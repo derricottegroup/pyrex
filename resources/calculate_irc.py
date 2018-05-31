@@ -9,8 +9,21 @@ __license__ = "BSD-3-Clause"
 __date__ = "2018-5-29"
 
 import psi4
-import numpy
+import numpy as np
 import os
+
+def num_first_derivs(irc_energies,step_size):
+    reaction_force = []
+    for i in range(2,len(irc_energies)-2):
+        current_force = -1.0*(-1.0*irc_energies[i+2] + 8.0*irc_energies[i+1] - 8.0*irc_energies[i-1] + 1.0*irc_energies[i-2])/(12.0*step_size)
+        reaction_force.append(current_force)
+    return reaction_force
+
+def num_integrate(force_coordinates, reaction_force_values, lower_limit, upper_limit):
+    integral_value = 0.0
+    for i in range(lower_limit,upper_limit):
+        integral_value += (force_coordinates[i+1] - force_coordinates[i])*((reaction_force_values[i] + reaction_force_values[i+1])/2.0)
+    return integral_value
 
 full_irc = open("full_irc.xyz", "r")
 energy_values = open("energy_values.dat", "w+")
@@ -18,8 +31,8 @@ irc = []
 
 charge = -1 #Specify total charge on your complex
 mult = 1 #Specify multiplicity of your complex
-irc_step_size = 0.2 #in units au*amu^(1/2), Psi4 default is 0.2
-level_of_theory = "scf/sto-3g" # Level of Theory for Total Energies
+irc_step_size = 0.05 #in units au*amu^(1/2), Psi4 default is 0.2
+level_of_theory = "scf/6-31G**" # Level of Theory for Total Energies
 
 # Grab number of atoms (natoms) from the top of the XYZ file.
 natoms = int(full_irc.readline())
@@ -38,6 +51,7 @@ for line in full_irc:
         coordinates.append(irc_num*irc_step_size)
 
 irc_energies = []
+reaction_force = []
 for i in range(len(irc)):
     geometry = ""
     geometry += "\n%d %d\n" %(charge, mult)
@@ -48,6 +62,37 @@ for i in range(len(irc)):
     psi4.set_options({'reference': 'rhf'})
     current_energy = psi4.energy(level_of_theory)
     irc_energies.append(current_energy)
+force_coordinates = coordinates[2:len(coordinates)-2]
+reaction_force_values = num_first_derivs(irc_energies,irc_step_size)
+
+for i in range(len(reaction_force_values)):
+    reaction_force.append((force_coordinates[i],reaction_force_values[i]))
+print(reaction_force)
+
+index_min = np.argmin(np.asarray(reaction_force_values))
+index_ts  = force_coordinates.index(0.0000)
+index_max = np.argmax(np.asarray(reaction_force_values))
+
+# Calculate Work in Reactant Region
+W_1 = -1.0*num_integrate(force_coordinates, reaction_force_values, 0, index_min)
+
+#Calculate Work in Transition State Region 1
+W_2 = -1.0*num_integrate(force_coordinates, reaction_force_values, index_min, index_ts)
+
+#Calculate Work in Transition State Region 2
+W_3 = -1.0*num_integrate(force_coordinates, reaction_force_values, index_ts, index_max)
+
+#Calculate Work in Product Region
+W_4 = -1.0*num_integrate(force_coordinates, reaction_force_values, index_max, len(reaction_force)-1)
+
+
+energy_values.write("W_1 = %f kcal/mol\n" %(W_1*627.51))
+energy_values.write("W_2 = %f kcal/mol\n" %(W_2*627.51))
+energy_values.write("W_3 = %f kcal/mol\n" %(W_3*627.51))
+energy_values.write("W_4 = %f kcal/mol\n" %(W_4*627.51))
+energy_values.write("\n\n")
 energy_values.writelines(["%f," % energy  for energy in irc_energies])
 energy_values.write("\n\n")
 energy_values.writelines(["%f," % coord  for coord in coordinates])
+energy_values.write("\n\n")
+energy_values.writelines(["%f," % force  for force in reaction_force_values])
