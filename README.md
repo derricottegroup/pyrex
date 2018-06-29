@@ -1,4 +1,8 @@
-![pyrex](logos/pyrex_logo.png)
+<p align="center">
+<br>
+<img src="logos/pyrex_logo.png" alt="Pyrex logo" height=200>
+<br>
+</p>
 
 #### Code Authors: Derricotte Research Group
 
