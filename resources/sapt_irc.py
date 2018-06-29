@@ -36,8 +36,8 @@ mult_2 = 1 #Specify multiplicity on fragment 2
 
 fragment_line = 5 # Which line in your geometry divides the fragments
 
-irc_step_size = 0.05 #in units au*amu^(1/2), Psi4 default is 0.2
-level_of_theory = "sapt0/6-31G**" # Level of Theory for Total Energies
+irc_step_size = 0.01 #in units au*amu^(1/2), Psi4 default is 0.2
+level_of_theory = "sapt0/6-311G**" # Level of Theory for Total Energies
 
 # Grab number of atoms (natoms) from the top of the XYZ file.
 natoms = int(full_irc.readline())
@@ -45,10 +45,10 @@ coordinates = []
 
 # Grab and store geometries from the IRC
 for line in full_irc:
-    if "Full IRC Point" in line:
+    if "IRC point" in line:
         geom = []
         irc_num_line = line.split()
-        irc_num = int(irc_num_line[3])
+        irc_num = int(irc_num_line[2])
         for i in range(natoms):
             line = next(full_irc)
             geom.append(line)
@@ -61,11 +61,13 @@ for i in range(len(irc)):
     geometry = ""
     geometry += "\n%d %d\n" %(charge_1, mult_1)
     for j in range(len(irc[i][1])):
-        if j==(fragment_line - 1):
+        if j==(fragment_line):
             geometry += "--"
             geometry += "\n%d %d\n" %(charge_2, mult_2)
+            geometry += irc[i][1][j]
         else:
             geometry += irc[i][1][j]
+    #print(geometry)
     psi4.core.set_output_file("irc_%d.out" %irc[i][0], False)
     psi4.geometry(geometry)
     psi4.set_options({'reference': 'rhf'})
@@ -79,7 +81,7 @@ for i in range(len(reaction_force_values)):
 print(reaction_force)
 
 index_min = np.argmin(np.asarray(reaction_force_values))
-index_ts  = force_coordinates.index(0.0000)
+index_ts  = force_coordinates.index(1.37)
 index_max = np.argmax(np.asarray(reaction_force_values))
 
 # Calculate Work in Reactant Region
