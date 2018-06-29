@@ -11,6 +11,7 @@ __date__ = "2018-5-29"
 import psi4
 import numpy as np
 import os
+import re
 import datetime
 from prettytable import PrettyTable
 
@@ -40,6 +41,7 @@ header ='''
 -----------------------------------------------------------------------
 '''
 
+os.makedirs("psi4_output")
 output_filename = "pyrex_output.dat"
 full_irc = open("full_irc.xyz", "r")
 output = open(output_filename, "w+")
@@ -53,6 +55,7 @@ output.write(datetime_now)
 output.write("\n")
 output.write("Process ID: %d" %pid)
 output.close()
+atom_symbols = []
 
 charge_A = 0 #Specify total charge on Monomer B
 mult_A = 1 #Specify multiplicity on Monomer B
@@ -99,48 +102,40 @@ e_B = 0.0
 for i in range(len(irc)):
     if (i==0):
         output = open(output_filename, "a")
-        geom_A_header ='''
-----------------------------------
-Geometry Optimization On Monomer A
-----------------------------------
-'''
-        output.write(geom_A_header)
+        output.write("\n\n--Monomer A Geometry Optimization--\n\n")
         print("%s Geometry Optimization on Monomer A" %level_of_theory)
         #geometry_A = ""
         geometry_A = "\n%d %d\n" %(charge_A, mult_A)
         for j in range(len(frag_A_atom_list)):
-            geometry_A += irc[i][1][frag_A_atom_list[j]]
+            line = irc[i][1][frag_A_atom_list[j]]
+            geometry_A += line.lstrip()
         output.write("\nInitial Geometry of Monomer A:\n")
         output.write(geometry_A[geometry_A.find('\n')+4:])
         geometry_A += "symmetry c1" 
         psi4.set_options({'reference': 'rhf'})
         #print(geometry_A)
         psi4.geometry(geometry_A)
-        outfile = "monomer_A_opt.out"
+        outfile = "psi4_output/monomer_A_opt.out"
         psi4.core.set_output_file(outfile, False)
         e_A = psi4.optimize(level_of_theory)
         output.write("\nOutput Written To: %s\n" %outfile)
         output.write("Final Energy: %f\n" %e_A)
         output.close()
         print("%s Geometry Optimization on Monomer B" %level_of_theory)
-        geom_B_header ='''
-----------------------------------
-Geometry Optimization On Monomer B
-----------------------------------
-'''
         output = open(output_filename, "a")
-        output.write(geom_B_header)
+        output.write("\n\n--Monomer B Geometry Optimization--\n\n")
         #geometry_B = ""
         geometry_B = "\n%d %d\n" %(charge_B, mult_B)
         for j in range(len(frag_B_atom_list)):
-            geometry_B += irc[i][1][frag_B_atom_list[j]]
+            line = irc[i][1][frag_B_atom_list[j]]
+            geometry_B += line.lstrip()
         psi4.set_options({'reference': 'rhf'})
         #print(geometry_B)
         output.write("\nInitial Geometry of Monomer B:\n")
         output.write(geometry_B[geometry_B.find('\n')+4:])
         geometry_B += "symmetry c1"
         psi4.geometry(geometry_B)
-        outfile = "monomer_B_opt.out"
+        outfile = "psi4_output/monomer_B_opt.out"
         psi4.core.set_output_file(outfile, False)
         e_B = psi4.optimize(level_of_theory)
         output.write("\nOutput Written To: %s\n" %outfile)
@@ -150,16 +145,17 @@ Geometry Optimization On Monomer B
         #output.write("-------------------------------------------------------\n")
         output.write("\n\n--Reaction Energy Analysis--\n\n")
         output.close()
-        t = PrettyTable(['IRC Point', 'E', 'E_strain', 'Potential'])
+        t = PrettyTable(['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B'])
 	#t.title = 'pyREX Reaction Energy Analysis Along Reaction Coordinate'
     geometry = ""
     geometry += "\n%d %d\n" %(charge_dimer, mult_dimer)
     for j in range(len(irc[i][1])):
-        geometry += irc[i][1][j]
+        line = irc[i][1][j]
+        geometry += line.lstrip()
     #output.write("=================================================\n")
     #output.write("Single Point Energy Calculation on IRC Point   %d\n" %irc[i][0])
     #output.write("=================================================\n")
-    psi4.core.set_output_file("irc_%d.out" %irc[i][0], False)
+    psi4.core.set_output_file("psi4_output/irc_%d.out" %irc[i][0], False)
     psi4.geometry(geometry)
     #output.write("Current Geometry:\n")
     #for j in range(natoms):
@@ -168,50 +164,61 @@ Geometry Optimization On Monomer B
     print("Single Point Calculation on IRC Point %d" %(irc[i][0]))
     current_energy, current_wfn = psi4.energy(level_of_theory, return_wfn=True)
     # Run SCF on Both Monomers for Flux Polarization Calculation (TODO Make this optional)
-    #geometry_A = ""
-    #geometry_A += "\n%d %d\n" %(charge_A, mult_A)
-    #for j in range(len(frag_A_atom_list)):
-    #    geometry_A += irc[i][1][frag_A_atom_list[j]]
-    #geometry_A += "symmetry c1"
-    #psi4.geometry(geometry_A)
-    #psi4.core.set_output_file("irc_%d_A_scf.out" %irc[i][0], False)
-    #psi4.set_options({'reference': 'rhf','mom_start': '5'})
-    #monomer_A_energy, monomer_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
-    # Grab number of occupied orbitals
-    #ndocc_A = monomer_A_wfn.doccpi()[0]
-    # Coefficient Matrix
-    #C_A = np.array(monomer_A_wfn.Ca())
-    # Orbital energies
-    #eps_A = monomer_A_wfn.epsilon_a()
-    #eps_A = np.array([eps_A.get(x) for x in range(C_A.shape[0])])
-    #homo_energy_A = eps_A[ndocc_A-1]
-    #lumo_energy_A = eps_A[ndocc_A]
-    #chemical_potential_A = 0.5*(homo_energy_A + lumo_energy_A)
-    #chemical_potentials_A.append(chemical_potential_A)
-    #geometry_B = ""
-    #geometry_B += "\n%d %d\n" %(charge_B, mult_B)
-    #for j in range(len(frag_B_atom_list)):
-    #    geometry_B += irc[i][1][frag_B_atom_list[j]]
-    #geometry_B += "symmetry c1"
-    #psi4.geometry(geometry_B)
-    #psi4.core.set_output_file("irc_%d_B_scf.out" %irc[i][0], False)
-    #psi4.set_options({'reference': 'rhf','mom_start': '5'})
-    #monomer_B_energy, monomer_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
-    # Grab number of occupied orbitals
-    #ndocc_B = monomer_B_wfn.doccpi()[0]
-    #print(ndocc)
-    # Coefficient Matrix
-    #C_B = np.array(monomer_B_wfn.Ca())
-    # Orbital energies
-    #eps_B = monomer_B_wfn.epsilon_a()
-    #eps_B = np.array([eps_B.get(x) for x in range(C_B.shape[0])])
-    #homo_energy_B = eps_B[ndocc_B-1]
-    #lumo_energy_B = eps_B[ndocc_B]
-    #chemical_potential_B = 0.5*(homo_energy_B + lumo_energy_B)
-    #chemical_potentials_B.append(chemical_potential_B)
     # Grab number of occupied orbitals
     ndocc = current_wfn.doccpi()[0]
-    print(ndocc)
+    nelec = ndocc*2.0
+    geometry_A = "\n%d %d\n" %(charge_A, mult_A)
+    for j in range(len(frag_A_atom_list)):
+        line = irc[i][1][frag_A_atom_list[j]]
+        geometry_A += line.lstrip()
+    for j in range(len(frag_B_atom_list)):
+        line = irc[i][1][frag_B_atom_list[j]]
+        geometry_A += "@"
+        geometry_A += line.lstrip()
+    geometry_A += "symmetry c1"
+    psi4.geometry(geometry_A)
+    psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %irc[i][0], False)
+    psi4.set_options({'reference': 'rhf'})
+    monomer_A_energy, monomer_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
+    # Grab number of occupied orbitals
+    ndocc_A = monomer_A_wfn.doccpi()[0]
+    nelec_A = ndocc_A*2.0
+    # Coefficient Matrix
+    C_A = np.array(monomer_A_wfn.Ca())
+    # Orbital energies
+    eps_A = monomer_A_wfn.epsilon_a()
+    eps_A = np.array([eps_A.get(x) for x in range(C_A.shape[0])])
+    homo_energy_A = eps_A[ndocc_A-1]
+    lumo_energy_A = eps_A[ndocc_A]
+    chemical_potential_A = 0.5*(homo_energy_A + lumo_energy_A)
+    chemical_potentials_A.append((nelec_A/nelec)*chemical_potential_A)
+    geometry_B = "\n%d %d\n" %(charge_B, mult_B)
+    for j in range(len(frag_B_atom_list)):
+        line = irc[i][1][frag_B_atom_list[j]]
+        geometry_B += line.lstrip()
+    for j in range(len(frag_A_atom_list)):
+        line = irc[i][1][frag_A_atom_list[j]]
+        geometry_B += "@"
+        geometry_B += line.lstrip()
+    geometry_B += "symmetry c1"
+    psi4.geometry(geometry_B)
+    psi4.core.set_output_file("psi4_output/irc_%d_B_scf.out" %irc[i][0], False)
+    psi4.set_options({'reference': 'rhf'})
+    monomer_B_energy, monomer_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
+    # Grab number of occupied orbitals
+    ndocc_B = monomer_B_wfn.doccpi()[0]
+    nelec_B = ndocc_B*2.0
+    #print(ndocc)
+    # Coefficient Matrix
+    C_B = np.array(monomer_B_wfn.Ca())
+    # Orbital energies
+    eps_B = monomer_B_wfn.epsilon_a()
+    eps_B = np.array([eps_B.get(x) for x in range(C_B.shape[0])])
+    homo_energy_B = eps_B[ndocc_B-1]
+    lumo_energy_B = eps_B[ndocc_B]
+    chemical_potential_B = 0.5*(homo_energy_B + lumo_energy_B)
+    chemical_potentials_B.append((nelec_B/nelec)*chemical_potential_B)
+    #print(ndocc)
     # Coefficient Matrix
     C = np.array(current_wfn.Ca())
     # Orbital energies
@@ -227,7 +234,7 @@ Geometry Optimization On Monomer B
     strain_energies.append(strain_energy)
     chemical_potentials.append(chemical_potential)
     #output = open("edacity_output.dat", "a")
-    t.add_row([i+1,"%.7f" %current_energy,"%.7f" %strain_energy, "%.7f" %chemical_potential])
+    t.add_row([i+1,"%.7f" %current_energy,"%.7f" %strain_energy, "%.7f" %chemical_potential, "%.7f" %chemical_potential_A, "%.7f" %chemical_potential_B])
     #output.write("%s\n" %t[i].get_string())
     #output.close()
 output = open(output_filename, "a")
@@ -240,16 +247,14 @@ reaction_electronic_flux_A = num_first_derivs(chemical_potentials_A,irc_step_siz
 reaction_electronic_flux_B = num_first_derivs(chemical_potentials_B,irc_step_size)
 
 output = open(output_filename, "a")
-output.write("=================================================\n")
-output.write("           pyREX Reaction Force Analysis        \n")
-output.write("=================================================\n")
+output.write("\n\n--IRC Force Partitioning--\n\n")
 output.write("Minimum Force =  %.10f\n" %(min(reaction_force_values)))
 output.write("Maximum Force =   %.10f\n" %(max(reaction_force_values)))
 
 
 for i in range(len(reaction_force_values)):
     reaction_force.append((force_coordinates[i],reaction_force_values[i]))
-print(reaction_force)
+#print(reaction_force)
 
 index_min = np.argmin(np.asarray(reaction_force_values))
 index_ts  = force_coordinates.index(0.0000)
@@ -305,16 +310,16 @@ Del_E = Del_E_raw[2:len(coordinates)-2]
 #for i in range(len(reaction_force_values)):
 #    output.write("       %.3f                           %.8f                             %.8f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i]))
 output.write("\n\n--Reaction Force Analysis--\n\n")
-t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux'])
+t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux', 'Flux_A', 'Flux_B'])
 #t.title = "pyREX Reaction Force Analysis Along Reaction Coordinate"
 for i in range(len(reaction_force_values)):
-    t.add_row(["%.2f" %force_coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i]])
+    t.add_row(["%.2f" %force_coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i], "%.7f" %reaction_electronic_flux_A[i], "%.7f" %reaction_electronic_flux_B[i]])
 output.write(t.get_string())
 
 potentials_truncated = chemical_potentials[2:len(coordinates)-2]
 csv_file.write("Coordinate,DeltaE,Force,Chemical Potential,Reaction Electronic Flux, Flux A, Flux B\n")
 for i in range(len(reaction_force_values)):
-    csv_file.write("%f,%f,%f,%f,%f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i], potentials_truncated[i],reaction_electronic_flux[i]))
+    csv_file.write("%f,%f,%f,%f,%f,%f,%f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i], potentials_truncated[i],reaction_electronic_flux[i], reaction_electronic_flux_A[i], reaction_electronic_flux_B[i]))
 
 output.write("\n\n**pyREX Has Exited Successfully!**\n")
 output.close()
