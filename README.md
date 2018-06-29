@@ -1,4 +1,4 @@
-![edacity](logos/edacity_logo.png)
+![edacity](logos/pyrex_logo.png)
 
 #### Code Authors: Derricotte Research Group
 
