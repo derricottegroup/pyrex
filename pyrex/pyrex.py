@@ -11,22 +11,13 @@ __date__ = "2018-5-29"
 import psi4
 import numpy as np
 import os
+import calctools
+import scf
+import geomtools
 import re
 import datetime
 from prettytable import PrettyTable
 
-def num_first_derivs(irc_energies,step_size):
-    reaction_force = []
-    for i in range(2,len(irc_energies)-2):
-        current_force = -1.0*(-1.0*irc_energies[i+2] + 8.0*irc_energies[i+1] - 8.0*irc_energies[i-1] + 1.0*irc_energies[i-2])/(12.0*step_size)
-        reaction_force.append(current_force)
-    return reaction_force
-
-def num_integrate(force_coordinates, reaction_force_values, lower_limit, upper_limit):
-    integral_value = 0.0
-    for i in range(lower_limit,upper_limit):
-        integral_value += (force_coordinates[i+1] - force_coordinates[i])*((reaction_force_values[i] + reaction_force_values[i+1])/2.0)
-    return integral_value
 
 header ='''
 -----------------------------------------------------------------------
@@ -100,49 +91,13 @@ e_A = 0.0
 e_B = 0.0
 
 for i in range(len(irc)):
+    current_geometry = irc[i][1]
     if (i==0):
+        geometry_A = geomtools.geombuilder(charge_A, mult_A, current_geometry, frag_A_atom_list)
+        e_A = scf.frag_opt(geometry_A, level_of_theory, output_filename, 'A')
+        geometry_B = geomtools.geombuilder(charge_B, mult_B, current_geometry, frag_B_atom_list)
+        e_B = scf.frag_opt(geometry_B, level_of_theory, output_filename, 'B')
         output = open(output_filename, "a")
-        output.write("\n\n--Monomer A Geometry Optimization--\n\n")
-        print("%s Geometry Optimization on Monomer A" %level_of_theory)
-        #geometry_A = ""
-        geometry_A = "\n%d %d\n" %(charge_A, mult_A)
-        for j in range(len(frag_A_atom_list)):
-            line = irc[i][1][frag_A_atom_list[j]]
-            geometry_A += line.lstrip()
-        output.write("\nInitial Geometry of Monomer A:\n")
-        output.write(geometry_A[geometry_A.find('\n')+4:])
-        geometry_A += "symmetry c1" 
-        psi4.set_options({'reference': 'rhf'})
-        #print(geometry_A)
-        psi4.geometry(geometry_A)
-        outfile = "psi4_output/monomer_A_opt.out"
-        psi4.core.set_output_file(outfile, False)
-        e_A = psi4.optimize(level_of_theory)
-        output.write("\nOutput Written To: %s\n" %outfile)
-        output.write("Final Energy: %f\n" %e_A)
-        output.close()
-        print("%s Geometry Optimization on Monomer B" %level_of_theory)
-        output = open(output_filename, "a")
-        output.write("\n\n--Monomer B Geometry Optimization--\n\n")
-        #geometry_B = ""
-        geometry_B = "\n%d %d\n" %(charge_B, mult_B)
-        for j in range(len(frag_B_atom_list)):
-            line = irc[i][1][frag_B_atom_list[j]]
-            geometry_B += line.lstrip()
-        psi4.set_options({'reference': 'rhf'})
-        #print(geometry_B)
-        output.write("\nInitial Geometry of Monomer B:\n")
-        output.write(geometry_B[geometry_B.find('\n')+4:])
-        geometry_B += "symmetry c1"
-        psi4.geometry(geometry_B)
-        outfile = "psi4_output/monomer_B_opt.out"
-        psi4.core.set_output_file(outfile, False)
-        e_B = psi4.optimize(level_of_theory)
-        output.write("\nOutput Written To: %s\n" %outfile)
-        output.write("Final Energy: %f\n\n" %e_B)
-        #output.write("-------------------------------------------------------\n")
-        #output.write("          pyREX Reaction Energy Analysis\n")
-        #output.write("-------------------------------------------------------\n")
         output.write("\n\n--Reaction Energy Analysis--\n\n")
         output.close()
         t = PrettyTable(['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B'])
@@ -152,9 +107,6 @@ for i in range(len(irc)):
     for j in range(len(irc[i][1])):
         line = irc[i][1][j]
         geometry += line.lstrip()
-    #output.write("=================================================\n")
-    #output.write("Single Point Energy Calculation on IRC Point   %d\n" %irc[i][0])
-    #output.write("=================================================\n")
     psi4.core.set_output_file("psi4_output/irc_%d.out" %irc[i][0], False)
     psi4.geometry(geometry)
     #output.write("Current Geometry:\n")
@@ -241,10 +193,10 @@ output = open(output_filename, "a")
 output.write("%s\n" %t.get_string())
 output.close()
 force_coordinates = coordinates[2:len(coordinates)-2]
-reaction_force_values = num_first_derivs(irc_energies,irc_step_size)
-reaction_electronic_flux = num_first_derivs(chemical_potentials,irc_step_size)
-reaction_electronic_flux_A = num_first_derivs(chemical_potentials_A,irc_step_size)
-reaction_electronic_flux_B = num_first_derivs(chemical_potentials_B,irc_step_size)
+reaction_force_values = calctools.num_first_derivs(irc_energies,irc_step_size)
+reaction_electronic_flux = calctools.num_first_derivs(chemical_potentials,irc_step_size)
+reaction_electronic_flux_A = calctools.num_first_derivs(chemical_potentials_A,irc_step_size)
+reaction_electronic_flux_B = calctools.num_first_derivs(chemical_potentials_B,irc_step_size)
 
 output = open(output_filename, "a")
 output.write("\n\n--IRC Force Partitioning--\n\n")
@@ -265,16 +217,16 @@ output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(force_coordinat
 output.write("\nProduct Region:            %.3f ------> %.3f\n" %(force_coordinates[index_max], coordinates[-1]))
 
 # Calculate Work in Reactant Region
-W_1 = -1.0*num_integrate(force_coordinates, reaction_force_values, 0, index_min)
+W_1 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, 0, index_min)
 
 #Calculate Work in Transition State Region 1
-W_2 = -1.0*num_integrate(force_coordinates, reaction_force_values, index_min, index_ts)
+W_2 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, index_min, index_ts)
 
 #Calculate Work in Transition State Region 2
-W_3 = -1.0*num_integrate(force_coordinates, reaction_force_values, index_ts, index_max)
+W_3 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, index_ts, index_max)
 
 #Calculate Work in Product Region
-W_4 = -1.0*num_integrate(force_coordinates, reaction_force_values, index_max, len(reaction_force)-1)
+W_4 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, index_max, len(reaction_force)-1)
 
 
 output.write("\n\n--Work Integrals--\n\n")
