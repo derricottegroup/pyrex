@@ -1,5 +1,5 @@
 """
-Script for Calculating Energies Along IRC in Psi4
+Main pyREX interface
 """
 __authors__ = "Wallace D. Derricotte"
 __credits__ = ["Wallace D. Derricotte"]
@@ -31,8 +31,10 @@ header ='''
                          Atlanta,Georgia
 -----------------------------------------------------------------------
 '''
-
-os.makedirs("psi4_output")
+if(os.path.isdir('psi4_output')):
+    pass
+else:
+    os.makedirs("psi4_output")
 output_filename = "pyrex_output.dat"
 full_irc = open("full_irc.xyz", "r")
 output = open(output_filename, "w+")
@@ -101,7 +103,6 @@ for i in range(len(irc)):
         output.write("\n\n--Reaction Energy Analysis--\n\n")
         output.close()
         t = PrettyTable(['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B'])
-	#t.title = 'pyREX Reaction Energy Analysis Along Reaction Coordinate'
     geometry = ""
     geometry += "\n%d %d\n" %(charge_dimer, mult_dimer)
     for j in range(len(irc[i][1])):
@@ -230,9 +231,9 @@ W_4 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, ind
 
 
 output.write("\n\n--Work Integrals--\n\n")
-t = PrettyTable(["Unit","W_1", "W_2", "W_3" , "W_4"])
-t.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %W_3, "%.7f" %W_4])
-t.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %(W_3*627.51), "%.7f" %(W_4*627.51)])
+t = PrettyTable(["Unit","W_1", "W_2", "W_3" , "W_4", "E_act", "E_react"])
+t.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %W_3, "%.7f" %W_4, "%.7f" %(W_1+W_2), "%.7f" %(W_1+W_2+ W_3 + W_4)])
+t.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %(W_3*627.51), "%.7f" %(W_4*627.51),"%.7f" %((W_1+W_2)*627.51), "%.7f" %((W_1+W_2+ W_3 + W_4)*627.51)])
 output.write(t.get_string())
 #output.write("%f kcal/mol\n" %(W_1*627.51))
 #output.write("%f kcal/mol\n" %(W_2*627.51))
