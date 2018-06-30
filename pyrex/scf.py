@@ -59,7 +59,7 @@ def frag_opt(geometry_frag, level_of_theory, outfile, label):
     output.close()
     return e_frag
 
-def psi4_scf(geometries, level_of_theory, frag=False):
+def psi4_scf(geometries, level_of_theory, pol=False):
     energies = []
     wavefunctions = []
     for i in range(len(geometries)):
@@ -69,7 +69,7 @@ def psi4_scf(geometries, level_of_theory, frag=False):
         psi4.set_options({'reference': 'rhf'})
         print("pyREX:Single Point Calculation on IRC Point %d" %(i))
         dimer_energy, dimer_wfn = psi4.energy(level_of_theory, return_wfn=True)
-        if(frag):
+        if(pol==True):
             # Fragment A SCF
             psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %i, False)
             psi4.geometry(geometries[i][1])
@@ -83,10 +83,10 @@ def psi4_scf(geometries, level_of_theory, frag=False):
             print("pyREX:Single Point Calculation on IRC Point %d (Fragment B)" %(i))
             frag_B_energy, frag_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
         else:
-            frag_A_energy = None
-            frag_A_wfn = None
-            frag_B_energy = None
-            frag_B_wfn = None
+            frag_A_energy = 0.0
+            frag_A_wfn = 0.0
+            frag_B_energy = 0.0
+            frag_B_wfn = 0.0
         energies.append((dimer_energy,frag_A_energy,frag_B_energy))
         wavefunctions.append((dimer_wfn, frag_A_wfn, frag_B_wfn))
     return energies, wavefunctions

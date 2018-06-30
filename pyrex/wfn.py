@@ -1,7 +1,7 @@
 import psi4
 import numpy as np
 
-def potential(wavefunctions, frag=False):
+def potential(wavefunctions, pol=False):
     potentials = []
     for i in range(len(wavefunctions)):
         dimer_wfn = wavefunctions[i][0]
@@ -13,7 +13,7 @@ def potential(wavefunctions, frag=False):
         homo_energy = eps[ndocc-1]
         lumo_energy = eps[ndocc]
         dimer_potential = 0.5*(homo_energy + lumo_energy)
-        if(frag):
+        if(pol==True):
             # Fragment A Chemical Potential
             frag_A_wfn = wavefunctions[i][1]
             ndocc_A = frag_A_wfn.doccpi()[0]
@@ -35,7 +35,7 @@ def potential(wavefunctions, frag=False):
             lumo_energy_B = eps_B[ndocc]
             frag_B_potential = 0.5*(homo_energy_B + lumo_energy_B)
         else:
-            frag_A_potential = None
-            frag_B_potential = None
+            frag_A_potential = 0.0
+            frag_B_potential = 0.0
         potentials.append((dimer_potential,frag_A_potential,frag_B_potential))
     return potentials

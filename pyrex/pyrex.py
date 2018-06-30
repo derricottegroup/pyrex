@@ -12,6 +12,8 @@ __date__ = "2018-5-29"
 import psi4
 import numpy as np
 import os
+from header import *
+from input_parser import *
 import calctools
 import scf
 import geomtools
@@ -20,56 +22,56 @@ import re
 import datetime
 from prettytable import PrettyTable
 
+import sys
 
-header ='''
------------------------------------------------------------------------
-     pyREX: Python Reaction Energy eXtension for Quantum Chemistry
-                            
-                         pyREX beta 0.1
+input_file = ""
 
-                      Wallace D. Derricotte
-                    Derricotte Research Group
-                        Morehouse College
-                         Atlanta,Georgia
------------------------------------------------------------------------
-'''
+if len(sys.argv) == 1:
+    input_file = "pyrex_input.dat"
+if len(sys.argv) > 1:
+    input_file = sys.arv[1]
+
+print(input_file)
+
+user_values = input_parser(input_file)
+
 if(os.path.isdir('psi4_output')):
     pass
 else:
     os.makedirs("psi4_output")
+
 output_filename = "pyrex_output.dat"
+header(output_filename)
+irc_filename = user_values['irc_filename']
 full_irc = open("full_irc.xyz", "r")
-output = open(output_filename, "w+")
+#output = open(output_filename, "w+")
 csv_file = open("raw_data.csv","w+")
 irc = []
-pid = os.getpid()
-output.write(header)
-datetime_now = datetime.datetime.now().strftime('pyREX Run on %A %B %d, %Y at %H:%M%p')
-output.write("\n")
-output.write(datetime_now)
-output.write("\n")
-output.write("Process ID: %d" %pid)
-output.close()
+
 atom_symbols = []
 
 #TODO Add the ability to read in these options from an input file
-do_frag = True
-charge_A = 0 #Specify total charge on Monomer B
-mult_A = 1 #Specify multiplicity on Monomer B
+# Input File Should Include: Charge (dimer and fragments), fragment atom list, step size of irc, irc_filename, level of theory, psi4 options. 
+do_frag = user_values['do_frag']
+do_polarization = user_values['do_polarization']
+print(do_polarization)
+#charge_A = 0 #Specify total charge on Monomer B
+charge_A = user_values['charge_A']
+mult_A = user_values['mult_A'] #Specify multiplicity on Monomer B
 frag_A_atom_list = [0,1,4]
-charge_B = 0 #Specify total charge on Monomer B
-mult_B = 1 #Specify multiplicity on Monomer B
+charge_B = user_values['charge_B'] #Specify total charge on Monomer B
+mult_B = user_values['mult_B'] #Specify multiplicity on Monomer B
 frag_B_atom_list = [2,3,5]
 
 natoms_A = len(frag_A_atom_list)
 natoms_B = len(frag_B_atom_list)
 
-charge_dimer = 0 #Specify total charge on the supermolecular complex
-mult_dimer = 1 #Specify multiplicity of the supermolecular complex
+charge_dimer = user_values['charge_dimer'] #Specify total charge on the supermolecular complex
+mult_dimer = user_values['mult_dimer'] #Specify multiplicity of the supermolecular complex
 
 charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
-irc_step_size = 0.2 #in units au*amu^(1/2), Psi4 default is 0.2
-level_of_theory = "scf/sto-3g" # Level of Theory for Total Energies
+irc_step_size = user_values['irc_step_size'] #in units au*amu^(1/2), Psi4 default is 0.2
+level_of_theory = "%s/%s" %(user_values['method'],user_values['basis']) # Level of Theory for Total Energies
 
 # Grab number of atoms (natoms) from the top of the XYZ file.
 natoms = int(full_irc.readline())
@@ -112,122 +114,28 @@ psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag
 
 e_A , e_B = scf.frag_opt_new(psi_geometries, level_of_theory, output_filename, natoms_A, natoms_B)
 
-energies, wavefunctions = scf.psi4_scf(psi_geometries, level_of_theory, frag=do_frag)
+energies, wavefunctions = scf.psi4_scf(psi_geometries, level_of_theory, pol=do_polarization)
 
-potentials = wfn.potential(wavefunctions, frag=do_frag)
+potentials = wfn.potential(wavefunctions, pol=do_polarization)
 
 for i in range(len(energies)):
     del_E = 0.0
     irc_energies.append(energies[i][0])
     chemical_potentials.append(potentials[i][0])
-    if(do_frag):
+    if(do_polarization==True):
         chemical_potentials_A.append(potentials[i][1])
         chemical_potentials_B.append(potentials[i][2])
+    else:
+        chemical_potentials_A.append(0.0)
+        chemical_potentials_B.append(0.0)
     del_E = energies[i][0] - (e_A + e_B)
     t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E, "%.7f" %potentials[i][0], "%.7f" %potentials[i][1], "%.7f" %potentials[i][2]])
 
 output = open(output_filename, "a")
+output.write("\n\n--Reaction Energy Analysis--\n\n")
 output.write("%s\n" %t.get_string())
 output.close()
 
-#for i in range(len(irc)):
-#    current_geometry = irc[i][1]
-#    if (i==0):
-#        geometry_A = geomtools.geombuilder(charge_A, mult_A, current_geometry, frag_A_atom_list)
-#        e_A = scf.frag_opt(geometry_A, level_of_theory, output_filename, 'A')
-#        geometry_B = geomtools.geombuilder(charge_B, mult_B, current_geometry, frag_B_atom_list)
-#        e_B = scf.frag_opt(geometry_B, level_of_theory, output_filename, 'B')
-#        output = open(output_filename, "a")
-#        output.write("\n\n--Reaction Energy Analysis--\n\n")
-#        output.close()
-#        t = PrettyTable(['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B'])
-#    geometry = ""
-#    geometry += "\n%d %d\n" %(charge_dimer, mult_dimer)
-#    for j in range(len(irc[i][1])):
-#        line = irc[i][1][j]
-#        geometry += line.lstrip()
-#    psi4.core.set_output_file("psi4_output/irc_%d.out" %irc[i][0], False)
-#    psi4.geometry(geometry)
-#    psi4.set_options({'reference': 'rhf'})
-#    print("Single Point Calculation on IRC Point %d" %(irc[i][0]))
-#    current_energy, current_wfn = psi4.energy(level_of_theory, return_wfn=True)
-#    # Run SCF on Both Monomers for Flux Polarization Calculation (TODO Make this optional)
-#    # Grab number of occupied orbitals
-#    ndocc = current_wfn.doccpi()[0]
-#    nelec = ndocc*2.0
-#    geometry_A = "\n%d %d\n" %(charge_A, mult_A)
-#    for j in range(len(frag_A_atom_list)):
-#        line = irc[i][1][frag_A_atom_list[j]]
-#        geometry_A += line.lstrip()
-#    for j in range(len(frag_B_atom_list)):
-#        line = irc[i][1][frag_B_atom_list[j]]
-#        geometry_A += "@"
-#        geometry_A += line.lstrip()
-#    geometry_A += "symmetry c1"
-#    psi4.geometry(geometry_A)
-#    psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %irc[i][0], False)
-#    psi4.set_options({'reference': 'rhf'})
-#    monomer_A_energy, monomer_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
-#    # Grab number of occupied orbitals
-#    ndocc_A = monomer_A_wfn.doccpi()[0]
-#    nelec_A = ndocc_A*2.0
-#    # Coefficient Matrix
-#    C_A = np.array(monomer_A_wfn.Ca())
-#    # Orbital energies
-#    eps_A = monomer_A_wfn.epsilon_a()
-#    eps_A = np.array([eps_A.get(x) for x in range(C_A.shape[0])])
-#    homo_energy_A = eps_A[ndocc_A-1]
-#    lumo_energy_A = eps_A[ndocc_A]
-#    chemical_potential_A = 0.5*(homo_energy_A + lumo_energy_A)
-#    chemical_potentials_A.append((nelec_A/nelec)*chemical_potential_A)
-#    geometry_B = "\n%d %d\n" %(charge_B, mult_B)
-#    for j in range(len(frag_B_atom_list)):
-#        line = irc[i][1][frag_B_atom_list[j]]
-#        geometry_B += line.lstrip()
-#    for j in range(len(frag_A_atom_list)):
-#        line = irc[i][1][frag_A_atom_list[j]]
-#        geometry_B += "@"
-#        geometry_B += line.lstrip()
-#    geometry_B += "symmetry c1"
-#    psi4.geometry(geometry_B)
-#    psi4.core.set_output_file("psi4_output/irc_%d_B_scf.out" %irc[i][0], False)
-#    psi4.set_options({'reference': 'rhf'})
-#    monomer_B_energy, monomer_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
-#    # Grab number of occupied orbitals
-#    ndocc_B = monomer_B_wfn.doccpi()[0]
-#    nelec_B = ndocc_B*2.0
-#    #print(ndocc)
-#    # Coefficient Matrix
-#    C_B = np.array(monomer_B_wfn.Ca())
-#    # Orbital energies
-#    eps_B = monomer_B_wfn.epsilon_a()
-#    eps_B = np.array([eps_B.get(x) for x in range(C_B.shape[0])])
-#    homo_energy_B = eps_B[ndocc_B-1]
-#    lumo_energy_B = eps_B[ndocc_B]
-#    chemical_potential_B = 0.5*(homo_energy_B + lumo_energy_B)
-#    chemical_potentials_B.append((nelec_B/nelec)*chemical_potential_B)
-#    #print(ndocc)
-#    # Coefficient Matrix
-#    C = np.array(current_wfn.Ca())
-#    # Orbital energies
-#    eps = current_wfn.epsilon_a()
-#    eps = np.array([eps.get(x) for x in range(C.shape[0])])
-#    homo_energy = eps[ndocc-1]
-#    lumo_energy = eps[ndocc]
-#    chemical_potential = 0.5*(homo_energy + lumo_energy)
-#    #output.write("Energy = %.10f Hartree\n" %current_energy)
-#    strain_energy = current_energy - (e_A + e_B)
-#    #print("Strain Energy for Point %d = %.4f" %(irc[i][0],strain_energy))
-#    irc_energies.append(current_energy)
-#    strain_energies.append(strain_energy)
-#    chemical_potentials.append(chemical_potential)
-#    #output = open("edacity_output.dat", "a")
-#    t.add_row([i+1,"%.7f" %current_energy,"%.7f" %strain_energy, "%.7f" %chemical_potential, "%.7f" %chemical_potential_A, "%.7f" %chemical_potential_B])
-#    #output.write("%s\n" %t[i].get_string())
-#    #output.close()
-output = open(output_filename, "a")
-output.write("%s\n" %t.get_string())
-output.close()
 force_coordinates = coordinates[2:len(coordinates)-2]
 reaction_force_values = calctools.num_first_derivs(irc_energies,irc_step_size)
 reaction_electronic_flux = calctools.num_first_derivs(chemical_potentials,irc_step_size)
@@ -272,17 +180,6 @@ t = PrettyTable(["Unit","W_1", "W_2", "W_3" , "W_4", "E_act", "E_react"])
 t.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %W_3, "%.7f" %W_4, "%.7f" %(W_1+W_2), "%.7f" %(W_1+W_2+ W_3 + W_4)])
 t.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %(W_3*627.51), "%.7f" %(W_4*627.51),"%.7f" %((W_1+W_2)*627.51), "%.7f" %((W_1+W_2+ W_3 + W_4)*627.51)])
 output.write(t.get_string())
-#output.write("%f kcal/mol\n" %(W_1*627.51))
-#output.write("%f kcal/mol\n" %(W_2*627.51))
-#output.write("%f kcal/mol\n" %(W_3*627.51))
-#output.write("%f kcal/mol\n\n" %(W_4*627.51))
-
-#output.writelines(["%f," % energy  for energy in irc_energies])
-#output.write("\n\n")
-#output.writelines(["%f," % coord  for coord in coordinates])
-#output.write("\n\n")
-#output.writelines(["%f," % force  for force in reaction_force_values])
-
 
 # Calculate Energy Difference
 min_energy_index = np.argmin(np.asarray(irc_energies))
