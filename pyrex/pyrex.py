@@ -61,12 +61,15 @@ charge_B = 0 #Specify total charge on Monomer B
 mult_B = 1 #Specify multiplicity on Monomer B
 frag_B_atom_list = [2,3,5]
 
+natoms_A = len(frag_A_atom_list)
+natoms_B = len(frag_B_atom_list)
+
 charge_dimer = 0 #Specify total charge on the supermolecular complex
 mult_dimer = 1 #Specify multiplicity of the supermolecular complex
 
 charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
 irc_step_size = 0.2 #in units au*amu^(1/2), Psi4 default is 0.2
-level_of_theory = "scf/3-21G" # Level of Theory for Total Energies
+level_of_theory = "scf/sto-3g" # Level of Theory for Total Energies
 
 # Grab number of atoms (natoms) from the top of the XYZ file.
 natoms = int(full_irc.readline())
@@ -98,109 +101,130 @@ reaction_electronic_flux_B = []
 e_A = 0.0
 e_B = 0.0
 
+table_header = ['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B']
 
-#TODO Incorporate the functions below into the main pyREX interface! 
-#psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
 
-#energies, wavefunctions = scf.psi4_scf(psi_geometries, level_of_theory, frag=do_frag)
+#TODO Incorporate the functions below into the main pyREX interface!
+table_header = ['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B']
+t = PrettyTable(table_header)
+ 
+psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
 
-#potentials = wfn.potential(wavefunctions, frag=do_frag)
+e_A , e_B = scf.frag_opt_new(psi_geometries, level_of_theory, output_filename, natoms_A, natoms_B)
 
-for i in range(len(irc)):
-    current_geometry = irc[i][1]
-    if (i==0):
-        geometry_A = geomtools.geombuilder(charge_A, mult_A, current_geometry, frag_A_atom_list)
-        e_A = scf.frag_opt(geometry_A, level_of_theory, output_filename, 'A')
-        geometry_B = geomtools.geombuilder(charge_B, mult_B, current_geometry, frag_B_atom_list)
-        e_B = scf.frag_opt(geometry_B, level_of_theory, output_filename, 'B')
-        output = open(output_filename, "a")
-        output.write("\n\n--Reaction Energy Analysis--\n\n")
-        output.close()
-        t = PrettyTable(['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B'])
-    geometry = ""
-    geometry += "\n%d %d\n" %(charge_dimer, mult_dimer)
-    for j in range(len(irc[i][1])):
-        line = irc[i][1][j]
-        geometry += line.lstrip()
-    psi4.core.set_output_file("psi4_output/irc_%d.out" %irc[i][0], False)
-    psi4.geometry(geometry)
-    psi4.set_options({'reference': 'rhf'})
-    print("Single Point Calculation on IRC Point %d" %(irc[i][0]))
-    current_energy, current_wfn = psi4.energy(level_of_theory, return_wfn=True)
-    # Run SCF on Both Monomers for Flux Polarization Calculation (TODO Make this optional)
-    # Grab number of occupied orbitals
-    ndocc = current_wfn.doccpi()[0]
-    nelec = ndocc*2.0
-    geometry_A = "\n%d %d\n" %(charge_A, mult_A)
-    for j in range(len(frag_A_atom_list)):
-        line = irc[i][1][frag_A_atom_list[j]]
-        geometry_A += line.lstrip()
-    for j in range(len(frag_B_atom_list)):
-        line = irc[i][1][frag_B_atom_list[j]]
-        geometry_A += "@"
-        geometry_A += line.lstrip()
-    geometry_A += "symmetry c1"
-    psi4.geometry(geometry_A)
-    psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %irc[i][0], False)
-    psi4.set_options({'reference': 'rhf'})
-    monomer_A_energy, monomer_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
-    # Grab number of occupied orbitals
-    ndocc_A = monomer_A_wfn.doccpi()[0]
-    nelec_A = ndocc_A*2.0
-    # Coefficient Matrix
-    C_A = np.array(monomer_A_wfn.Ca())
-    # Orbital energies
-    eps_A = monomer_A_wfn.epsilon_a()
-    eps_A = np.array([eps_A.get(x) for x in range(C_A.shape[0])])
-    homo_energy_A = eps_A[ndocc_A-1]
-    lumo_energy_A = eps_A[ndocc_A]
-    chemical_potential_A = 0.5*(homo_energy_A + lumo_energy_A)
-    chemical_potentials_A.append((nelec_A/nelec)*chemical_potential_A)
-    geometry_B = "\n%d %d\n" %(charge_B, mult_B)
-    for j in range(len(frag_B_atom_list)):
-        line = irc[i][1][frag_B_atom_list[j]]
-        geometry_B += line.lstrip()
-    for j in range(len(frag_A_atom_list)):
-        line = irc[i][1][frag_A_atom_list[j]]
-        geometry_B += "@"
-        geometry_B += line.lstrip()
-    geometry_B += "symmetry c1"
-    psi4.geometry(geometry_B)
-    psi4.core.set_output_file("psi4_output/irc_%d_B_scf.out" %irc[i][0], False)
-    psi4.set_options({'reference': 'rhf'})
-    monomer_B_energy, monomer_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
-    # Grab number of occupied orbitals
-    ndocc_B = monomer_B_wfn.doccpi()[0]
-    nelec_B = ndocc_B*2.0
-    #print(ndocc)
-    # Coefficient Matrix
-    C_B = np.array(monomer_B_wfn.Ca())
-    # Orbital energies
-    eps_B = monomer_B_wfn.epsilon_a()
-    eps_B = np.array([eps_B.get(x) for x in range(C_B.shape[0])])
-    homo_energy_B = eps_B[ndocc_B-1]
-    lumo_energy_B = eps_B[ndocc_B]
-    chemical_potential_B = 0.5*(homo_energy_B + lumo_energy_B)
-    chemical_potentials_B.append((nelec_B/nelec)*chemical_potential_B)
-    #print(ndocc)
-    # Coefficient Matrix
-    C = np.array(current_wfn.Ca())
-    # Orbital energies
-    eps = current_wfn.epsilon_a()
-    eps = np.array([eps.get(x) for x in range(C.shape[0])])
-    homo_energy = eps[ndocc-1]
-    lumo_energy = eps[ndocc]
-    chemical_potential = 0.5*(homo_energy + lumo_energy)
-    #output.write("Energy = %.10f Hartree\n" %current_energy)
-    strain_energy = current_energy - (e_A + e_B)
-    #print("Strain Energy for Point %d = %.4f" %(irc[i][0],strain_energy))
-    irc_energies.append(current_energy)
-    strain_energies.append(strain_energy)
-    chemical_potentials.append(chemical_potential)
-    #output = open("edacity_output.dat", "a")
-    t.add_row([i+1,"%.7f" %current_energy,"%.7f" %strain_energy, "%.7f" %chemical_potential, "%.7f" %chemical_potential_A, "%.7f" %chemical_potential_B])
-    #output.write("%s\n" %t[i].get_string())
-    #output.close()
+energies, wavefunctions = scf.psi4_scf(psi_geometries, level_of_theory, frag=do_frag)
+
+potentials = wfn.potential(wavefunctions, frag=do_frag)
+
+for i in range(len(energies)):
+    del_E = 0.0
+    irc_energies.append(energies[i][0])
+    chemical_potentials.append(potentials[i][0])
+    if(do_frag):
+        chemical_potentials_A.append(potentials[i][1])
+        chemical_potentials_B.append(potentials[i][2])
+    del_E = energies[i][0] - (e_A + e_B)
+    t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E, "%.7f" %potentials[i][0], "%.7f" %potentials[i][1], "%.7f" %potentials[i][2]])
+
+output = open(output_filename, "a")
+output.write("%s\n" %t.get_string())
+output.close()
+
+#for i in range(len(irc)):
+#    current_geometry = irc[i][1]
+#    if (i==0):
+#        geometry_A = geomtools.geombuilder(charge_A, mult_A, current_geometry, frag_A_atom_list)
+#        e_A = scf.frag_opt(geometry_A, level_of_theory, output_filename, 'A')
+#        geometry_B = geomtools.geombuilder(charge_B, mult_B, current_geometry, frag_B_atom_list)
+#        e_B = scf.frag_opt(geometry_B, level_of_theory, output_filename, 'B')
+#        output = open(output_filename, "a")
+#        output.write("\n\n--Reaction Energy Analysis--\n\n")
+#        output.close()
+#        t = PrettyTable(['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B'])
+#    geometry = ""
+#    geometry += "\n%d %d\n" %(charge_dimer, mult_dimer)
+#    for j in range(len(irc[i][1])):
+#        line = irc[i][1][j]
+#        geometry += line.lstrip()
+#    psi4.core.set_output_file("psi4_output/irc_%d.out" %irc[i][0], False)
+#    psi4.geometry(geometry)
+#    psi4.set_options({'reference': 'rhf'})
+#    print("Single Point Calculation on IRC Point %d" %(irc[i][0]))
+#    current_energy, current_wfn = psi4.energy(level_of_theory, return_wfn=True)
+#    # Run SCF on Both Monomers for Flux Polarization Calculation (TODO Make this optional)
+#    # Grab number of occupied orbitals
+#    ndocc = current_wfn.doccpi()[0]
+#    nelec = ndocc*2.0
+#    geometry_A = "\n%d %d\n" %(charge_A, mult_A)
+#    for j in range(len(frag_A_atom_list)):
+#        line = irc[i][1][frag_A_atom_list[j]]
+#        geometry_A += line.lstrip()
+#    for j in range(len(frag_B_atom_list)):
+#        line = irc[i][1][frag_B_atom_list[j]]
+#        geometry_A += "@"
+#        geometry_A += line.lstrip()
+#    geometry_A += "symmetry c1"
+#    psi4.geometry(geometry_A)
+#    psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %irc[i][0], False)
+#    psi4.set_options({'reference': 'rhf'})
+#    monomer_A_energy, monomer_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
+#    # Grab number of occupied orbitals
+#    ndocc_A = monomer_A_wfn.doccpi()[0]
+#    nelec_A = ndocc_A*2.0
+#    # Coefficient Matrix
+#    C_A = np.array(monomer_A_wfn.Ca())
+#    # Orbital energies
+#    eps_A = monomer_A_wfn.epsilon_a()
+#    eps_A = np.array([eps_A.get(x) for x in range(C_A.shape[0])])
+#    homo_energy_A = eps_A[ndocc_A-1]
+#    lumo_energy_A = eps_A[ndocc_A]
+#    chemical_potential_A = 0.5*(homo_energy_A + lumo_energy_A)
+#    chemical_potentials_A.append((nelec_A/nelec)*chemical_potential_A)
+#    geometry_B = "\n%d %d\n" %(charge_B, mult_B)
+#    for j in range(len(frag_B_atom_list)):
+#        line = irc[i][1][frag_B_atom_list[j]]
+#        geometry_B += line.lstrip()
+#    for j in range(len(frag_A_atom_list)):
+#        line = irc[i][1][frag_A_atom_list[j]]
+#        geometry_B += "@"
+#        geometry_B += line.lstrip()
+#    geometry_B += "symmetry c1"
+#    psi4.geometry(geometry_B)
+#    psi4.core.set_output_file("psi4_output/irc_%d_B_scf.out" %irc[i][0], False)
+#    psi4.set_options({'reference': 'rhf'})
+#    monomer_B_energy, monomer_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
+#    # Grab number of occupied orbitals
+#    ndocc_B = monomer_B_wfn.doccpi()[0]
+#    nelec_B = ndocc_B*2.0
+#    #print(ndocc)
+#    # Coefficient Matrix
+#    C_B = np.array(monomer_B_wfn.Ca())
+#    # Orbital energies
+#    eps_B = monomer_B_wfn.epsilon_a()
+#    eps_B = np.array([eps_B.get(x) for x in range(C_B.shape[0])])
+#    homo_energy_B = eps_B[ndocc_B-1]
+#    lumo_energy_B = eps_B[ndocc_B]
+#    chemical_potential_B = 0.5*(homo_energy_B + lumo_energy_B)
+#    chemical_potentials_B.append((nelec_B/nelec)*chemical_potential_B)
+#    #print(ndocc)
+#    # Coefficient Matrix
+#    C = np.array(current_wfn.Ca())
+#    # Orbital energies
+#    eps = current_wfn.epsilon_a()
+#    eps = np.array([eps.get(x) for x in range(C.shape[0])])
+#    homo_energy = eps[ndocc-1]
+#    lumo_energy = eps[ndocc]
+#    chemical_potential = 0.5*(homo_energy + lumo_energy)
+#    #output.write("Energy = %.10f Hartree\n" %current_energy)
+#    strain_energy = current_energy - (e_A + e_B)
+#    #print("Strain Energy for Point %d = %.4f" %(irc[i][0],strain_energy))
+#    irc_energies.append(current_energy)
+#    strain_energies.append(strain_energy)
+#    chemical_potentials.append(chemical_potential)
+#    #output = open("edacity_output.dat", "a")
+#    t.add_row([i+1,"%.7f" %current_energy,"%.7f" %strain_energy, "%.7f" %chemical_potential, "%.7f" %chemical_potential_A, "%.7f" %chemical_potential_B])
+#    #output.write("%s\n" %t[i].get_string())
+#    #output.close()
 output = open(output_filename, "a")
 output.write("%s\n" %t.get_string())
 output.close()
@@ -209,6 +233,8 @@ reaction_force_values = calctools.num_first_derivs(irc_energies,irc_step_size)
 reaction_electronic_flux = calctools.num_first_derivs(chemical_potentials,irc_step_size)
 reaction_electronic_flux_A = calctools.num_first_derivs(chemical_potentials_A,irc_step_size)
 reaction_electronic_flux_B = calctools.num_first_derivs(chemical_potentials_B,irc_step_size)
+
+
 
 output = open(output_filename, "a")
 output.write("\n\n--IRC Force Partitioning--\n\n")

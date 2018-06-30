@@ -38,5 +38,4 @@ def potential(wavefunctions, frag=False):
             frag_A_potential = None
             frag_B_potential = None
         potentials.append((dimer_potential,frag_A_potential,frag_B_potential))
-        print(dimer_potential)
     return potentials
