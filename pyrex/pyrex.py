@@ -58,10 +58,10 @@ print(do_polarization)
 #charge_A = 0 #Specify total charge on Monomer B
 charge_A = user_values['charge_A']
 mult_A = user_values['mult_A'] #Specify multiplicity on Monomer B
-frag_A_atom_list = [0,1,4]
+frag_A_atom_list = user_values['atom_list_Frag_A']
 charge_B = user_values['charge_B'] #Specify total charge on Monomer B
 mult_B = user_values['mult_B'] #Specify multiplicity on Monomer B
-frag_B_atom_list = [2,3,5]
+frag_B_atom_list = user_values['atom_list_Frag_B']
 
 natoms_A = len(frag_A_atom_list)
 natoms_B = len(frag_B_atom_list)
