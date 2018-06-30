@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Main pyREX interface
 """
@@ -60,13 +61,14 @@ frag_B_atom_list = [2,3,5]
 charge_dimer = 0 #Specify total charge on the supermolecular complex
 mult_dimer = 1 #Specify multiplicity of the supermolecular complex
 
+charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
 irc_step_size = 0.2 #in units au*amu^(1/2), Psi4 default is 0.2
 level_of_theory = "scf/3-21G" # Level of Theory for Total Energies
 
 # Grab number of atoms (natoms) from the top of the XYZ file.
 natoms = int(full_irc.readline())
 coordinates = []
-
+geometries = []
 # Grab and store geometries from the IRC
 for line in full_irc:
     if "Full IRC Point" in line:
@@ -75,10 +77,11 @@ for line in full_irc:
         irc_num = int(irc_num_line[3])
         for i in range(natoms):
             line = next(full_irc)
-            geom.append(line)
+            geom.append(line.lstrip())
         irc.append((irc_num, geom))
+        geometries.append(geom)
         coordinates.append(irc_num*irc_step_size)
-
+#TODO Store all coordinates in tuple array --> (,(dimer_geom,frag_a,frag_b),) prior to scf calls 
 irc_energies = []
 reaction_force = []
 strain_energies = []
@@ -91,6 +94,8 @@ reaction_electronic_flux_B = []
 
 e_A = 0.0
 e_B = 0.0
+
+
 
 for i in range(len(irc)):
     current_geometry = irc[i][1]
@@ -110,9 +115,6 @@ for i in range(len(irc)):
         geometry += line.lstrip()
     psi4.core.set_output_file("psi4_output/irc_%d.out" %irc[i][0], False)
     psi4.geometry(geometry)
-    #output.write("Current Geometry:\n")
-    #for j in range(natoms):
-    #    output.write("%s  \n" %irc[i][1][j])
     psi4.set_options({'reference': 'rhf'})
     print("Single Point Calculation on IRC Point %d" %(irc[i][0]))
     current_energy, current_wfn = psi4.energy(level_of_theory, return_wfn=True)
