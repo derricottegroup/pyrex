@@ -95,7 +95,9 @@ reaction_electronic_flux_B = []
 e_A = 0.0
 e_B = 0.0
 
+#psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
 
+#energies = scf.psi4_scf(psi_geometries, level_of_theory, frag=True)
 
 for i in range(len(irc)):
     current_geometry = irc[i][1]
