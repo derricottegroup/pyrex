@@ -15,6 +15,7 @@ import os
 import calctools
 import scf
 import geomtools
+import wfn
 import re
 import datetime
 from prettytable import PrettyTable
@@ -51,6 +52,8 @@ output.write("Process ID: %d" %pid)
 output.close()
 atom_symbols = []
 
+#TODO Add the ability to read in these options from an input file
+do_frag = True
 charge_A = 0 #Specify total charge on Monomer B
 mult_A = 1 #Specify multiplicity on Monomer B
 frag_A_atom_list = [0,1,4]
@@ -95,9 +98,13 @@ reaction_electronic_flux_B = []
 e_A = 0.0
 e_B = 0.0
 
+
+#TODO Incorporate the functions below into the main pyREX interface! 
 #psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
 
-#energies = scf.psi4_scf(psi_geometries, level_of_theory, frag=True)
+#energies, wavefunctions = scf.psi4_scf(psi_geometries, level_of_theory, frag=do_frag)
+
+#potentials = wfn.potential(wavefunctions, frag=do_frag)
 
 for i in range(len(irc)):
     current_geometry = irc[i][1]
