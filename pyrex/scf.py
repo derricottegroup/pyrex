@@ -60,8 +60,9 @@ def frag_opt(geometry_frag, level_of_theory, outfile, label):
     return e_frag
 
 def psi4_scf(geometries, level_of_theory, pol=False):
-    energies = []
+    energies = [] # Energy array of tuples -> (Dimer_Energy, Fragment_A_Energy, Fragment_B_Energy)
     wavefunctions = []
+    interaction_energies = []
     for i in range(len(geometries)):
         psi4.core.set_output_file("psi4_output/irc_%d.out" %i, False)
         geometry = geometries[i][0]
@@ -71,6 +72,8 @@ def psi4_scf(geometries, level_of_theory, pol=False):
         psi4.set_options({'reference': 'rhf'})
         print("pyREX:Single Point Calculation on IRC Point %d" %(i))
         dimer_energy, dimer_wfn = psi4.energy(level_of_theory, return_wfn=True)
+        e_1e = psi4.core.get_variable("ONE-ELECTRON ENERGY")
+        e_2e = psi4.core.get_variable("TWO-ELECTRON ENERGY")
         if(pol==True):
             # Fragment A SCF
             psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %i, False)
@@ -80,6 +83,8 @@ def psi4_scf(geometries, level_of_theory, pol=False):
             psi4.set_options({'reference': 'rhf'})
             print("pyREX:Single Point Calculation on IRC Point %d (Fragment A)" %(i))
             frag_A_energy, frag_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
+            frag_A_e_1e = psi4.core.get_variable("ONE-ELECTRON ENERGY")
+            frag_A_e_2e = psi4.core.get_variable("TWO-ELECTRON ENERGY")
             # Fragment B SCF
             psi4.core.set_output_file("psi4_output/irc_%d_B_scf.out" %i, False)
             geometry_B = geometries[i][2]
@@ -88,11 +93,17 @@ def psi4_scf(geometries, level_of_theory, pol=False):
             psi4.set_options({'reference': 'rhf'})
             print("pyREX:Single Point Calculation on IRC Point %d (Fragment B)" %(i))
             frag_B_energy, frag_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
+            frag_B_e_1e = psi4.core.get_variable("ONE-ELECTRON ENERGY")
+            frag_B_e_2e = psi4.core.get_variable("TWO-ELECTRON ENERGY")
         else:
             frag_A_energy = 0.0
             frag_A_wfn = 0.0
             frag_B_energy = 0.0
             frag_B_wfn = 0.0
+            frag_A_e_1e = 0.0
+            frag_A_e_2e = 0.0
+            frag_B_e_1e = 0.0
+            frag_B_e_2e = 0.0
         energies.append((dimer_energy,frag_A_energy,frag_B_energy))
         wavefunctions.append((dimer_wfn, frag_A_wfn, frag_B_wfn))
     return energies, wavefunctions

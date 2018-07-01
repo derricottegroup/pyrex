@@ -114,7 +114,7 @@ psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag
 
 e_A , e_B = scf.frag_opt_new(psi_geometries, level_of_theory, output_filename, natoms_A, natoms_B)
 
-energies, wavefunctions = scf.psi4_scf(psi_geometries, level_of_theory, pol=do_polarization)
+energies, wavefunctions = scf.psi4_scf(psi_geometries, level_of_theory, pol=bool(do_polarization))
 
 potentials = wfn.potential(wavefunctions, pol=do_polarization)
 

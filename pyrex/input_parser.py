@@ -25,7 +25,7 @@ def input_parser(input_file):
             user_values['irc_filename'] = str(inp[1])
         if line.startswith('do_frag'):
             inp = line.split()
-            user_values['do_frag'] = bool(inp[1])
+            user_values['do_frag'] = str_to_bool(inp[1])
         if line.startswith('method'):
             inp = line.split()
             user_values['method'] = str(inp[1])
@@ -34,7 +34,7 @@ def input_parser(input_file):
             user_values['basis'] = str(inp[1])
         if line.startswith('do_polarization'):
             inp = line.split()
-            user_values['do_polarization'] = str(inp[1]) 
+            user_values['do_polarization'] = str_to_bool(inp[1])
         if line.startswith('atom_list_Frag_A'):
             inp = line.split('=')
             inp_array = inp[1].split()
@@ -46,3 +46,11 @@ def input_parser(input_file):
             inp_array = [int(x) for x in inp_array]
             user_values['atom_list_Frag_B'] = list(inp_array) 
     return user_values
+
+def str_to_bool(string):
+    if string == 'True':
+        return True
+    elif string == 'False':
+        return False
+    else:
+        raise ValueError("Cannot convert %s to a boolean value" %string)
