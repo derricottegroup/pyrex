@@ -64,7 +64,9 @@ def psi4_scf(geometries, level_of_theory, pol=False):
     wavefunctions = []
     for i in range(len(geometries)):
         psi4.core.set_output_file("psi4_output/irc_%d.out" %i, False)
-        psi4.geometry(geometries[i][0])
+        geometry = geometries[i][0]
+        geometry += "symmetry c1"
+        psi4.geometry(geometry)
         #TODO Give the user control over these SCF options
         psi4.set_options({'reference': 'rhf'})
         print("pyREX:Single Point Calculation on IRC Point %d" %(i))

@@ -9,7 +9,9 @@ def potential(wavefunctions, pol=False):
         nelec = ndocc*2.0
         C = np.array(dimer_wfn.Ca())
         eps = dimer_wfn.epsilon_a()
-        eps = np.array([eps.get(x) for x in range(C.shape[0])])
+        #eps = np.array([eps.get(x) for x in range(C.shape[0])])
+        eps = np.array(eps)
+        print(eps)
         homo_energy = eps[ndocc-1]
         lumo_energy = eps[ndocc]
         dimer_potential = 0.5*(homo_energy + lumo_energy)
