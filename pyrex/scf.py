@@ -74,13 +74,17 @@ def psi4_scf(geometries, level_of_theory, pol=False):
         if(pol==True):
             # Fragment A SCF
             psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %i, False)
-            psi4.geometry(geometries[i][1])
+            geometry_A = geometries[i][1]
+            geometry_A += "symmetry c1"
+            psi4.geometry(geometry_A)
             psi4.set_options({'reference': 'rhf'})
             print("pyREX:Single Point Calculation on IRC Point %d (Fragment A)" %(i))
             frag_A_energy, frag_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
             # Fragment B SCF
             psi4.core.set_output_file("psi4_output/irc_%d_B_scf.out" %i, False)
-            psi4.geometry(geometries[i][1])
+            geometry_B = geometries[i][2]
+            geometry_B += "symmetry c1"
+            psi4.geometry(geometry_B)
             psi4.set_options({'reference': 'rhf'})
             print("pyREX:Single Point Calculation on IRC Point %d (Fragment B)" %(i))
             frag_B_energy, frag_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
