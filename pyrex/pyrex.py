@@ -16,6 +16,7 @@ from header import *
 from input_parser import *
 import calctools
 import scf
+import sapt
 import geomtools
 import wfn
 import re
@@ -54,6 +55,7 @@ atom_symbols = []
 # Input File Should Include: Charge (dimer and fragments), fragment atom list, step size of irc, irc_filename, level of theory, psi4 options. 
 do_frag = user_values['do_frag']
 do_polarization = user_values['do_polarization']
+do_sapt = user_values['do_sapt']
 print(do_polarization)
 #charge_A = 0 #Specify total charge on Monomer B
 charge_A = user_values['charge_A']
@@ -71,7 +73,12 @@ mult_dimer = user_values['mult_dimer'] #Specify multiplicity of the supermolecul
 
 charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
 irc_step_size = user_values['irc_step_size'] #in units au*amu^(1/2), Psi4 default is 0.2
-level_of_theory = "%s/%s" %(user_values['method'],user_values['basis']) # Level of Theory for Total Energies
+method = user_values['method']
+sapt_method = user_values['sapt_method']
+basis = user_values['basis']
+
+level_of_theory = "%s/%s" %(method,basis) # Level of Theory for Total Energies
+
 
 # Grab number of atoms (natoms) from the top of the XYZ file.
 natoms = int(full_irc.readline())
@@ -107,16 +114,23 @@ table_header = ['IRC Point', 'E', 'Delta E', 'Potential']
 
 t_pol_header = ['IRC Point', 'Del E', 'E_int', 'E_strain' ,'E_elst', 'E_pauli', 'E_orb']
 
+t_sapt_header = ['IRC Point', 'E_int', 'E_elst', 'E_exch', 'E_ind', 'E_disp']
+
 #TODO Incorporate the functions below into the main pyREX interface!
 #table_header = ['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B']
 t = PrettyTable(table_header)
 t_pol = PrettyTable(t_pol_header)
+t_sapt = PrettyTable(t_sapt_header)
  
 psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
+
+sapt_geometries = geomtools.saptbuilder(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
 
 e_A , e_B = scf.frag_opt_new(psi_geometries, level_of_theory, output_filename, natoms_A, natoms_B)
 
 energies, wavefunctions, interaction_energies = scf.psi4_scf(psi_geometries, level_of_theory, pol=bool(do_polarization))
+
+sapt_contributions = sapt.psi4_sapt(sapt_geometries, sapt_method, basis)
 
 potentials = wfn.potential(wavefunctions, pol=do_polarization)
 
@@ -133,7 +147,7 @@ for i in range(len(energies)):
     del_E = energies[i][0] - (e_A + e_B)
     t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E, "%.7f" %potentials[i][0]])
     t_pol.add_row([i+1,"%.7f" %del_E, "%.7f" %interaction_energies[i][0], "%.7f" %(del_E - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
-
+    t_sapt.add_row([i+1, "%.7f" %sapt_contributions[i][0], "%.7f" %sapt_contributions[i][1], "%.7f" %sapt_contributions[i][2], "%.7f" %sapt_contributions[i][3], "%.7f" %sapt_contributions[i][4]])
 
 
 output = open(output_filename, "a")
@@ -146,6 +160,13 @@ if(do_polarization==True):
     output.write("\n\n--Energy Decomposition Analysis--\n\n")
     output.write("%s\n" %t_pol.get_string())
     output.close()
+
+if(do_sapt==True):
+    output = open(output_filename, "a")
+    output.write("\n\n--Symmetry Adapted Perturbation Theory--\n\n")
+    output.write("%s\n" %t_sapt.get_string())
+    output.close()
+
 
 force_coordinates = coordinates[2:len(coordinates)-2]
 reaction_force_values = calctools.num_first_derivs(irc_energies,irc_step_size)

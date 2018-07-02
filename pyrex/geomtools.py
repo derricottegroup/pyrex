@@ -10,7 +10,24 @@ def geombuilder(charge, mult, geometry, fraglist=None):
         line = geometry[fraglist[j]]
         geometry_frag += line
     return geometry_frag
- 
+
+def saptbuilder(natoms, charge_mult, geometries, fraglist_A=None, fraglist_B=None):
+    sapt_geometries = []
+    print("pyREX: Building SAPT geometries")
+    for i in range(len(geometries)):
+        sapt_geom = "\n%d %d\n" %(charge_mult[2], charge_mult[3])
+        for j in range(len(fraglist_A)):
+            line = geometries[i][fraglist_A[j]]
+            sapt_geom += line
+        sapt_geom += "--\n"
+        sapt_geom += "%d %d\n" %(charge_mult[4], charge_mult[5])
+        for j in range(len(fraglist_B)):
+            line = geometries[i][fraglist_B[j]]
+            sapt_geom += line
+        print(sapt_geom)
+        sapt_geometries.append(sapt_geom)
+    return sapt_geometries
+
 def geombuilder_array(natoms, charge_mult, geometries, fraglist_A=None, fraglist_B=None):
     #NOTE function should return array of tuple containing all necessary geometries
     print("pyREX: Building geometries")
