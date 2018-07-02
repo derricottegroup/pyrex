@@ -26,6 +26,9 @@ def input_parser(input_file):
         if line.startswith('do_frag'):
             inp = line.split()
             user_values['do_frag'] = str_to_bool(inp[1])
+        if line.startswith('do_eda'):
+            inp = line.split()
+            user_values['do_eda'] = str_to_bool(inp[1])
         if line.startswith('method'):
             inp = line.split()
             user_values['method'] = str(inp[1])
@@ -44,7 +47,9 @@ def input_parser(input_file):
             inp = line.split('=')
             inp_array = inp[1].split()
             inp_array = [int(x) for x in inp_array]
-            user_values['atom_list_Frag_B'] = list(inp_array) 
+            user_values['atom_list_Frag_B'] = list(inp_array)
+        else:
+            pass 
     return user_values
 
 def str_to_bool(string):

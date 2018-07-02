@@ -103,13 +103,14 @@ reaction_electronic_flux_B = []
 e_A = 0.0
 e_B = 0.0
 
-#table_header = ['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B']
+table_header = ['IRC Point', 'E', 'Delta E', 'Potential']
 
-table_header = ['IRC Point', 'Del E', 'E_int', 'E_strain' ,'E_elst', 'E_pauli', 'E_orb']
+t_pol_header = ['IRC Point', 'Del E', 'E_int', 'E_strain' ,'E_elst', 'E_pauli', 'E_orb']
 
 #TODO Incorporate the functions below into the main pyREX interface!
 #table_header = ['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B']
 t = PrettyTable(table_header)
+t_pol = PrettyTable(t_pol_header)
  
 psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
 
@@ -130,13 +131,21 @@ for i in range(len(energies)):
         chemical_potentials_A.append(0.0)
         chemical_potentials_B.append(0.0)
     del_E = energies[i][0] - (e_A + e_B)
-    #t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E, "%.7f" %potentials[i][0], "%.7f" %potentials[i][1], "%.7f" %potentials[i][2]])
-    t.add_row([i+1,"%.7f" %del_E, "%.7f" %interaction_energies[i][0], "%.7f" %(del_E - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
+    t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E, "%.7f" %potentials[i][0]])
+    t_pol.add_row([i+1,"%.7f" %del_E, "%.7f" %interaction_energies[i][0], "%.7f" %(del_E - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
+
+
 
 output = open(output_filename, "a")
 output.write("\n\n--Reaction Energy Analysis--\n\n")
 output.write("%s\n" %t.get_string())
 output.close()
+
+if(do_polarization==True):
+    output = open(output_filename, "a")
+    output.write("\n\n--Energy Decomposition Analysis--\n\n")
+    output.write("%s\n" %t_pol.get_string())
+    output.close()
 
 force_coordinates = coordinates[2:len(coordinates)-2]
 reaction_force_values = calctools.num_first_derivs(irc_energies,irc_step_size)

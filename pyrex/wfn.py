@@ -13,6 +13,7 @@ def potential(wavefunctions, pol=False):
         homo_energy = eps[ndocc-1]
         lumo_energy = eps[ndocc]
         dimer_potential = 0.5*(homo_energy + lumo_energy)
+        dimer_hardness = 0.5*(lumo_energy - homo_energy)
         if(pol==True):
             # Fragment A Chemical Potential
             frag_A_wfn = wavefunctions[i][1]
@@ -24,6 +25,7 @@ def potential(wavefunctions, pol=False):
             homo_energy_A = eps_A[ndocc-1]
             lumo_energy_A = eps_A[ndocc]
             frag_A_potential = 0.5*(homo_energy_A + lumo_energy_A)
+            frag_A_hardness = 0.5*(lumo_energy_A - homo_energy_A)
             # Fragment B Chemical Potential
             frag_B_wfn = wavefunctions[i][2]
             ndocc_B = frag_B_wfn.doccpi()[0]
@@ -34,6 +36,7 @@ def potential(wavefunctions, pol=False):
             homo_energy_B = eps_B[ndocc-1]
             lumo_energy_B = eps_B[ndocc]
             frag_B_potential = 0.5*(homo_energy_B + lumo_energy_B)
+            frag_B_hardness = 0.5*(lumo_energy_B - homo_energy_B)
         else:
             frag_A_potential = 0.0
             frag_B_potential = 0.0
