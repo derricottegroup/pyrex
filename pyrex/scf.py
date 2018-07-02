@@ -69,42 +69,80 @@ def psi4_scf(geometries, level_of_theory, pol=False):
         geometry += "symmetry c1"
         psi4.geometry(geometry)
         #TODO Give the user control over these SCF options
-        psi4.set_options({'reference': 'rhf'})
+        psi4.set_options({'reference': 'rhf', 'save_jk' : 'true'})
         print("pyREX:Single Point Calculation on IRC Point %d" %(i))
         dimer_energy, dimer_wfn = psi4.energy(level_of_theory, return_wfn=True)
         e_1e = psi4.core.get_variable("ONE-ELECTRON ENERGY")
         e_2e = psi4.core.get_variable("TWO-ELECTRON ENERGY")
+        e_nuc = psi4.core.get_variable("NUCLEAR REPULSION ENERGY")
+        j = np.array(dimer_wfn.jk().J()[0].to_array())
+        k = np.array(dimer_wfn.jk().K()[0].to_array())
+        h = np.array(dimer_wfn.H().to_array()) 
+        c = np.array(dimer_wfn.Ca_subset("AO", "OCC").to_array())
+        D = np.dot(c, c.transpose())
+        F = h + 2.0*j - k
+        #e_1e = 2.0*np.trace(np.dot(D , j))
+        print(2.0*np.vdot(D , h) + 2.0*np.vdot(D , j))
+        print(np.vdot((h+F),D) + e_nuc)
+        #e_2e = np.trace(np.dot(D , k))
+        #e_int1 = dimer_wfn.jk()
+        #test = e_int1.J()
         if(pol==True):
             # Fragment A SCF
             psi4.core.set_output_file("psi4_output/irc_%d_A_scf.out" %i, False)
             geometry_A = geometries[i][1]
             geometry_A += "symmetry c1"
             psi4.geometry(geometry_A)
-            psi4.set_options({'reference': 'rhf'})
+            psi4.set_options({'reference': 'rhf', 'save_jk' : 'true'})
             print("pyREX:Single Point Calculation on IRC Point %d (Fragment A)" %(i))
             frag_A_energy, frag_A_wfn = psi4.energy(level_of_theory, return_wfn=True)
             frag_A_e_1e = psi4.core.get_variable("ONE-ELECTRON ENERGY")
             frag_A_e_2e = psi4.core.get_variable("TWO-ELECTRON ENERGY")
+            frag_A_e_nuc = psi4.core.get_variable("NUCLEAR REPULSION ENERGY")
+            j_A = np.array(frag_A_wfn.jk().J()[0].to_array())
+            k_A = np.array(frag_A_wfn.jk().K()[0].to_array())
+            c_A = np.array(frag_A_wfn.Ca_subset("AO", "OCC").to_array())
+            h_A = np.array(frag_A_wfn.H().to_array())
+            D_A = np.dot(c_A, c_A.transpose())
+            #frag_A_e_1e = 2.0*np.trace(np.dot(D_A , j_A))
+            #frag_A_e_2e = np.trace(np.dot(D_A , k_A))
             # Fragment B SCF
             psi4.core.set_output_file("psi4_output/irc_%d_B_scf.out" %i, False)
             geometry_B = geometries[i][2]
             geometry_B += "symmetry c1"
             psi4.geometry(geometry_B)
-            psi4.set_options({'reference': 'rhf'})
+            psi4.set_options({'reference': 'rhf', 'save_jk' : 'true'})
             print("pyREX:Single Point Calculation on IRC Point %d (Fragment B)" %(i))
             frag_B_energy, frag_B_wfn = psi4.energy(level_of_theory, return_wfn=True)
             frag_B_e_1e = psi4.core.get_variable("ONE-ELECTRON ENERGY")
             frag_B_e_2e = psi4.core.get_variable("TWO-ELECTRON ENERGY")
+            frag_B_e_nuc = psi4.core.get_variable("NUCLEAR REPULSION ENERGY")
+            j_B = np.array(frag_B_wfn.jk().J()[0].to_array())
+            k_B = np.array(frag_B_wfn.jk().K()[0].to_array())
+            c_B = np.array(frag_B_wfn.Ca_subset("AO", "OCC").to_array())
+            h_B = np.array(frag_B_wfn.H().to_array())
+            D_B = np.dot(c_B, c_B.transpose())
+            #frag_B_e_1e = 2.0*np.trace(np.dot(D_B , j_B))
+            #frag_B_e_2e = np.trace(np.dot(D_B , k_B))
+            approx_energy_1 = 2.0*np.vdot(D , h) + 2.0*np.vdot(D , j) - (np.vdot(D_A, k_A) + np.vdot(D_B, k_B)) + e_nuc
+            approx_energy_2 = 2.0*np.vdot(D , h) + 2.0*np.vdot(D , j) - np.vdot(D, k) + e_nuc
+            interaction_energy = dimer_energy - (frag_A_energy + frag_B_energy)
+            #electrostatic = 2.0*np.vdot(D, j) + e_nuc - (2.0*np.vdot(D_A, h_A) + 2.0*np.vdot(D_A, j_A) + frag_A_e_nuc + 2.0*np.vdot(D_B, h_B) + 2.0*np.vdot(D_B, j_B) + frag_B_e_nuc)
+            electrostatic = (frag_A_energy  + frag_B_energy) - approx_energy_1
+            #exchange =  - e_2e + e_nuc - (-frag_A_e_2e + frag_A_e_nuc + -frag_B_e_2e + frag_B_e_nuc)
+            exchange = approx_energy_1 - approx_energy_2
+            relaxation = interaction_energy - electrostatic - exchange
         else:
             frag_A_energy = 0.0
             frag_A_wfn = 0.0
             frag_B_energy = 0.0
             frag_B_wfn = 0.0
-            frag_A_e_1e = 0.0
-            frag_A_e_2e = 0.0
-            frag_B_e_1e = 0.0
-            frag_B_e_2e = 0.0
+            interaction_energy = 0.0
+            electrostatic = 0.0
+            exchange = 0.0
+            relaxation = 0.0
         energies.append((dimer_energy,frag_A_energy,frag_B_energy))
         wavefunctions.append((dimer_wfn, frag_A_wfn, frag_B_wfn))
-    return energies, wavefunctions
+        interaction_energies.append((interaction_energy, electrostatic,exchange,relaxation))
+    return energies, wavefunctions, interaction_energies
         
