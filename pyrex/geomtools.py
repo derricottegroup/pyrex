@@ -24,7 +24,6 @@ def saptbuilder(natoms, charge_mult, geometries, fraglist_A=None, fraglist_B=Non
         for j in range(len(fraglist_B)):
             line = geometries[i][fraglist_B[j]]
             sapt_geom += line
-        print(sapt_geom)
         sapt_geometries.append(sapt_geom)
     return sapt_geometries
 
