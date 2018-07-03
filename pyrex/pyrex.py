@@ -53,9 +53,12 @@ atom_symbols = []
 
 #TODO Add the ability to read in these options from an input file
 # Input File Should Include: Charge (dimer and fragments), fragment atom list, step size of irc, irc_filename, level of theory, psi4 options. 
+
 do_frag = user_values['do_frag']
 do_polarization = user_values['do_polarization']
 do_sapt = user_values['do_sapt']
+do_eda = user_values['do_eda']
+
 print(do_polarization)
 #charge_A = 0 #Specify total charge on Monomer B
 if(do_frag==True):
@@ -152,7 +155,7 @@ if(do_sapt==True):
 if(do_frag==True):
     e_A , e_B = scf.frag_opt_new(psi_geometries, level_of_theory, output_filename, natoms_A, natoms_B)
 
-energies, wavefunctions, interaction_energies = scf.psi4_scf(psi_geometries, level_of_theory, pol=bool(do_polarization))
+energies, wavefunctions, interaction_energies = scf.psi4_scf(psi_geometries, level_of_theory, pol=do_polarization, do_eda = do_eda)
 
 if(do_sapt==True):
     sapt_contributions = sapt.psi4_sapt(sapt_geometries, sapt_method, basis)
@@ -182,9 +185,10 @@ for i in range(len(energies)):
     else:
         chemical_potentials_A.append(0.0)
         chemical_potentials_B.append(0.0)
-    strain_energies.append(del_E[i] - interaction_energies[i][0])
+    strain_energies.append(del_E[i] - int_energies[i])
     t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E[i], "%.7f" %potentials[i][0]])
-    t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
+    if(do_eda==True):
+        t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
     if(do_sapt==True):
         t_sapt.add_row([i+1, "%.7f" %sapt_contributions[i][0], "%.7f" %sapt_contributions[i][1], "%.7f" %sapt_contributions[i][2], "%.7f" %sapt_contributions[i][3], "%.7f" %sapt_contributions[i][4]])
 
@@ -194,7 +198,7 @@ output.write("\n\n--Reaction Energy Analysis--\n\n")
 output.write("%s\n" %t.get_string())
 output.close()
 
-if(do_polarization==True):
+if(do_eda==True):
     output = open(output_filename, "a")
     output.write("\n\n--Energy Decomposition Analysis--\n\n")
     output.write("%s\n" %t_pol.get_string())
@@ -288,6 +292,8 @@ t_work.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %(
 output.write(t_work.get_string())
 
 if(do_sapt==True):
+    output.write("\n\n--Decomposition of Work Integrals Using SAPT--\n\n")
+    output.write("***DISCLAIMER: The sum of the components below will only be equal to the total work integral if you used a method that includes dispersion (i.e. MPn,CCSD, etc.) If the work was calculated with SCF or dispersionless DFT then W = W_strain + W_elst + W_exch + W_ind.")
     output.write("\n\n--W_1 Decomposition (%.2f kcal/mol)--\n\n" %(W_1*627.51))
     t_w1sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
     t_w1sapt.add_row(["%.7f" %(W_1_strain*627.51), "%.7f" %(W_1_elst*627.51), "%.7f" %(W_1_exch*627.51), "%.7f" %(W_1_ind*627.51),"%.7f" %(W_1_disp*627.51)])
@@ -325,7 +331,7 @@ Del_E = Del_E_raw[2:len(coordinates)-2]
 #output.write("----------------------------------------------------------------------------------------\n")
 #for i in range(len(reaction_force_values)):
 #    output.write("       %.3f                           %.8f                             %.8f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i]))
-output.write("\n\n--Reaction Force Analysis--\n\n")
+output.write("\n\n--Reaction Force and Electronic Flux Analysis--\n\n")
 t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux', 'Flux_A', 'Flux_B'])
 #t.title = "pyREX Reaction Force Analysis Along Reaction Coordinate"
 for i in range(len(reaction_force_values)):

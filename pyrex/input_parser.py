@@ -26,9 +26,9 @@ def input_parser(input_file):
         if line.startswith('do_frag'):
             inp = line.split()
             user_values['do_frag'] = str_to_bool(inp[1])
-        #if line.startswith('do_eda'):
-        #    inp = line.split()
-        #    user_values['do_eda'] = str_to_bool(inp[1])
+        if line.startswith('do_eda'):
+            inp = line.split()
+            user_values['do_eda'] = str_to_bool(inp[1])
         if line.startswith('do_sapt'):
             inp = line.split()
             user_values['do_sapt'] = str_to_bool(inp[1])
