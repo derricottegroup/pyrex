@@ -16,9 +16,15 @@ pyREX(Python Reaction Energy eXtension), is a free open-source implementation of
 * Reaction Force Analysis
 * Reaction Electronic Flux (REF) Analysis
 * Decomposition of REF into Polarization and Transfer Components
-Much more COMING SOON!
+* Symmetry Adapted Perturbation Theory Decomposition analysis
 
-### Getting Started
+### Installation
 1. Obtain required software
     1. [pyREX](https://github.com/WDerricotte/pyrex) (must clone this repository; no binary install currently available)
-    2. [Psi4](http://psicode.org/psi4manual/1.1/build_obtaining.html) pyREX depends intrinsically on Psi4, currently the easiest way to obtain the code is to download the available binaries available at http://vergil.chemistry.gatech.edu/psicode-download/1.1.html 
+    2. [Psi4](http://psicode.org/psi4manual/1.1/build_obtaining.html) pyREX depends intrinsically on Psi4, currently the easiest way to obtain the code is to download the available binaries available at http://vergil.chemistry.gatech.edu/psicode-download/1.1.html
+    3. Export the necessary paths either through the command line or .bashrc
+    ``` 
+    export PATH=$PATH:/path/to/pyrex/src/directory/pyrex:
+    export PYTHONPATH=$PYTHONPATH:/path/to/pyrex/src/directory/pyrex:
+    ```
+    4. The main "pyrex.py" module should now be executable from anywhere in your directory tree by simply typing "pyrex.py".  
