@@ -185,7 +185,8 @@ for i in range(len(energies)):
     else:
         chemical_potentials_A.append(0.0)
         chemical_potentials_B.append(0.0)
-    strain_energies.append(del_E[i] - int_energies[i])
+    if(do_frag==True):
+        strain_energies.append(del_E[i] - int_energies[i])
     t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E[i], "%.7f" %potentials[i][0]])
     if(do_eda==True):
         t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
