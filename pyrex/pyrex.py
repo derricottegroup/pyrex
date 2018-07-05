@@ -46,7 +46,6 @@ header(output_filename)
 irc_filename = user_values['irc_filename']
 full_irc = open(irc_filename, "r")
 #output = open(output_filename, "w+")
-csv_file = open("raw_data.csv","w+")
 irc = []
 
 atom_symbols = []
@@ -340,9 +339,21 @@ for i in range(len(reaction_force_values)):
 output.write(t.get_string())
 
 potentials_truncated = chemical_potentials[2:len(coordinates)-2]
-csv_file.write("Coordinate,DeltaE,Force,Chemical Potential,Reaction Electronic Flux, Flux A, Flux B\n")
+ref_csv = open("force_flux.csv","w+")
+ref_csv.write("Coordinate,DeltaE,Force,Chemical Potential,Reaction Electronic Flux, Flux A, Flux B\n")
 for i in range(len(reaction_force_values)):
-    csv_file.write("%f,%f,%f,%f,%f,%f,%f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i], potentials_truncated[i],reaction_electronic_flux[i], reaction_electronic_flux_A[i], reaction_electronic_flux_B[i]))
+    ref_csv.write("%f,%f,%f,%f,%f,%f,%f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i], potentials_truncated[i],reaction_electronic_flux[i], reaction_electronic_flux_A[i], reaction_electronic_flux_B[i]))
+
+if(do_sapt==True):
+    sapt_e_csv = open("sapt_energy.csv" , "w+")
+    sapt_e_csv.write("Coordinate, E_elst, E_exch, E_ind, E_disp")
+    for i in range(len(coordinates)):
+        sapt_e_csv.write("%f, %f, %f, %f, %f,\n" %(coordinates[i], electrostatics[i], exchange[i], induction[i], dispersion[i]))
+
+    sapt_f_csv = open("sapt_force.csv", "w+")
+    sapt_f_csv.write("Coordinate, F_elst, F_exch, F_ind, F_disp")
+    for i in range(len(force_coordinates)): 
+        sapt_f_csv.write("%f, %f, %f, %f, %f,\n" %(force_coordinates[i], reaction_force_elst[i], reaction_force_exch[i], reaction_force_ind[i], reaction_force_disp[i]))   
 
 output.write("\n\n**pyREX Has Exited Successfully!**\n")
 output.close()
