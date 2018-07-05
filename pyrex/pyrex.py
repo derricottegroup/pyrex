@@ -44,7 +44,7 @@ else:
 output_filename = "pyrex_output.dat"
 header(output_filename)
 irc_filename = user_values['irc_filename']
-full_irc = open("full_irc.xyz", "r")
+full_irc = open(irc_filename, "r")
 #output = open(output_filename, "w+")
 csv_file = open("raw_data.csv","w+")
 irc = []
