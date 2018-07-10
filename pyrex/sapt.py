@@ -10,7 +10,7 @@ def psi4_sapt(geometries, method, basis):
         geometry += "symmetry c1"
         psi4.geometry(geometry)
         #TODO Give the user control over these SCF options
-        psi4.set_options({'reference': 'rhf', 'basis' : basis})
+        psi4.set_options({'reference': 'rhf', 'basis' : basis, 'exch_scale_alpha' : 'true'})
         print("pyREX:SAPT Calculation on IRC Point %d" %(i))
         interaction_energy = psi4.energy(method)
         elst = psi4.core.get_variable("SAPT ELST ENERGY")

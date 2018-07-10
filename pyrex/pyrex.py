@@ -348,12 +348,12 @@ if(do_sapt==True):
     sapt_e_csv = open("sapt_energy.csv" , "w+")
     sapt_e_csv.write("Coordinate, E_elst, E_exch, E_ind, E_disp\n")
     for i in range(len(coordinates)):
-        sapt_e_csv.write("%f, %f, %f, %f, %f,\n" %(coordinates[i], electrostatics[i], exchange[i], induction[i], dispersion[i]))
+        sapt_e_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], electrostatics[i], exchange[i], induction[i], dispersion[i]))
 
     sapt_f_csv = open("sapt_force.csv", "w+")
     sapt_f_csv.write("Coordinate, F_elst, F_exch, F_ind, F_disp\n")
     for i in range(len(force_coordinates)): 
-        sapt_f_csv.write("%f, %f, %f, %f, %f,\n" %(force_coordinates[i], reaction_force_elst[i], reaction_force_exch[i], reaction_force_ind[i], reaction_force_disp[i]))   
+        sapt_f_csv.write("%f, %f, %f, %f, %f\n" %(force_coordinates[i], reaction_force_elst[i], reaction_force_exch[i], reaction_force_ind[i], reaction_force_disp[i]))   
 
 output.write("\n\n**pyREX Has Exited Successfully!**\n")
 output.close()
