@@ -21,6 +21,7 @@ import geomtools
 import wfn
 import re
 import datetime
+from re_flux import *
 from prettytable import PrettyTable
 
 import sys
@@ -159,10 +160,12 @@ energies, wavefunctions, interaction_energies = scf.psi4_scf(psi_geometries, lev
 if(do_sapt==True):
     sapt_contributions = sapt.psi4_sapt(sapt_geometries, sapt_method, basis)
 
+ref = re_flux(wavefunctions, pol=do_polarization)
+
 potentials = wfn.potential(wavefunctions, pol=do_polarization)
 
-
-
+#potentials = ref.potential()
+#print(potentials)
 
 
 # List Comprehensions!!! WOOT! 
@@ -212,11 +215,12 @@ if(do_sapt==True):
 
 
 force_coordinates = coordinates[2:len(coordinates)-2]
-reaction_force_values = calctools.num_first_derivs(irc_energies,irc_step_size)
+reaction_force_values = np.gradient(irc_energies,irc_step_size)
 reaction_electronic_flux = calctools.num_first_derivs(chemical_potentials,irc_step_size)
 reaction_electronic_flux_A = calctools.num_first_derivs(chemical_potentials_A,irc_step_size)
 reaction_electronic_flux_B = calctools.num_first_derivs(chemical_potentials_B,irc_step_size)
 
+print(reaction_force_values)
 if(do_sapt==True):
     reaction_force_strain = calctools.num_first_derivs(strain_energies,irc_step_size)
     reaction_force_int = calctools.num_first_derivs(int_energies,irc_step_size)
