@@ -15,13 +15,12 @@ import os
 from header import *
 from input_parser import *
 import calctools
-import scf
-import sapt
-import geomtools
-import wfn
 import re
 import datetime
 from re_flux import *
+from scf_class import *
+from geomparser import *
+from sapt_class import *
 from prettytable import PrettyTable
 
 import sys
@@ -50,9 +49,6 @@ full_irc = open(irc_filename, "r")
 irc = []
 
 atom_symbols = []
-
-#TODO Add the ability to read in these options from an input file
-# Input File Should Include: Charge (dimer and fragments), fragment atom list, step size of irc, irc_filename, level of theory, psi4 options. 
 
 do_frag = user_values['do_frag']
 do_polarization = user_values['do_polarization']
@@ -125,6 +121,8 @@ chemical_potentials_B = []
 reaction_electronic_flux = []
 reaction_electronic_flux_A = []
 reaction_electronic_flux_B = []
+polarization_flux = []
+transfer_flux = []
 #int_energies = []
 #electrostatics = []
 #exchange = []
@@ -146,54 +144,68 @@ t_sapt_header = ['IRC Point', 'E_int', 'E_elst', 'E_exch', 'E_ind', 'E_disp']
 t = PrettyTable(table_header)
 t_pol = PrettyTable(t_pol_header)
 t_sapt = PrettyTable(t_sapt_header)
- 
-psi_geometries = geomtools.geombuilder_array(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
+
+
+geomparser = Geomparser(natoms, charge_dimer, mult_dimer, geometries)
+
+scf_instance = scf_class(level_of_theory)
+
+geoms = geomparser.geombuilder()
 
 if(do_sapt==True):
-    sapt_geometries = geomtools.saptbuilder(natoms,charge_mult,geometries, frag_A_atom_list, frag_B_atom_list)
+    sapt_geometries = geomparser.sapt_geombuilder(charge_A, mult_A, charge_B, mult_B, frag_A_atom_list, frag_B_atom_list)
 
 if(do_frag==True):
-    e_A , e_B = scf.frag_opt_new(psi_geometries, level_of_theory, output_filename, natoms_A, natoms_B)
+    iso_frag_A = geomparser.iso_frag(charge_A, mult_A, frag_A_atom_list)
+    iso_frag_B = geomparser.iso_frag(charge_B, mult_B, frag_B_atom_list)
+    e_A = scf_instance.opt("A", natoms_A, iso_frag_A[0])
+    e_B = scf_instance.opt("B", natoms_B, iso_frag_B[0]) 
 
-energies, wavefunctions, interaction_energies = scf.psi4_scf(psi_geometries, level_of_theory, pol=do_polarization, do_eda = do_eda)
+energies, wavefunctions = scf_instance.psi4_scf(geoms)
+
+if(do_polarization==True):
+    frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
+    frag_B_geoms = geomparser.frag_ghost(charge_B, mult_B, frag_B_atom_list)
+    energies_A, wavefunctions_A = scf_instance.psi4_scf(frag_A_geoms)
+    energies_B, wavefunctions_B = scf_instance.psi4_scf(frag_B_geoms)
+    
 
 if(do_sapt==True):
-    sapt_contributions = sapt.psi4_sapt(sapt_geometries, sapt_method, basis)
+    sapt = sapt(sapt_geometries, sapt_method, basis)
+    int_, elst_, exch_, ind_, disp_  = sapt.psi4_sapt()
 
-ref = re_flux(wavefunctions, pol=do_polarization)
+# Grabbing chemical potential and calculating REF using re_flux class
+ref = re_flux()
+potentials = ref.potential(wavefunctions)
+reaction_electronic_flux = np.array(ref.electronic_flux(irc_step_size))
 
-potentials = wfn.potential(wavefunctions, pol=do_polarization)
-
-#potentials = ref.potential()
-#print(potentials)
-
+if(do_polarization==True):
+    potentials_A = ref.potential(wavefunctions_A)
+    reaction_electronic_flux_A = (natoms_A/natoms)*np.array(ref.electronic_flux(irc_step_size))
+    potentials_B = ref.potential(wavefunctions_B)
+    reaction_electronic_flux_B = (natoms_B/natoms)*np.array(ref.electronic_flux(irc_step_size))
+    polarization_flux = reaction_electronic_flux_A + reaction_electronic_flux_B
+    transfer_flux = reaction_electronic_flux - polarization_flux
 
 # List Comprehensions!!! WOOT! 
-irc_energies = [energy[0] for energy in energies] # SCF Total Energies
-chemical_potentials = [potential[0] for potential in potentials] # Chemical Potentials
-del_E = [(energy[0] - (e_A + e_B)) for energy in energies]  #Energy Change relative to optimized fragment
-
-if(do_sapt==True):
-    int_energies = [int_e[0] for int_e in sapt_contributions] # SAPT E_int
-    electrostatics = [elst[1] for elst in sapt_contributions] # SAPT E_elst
-    exchange = [exch[2] for exch in sapt_contributions] # SAPT E_exch
-    induction = [ind[3] for ind in sapt_contributions] # SAPT E_ind
-    dispersion = [disp[4] for disp in sapt_contributions] # SAPT E_disp
+#irc_energies = [energy[0] for energy in energies] # SCF Total Energies
+#chemical_potentials = [potential[0] for potential in potentials] # Chemical Potentials
+del_E = [(energy - (e_A + e_B)) for energy in energies]  #Energy Change relative to optimized fragment
+for i in range(len(energies)):
+    t.add_row([i+1,"%.7f" %energies[i],"%.7f" %del_E[i], "%.7f" %potentials[i]])
+output = open(output_filename, "a")
+output.write("\n\n--Reaction Energy Analysis--\n\n")
+output.write("%s\n" %t.get_string())
+output.close()
 
 for i in range(len(energies)):
-    if(do_polarization==True):
-        chemical_potentials_A.append(potentials[i][1])
-        chemical_potentials_B.append(potentials[i][2])
-    else:
-        chemical_potentials_A.append(0.0)
-        chemical_potentials_B.append(0.0)
     if(do_frag==True):
-        strain_energies.append(del_E[i] - int_energies[i])
-    t.add_row([i+1,"%.7f" %energies[i][0],"%.7f" %del_E[i], "%.7f" %potentials[i][0]])
-    if(do_eda==True):
-        t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
+        strain_energies.append(del_E[i] - int_[i])
+    t.add_row([i+1,"%.7f" %energies[i],"%.7f" %del_E[i], "%.7f" %potentials[i]])
+    #if(do_eda==True):
+        #t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
     if(do_sapt==True):
-        t_sapt.add_row([i+1, "%.7f" %sapt_contributions[i][0], "%.7f" %sapt_contributions[i][1], "%.7f" %sapt_contributions[i][2], "%.7f" %sapt_contributions[i][3], "%.7f" %sapt_contributions[i][4]])
+        t_sapt.add_row([i+1, "%.7f" %int_[i], "%.7f" %elst_[i], "%.7f" %exch_[i], "%.7f" %ind_[i], "%.7f" %disp_[i]])
 
 
 output = open(output_filename, "a")
@@ -214,20 +226,20 @@ if(do_sapt==True):
     output.close()
 
 
-force_coordinates = coordinates[2:len(coordinates)-2]
-reaction_force_values = np.gradient(irc_energies,irc_step_size)
-reaction_electronic_flux = calctools.num_first_derivs(chemical_potentials,irc_step_size)
-reaction_electronic_flux_A = calctools.num_first_derivs(chemical_potentials_A,irc_step_size)
-reaction_electronic_flux_B = calctools.num_first_derivs(chemical_potentials_B,irc_step_size)
+#force_coordinates = coordinates[2:len(coordinates)-2]
+reaction_force_values = -1.0*np.gradient(energies,irc_step_size)
+#reaction_electronic_flux = -1.0*np.gradient(potentials,irc_step_size)
+#reaction_electronic_flux_A = -1.0*np.gradient(chemical_potentials_A,irc_step_size)
+#reaction_electronic_flux_B = -1.0*np.gradient(chemical_potentials_B,irc_step_size)
 
-print(reaction_force_values)
+#print(reaction_force_values)
 if(do_sapt==True):
-    reaction_force_strain = calctools.num_first_derivs(strain_energies,irc_step_size)
-    reaction_force_int = calctools.num_first_derivs(int_energies,irc_step_size)
-    reaction_force_elst = calctools.num_first_derivs(electrostatics,irc_step_size)
-    reaction_force_exch = calctools.num_first_derivs(exchange,irc_step_size)
-    reaction_force_ind = calctools.num_first_derivs(induction,irc_step_size)
-    reaction_force_disp = calctools.num_first_derivs(dispersion,irc_step_size)
+    reaction_force_strain = -1.0*np.gradient(strain_energies,irc_step_size)
+    reaction_force_int = -1.0*np.gradient(int_,irc_step_size)
+    reaction_force_elst = -1.0*np.gradient(elst_,irc_step_size)
+    reaction_force_exch = -1.0*np.gradient(exch_,irc_step_size)
+    reaction_force_ind = -1.0*np.gradient(ind_,irc_step_size)
+    reaction_force_disp = -1.0*np.gradient(disp_,irc_step_size)
 
 
 output = open(output_filename, "a")
@@ -237,62 +249,62 @@ output.write("Maximum Force =   %.10f\n" %(max(reaction_force_values)))
 
 
 for i in range(len(reaction_force_values)):
-    reaction_force.append((force_coordinates[i],reaction_force_values[i]))
+    reaction_force.append((coordinates[i],reaction_force_values[i]))
 #print(reaction_force)
 
 index_min = np.argmin(np.asarray(reaction_force_values))
-index_ts  = force_coordinates.index(0.0000)
+index_ts  = coordinates.index(0.0000)
 index_max = np.argmax(np.asarray(reaction_force_values))
 
-output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], force_coordinates[index_min]))
-output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(force_coordinates[index_min], force_coordinates[index_max]))
-output.write("\nProduct Region:            %.3f ------> %.3f\n" %(force_coordinates[index_max], coordinates[-1]))
+output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], coordinates[index_min]))
+output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(coordinates[index_min], coordinates[index_max]))
+output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[index_max], coordinates[-1]))
 
 # Calculate Work in Reactant Region
-W_1 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, 0, index_min)
+W_1 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, 0, index_min)
 if(do_sapt==True):
-    W_1_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, 0, index_min)
-    W_1_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int, 0, index_min)
-    W_1_elst = -1.0*calctools.num_integrate(force_coordinates, reaction_force_elst, 0, index_min)
-    W_1_exch = -1.0*calctools.num_integrate(force_coordinates, reaction_force_exch, 0, index_min)
-    W_1_ind = -1.0*calctools.num_integrate(force_coordinates, reaction_force_ind, 0, index_min)
-    W_1_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, 0, index_min)
+    W_1_strain = -1.0*calctools.num_integrate(coordinates, reaction_force_strain, 0, index_min)
+    W_1_int = -1.0*calctools.num_integrate(coordinates, reaction_force_int, 0, index_min)
+    W_1_elst = -1.0*calctools.num_integrate(coordinates, reaction_force_elst, 0, index_min)
+    W_1_exch = -1.0*calctools.num_integrate(coordinates, reaction_force_exch, 0, index_min)
+    W_1_ind = -1.0*calctools.num_integrate(coordinates, reaction_force_ind, 0, index_min)
+    W_1_disp = -1.0*calctools.num_integrate(coordinates, reaction_force_disp, 0, index_min)
 
 #Calculate Work in Transition State Region 1
-W_2 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, index_min, index_ts)
+W_2 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_min, index_ts)
 if(do_sapt==True):
-    W_2_strain = -1.0*calctools.num_integrate(force_coordinates,reaction_force_strain,index_min,index_ts)
-    W_2_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int,index_min, index_ts)
-    W_2_elst = -1.0*calctools.num_integrate(force_coordinates, reaction_force_elst, index_min, index_ts)
-    W_2_exch = -1.0*calctools.num_integrate(force_coordinates, reaction_force_exch, index_min, index_ts)
-    W_2_ind = -1.0*calctools.num_integrate(force_coordinates, reaction_force_ind, index_min, index_ts)
-    W_2_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_min, index_ts)
+    W_2_strain = -1.0*calctools.num_integrate(coordinates,reaction_force_strain,index_min,index_ts)
+    W_2_int = -1.0*calctools.num_integrate(coordinates, reaction_force_int,index_min, index_ts)
+    W_2_elst = -1.0*calctools.num_integrate(coordinates, reaction_force_elst, index_min, index_ts)
+    W_2_exch = -1.0*calctools.num_integrate(coordinates, reaction_force_exch, index_min, index_ts)
+    W_2_ind = -1.0*calctools.num_integrate(coordinates, reaction_force_ind, index_min, index_ts)
+    W_2_disp = -1.0*calctools.num_integrate(coordinates, reaction_force_disp, index_min, index_ts)
 
 
 #Calculate Work in Transition State Region 2
-W_3 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, index_ts, index_max)
-if(do_sapt==True):
-    W_3_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_ts, index_max)
-    W_3_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int,index_ts, index_max)
-    W_3_elst = -1.0*calctools.num_integrate(force_coordinates, reaction_force_elst, index_ts, index_max)
-    W_3_exch = -1.0*calctools.num_integrate(force_coordinates, reaction_force_exch, index_ts, index_max)
-    W_3_ind = -1.0*calctools.num_integrate(force_coordinates, reaction_force_ind, index_ts, index_max)
-    W_3_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_ts, index_max)
+#W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
+#if(do_sapt==True):
+#    W_3_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_ts, index_max)
+#    W_3_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int,index_ts, index_max)
+#    W_3_elst = -1.0*calctools.num_integrate(force_coordinates, reaction_force_elst, index_ts, index_max)
+#    W_3_exch = -1.0*calctools.num_integrate(force_coordinates, reaction_force_exch, index_ts, index_max)
+#    W_3_ind = -1.0*calctools.num_integrate(force_coordinates, reaction_force_ind, index_ts, index_max)
+#    W_3_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_ts, index_max)
 
 #Calculate Work in Product Region
-W_4 = -1.0*calctools.num_integrate(force_coordinates, reaction_force_values, index_max, len(reaction_force)-1)
-if(do_sapt==True):
-    W_4_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_max, len(reaction_force)-1)
-    W_4_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int, index_max, len(reaction_force)-1)
-    W_4_elst = -1.0*calctools.num_integrate(force_coordinates, reaction_force_elst, index_max, len(reaction_force)-1)
-    W_4_exch = -1.0*calctools.num_integrate(force_coordinates, reaction_force_exch, index_max, len(reaction_force)-1)
-    W_4_ind = -1.0*calctools.num_integrate(force_coordinates, reaction_force_ind, index_max, len(reaction_force)-1)
-    W_4_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_max, len(reaction_force)-1)
+#W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force)-1)
+#if(do_sapt==True):
+#    W_4_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_max, len(reaction_force)-1)
+#    W_4_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int, index_max, len(reaction_force)-1)
+#    W_4_elst = -1.0*calctools.num_integrate(force_coordinates, reaction_force_elst, index_max, len(reaction_force)-1)
+#    W_4_exch = -1.0*calctools.num_integrate(force_coordinates, reaction_force_exch, index_max, len(reaction_force)-1)
+#    W_4_ind = -1.0*calctools.num_integrate(force_coordinates, reaction_force_ind, index_max, len(reaction_force)-1)
+#    W_4_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_max, len(reaction_force)-1)
 
 output.write("\n\n--Work Integrals--\n\n")
-t_work = PrettyTable(["Unit","W_1", "W_2", "W_3" , "W_4", "E_act", "E_react"])
-t_work.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %W_3, "%.7f" %W_4, "%.7f" %(W_1+W_2), "%.7f" %(W_1+W_2+ W_3 + W_4)])
-t_work.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %(W_3*627.51), "%.7f" %(W_4*627.51),"%.7f" %((W_1+W_2)*627.51), "%.7f" %((W_1+W_2+ W_3 + W_4)*627.51)])
+t_work = PrettyTable(["Unit","W_1", "W_2", "E_act"])
+t_work.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %(W_1+W_2)])
+t_work.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51),"%.7f" %((W_1+W_2)*627.51)])
 output.write(t_work.get_string())
 
 if(do_sapt==True):
@@ -309,24 +321,24 @@ if(do_sapt==True):
     t_w2sapt.add_row(["%.7f" %(W_2_strain*627.51), "%.7f" %(W_2_elst*627.51), "%.7f" %(W_2_exch*627.51), "%.7f" %(W_2_ind*627.51),"%.7f" %(W_2_disp*627.51)])
     output.write(t_w2sapt.get_string())
 
-if(do_sapt==True):
-    output.write("\n\n--W_3 Decomposition (%.2f kcal/mol)--\n\n" %(W_3*627.51))
-    t_w3sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
-    t_w3sapt.add_row(["%.7f" %(W_3_strain*627.51), "%.7f" %(W_3_elst*627.51), "%.7f" %(W_3_exch*627.51), "%.7f" %(W_3_ind*627.51),"%.7f" %(W_3_disp*627.51)])
-    output.write(t_w3sapt.get_string())
-if(do_sapt==True):
-    output.write("\n\n--W_4 Decomposition (%.2f kcal/mol)--\n\n" %(W_4*627.51))
-    t_w4sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
-    t_w4sapt.add_row(["%.7f" %(W_4_strain*627.51), "%.7f" %(W_4_elst*627.51), "%.7f" %(W_4_exch*627.51), "%.7f" %(W_4_ind*627.51),"%.7f" %(W_4_disp*627.51)])
-    output.write(t_w4sapt.get_string())
+#if(do_sapt==True):
+#    output.write("\n\n--W_3 Decomposition (%.2f kcal/mol)--\n\n" %(W_3*627.51))
+#    t_w3sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
+#    t_w3sapt.add_row(["%.7f" %(W_3_strain*627.51), "%.7f" %(W_3_elst*627.51), "%.7f" %(W_3_exch*627.51), "%.7f" %(W_3_ind*627.51),"%.7f" %(W_3_disp*627.51)])
+#    output.write(t_w3sapt.get_string())
+#if(do_sapt==True):
+#    output.write("\n\n--W_4 Decomposition (%.2f kcal/mol)--\n\n" %(W_4*627.51))
+#    t_w4sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
+#    t_w4sapt.add_row(["%.7f" %(W_4_strain*627.51), "%.7f" %(W_4_elst*627.51), "%.7f" %(W_4_exch*627.51), "%.7f" %(W_4_ind*627.51),"%.7f" %(W_4_disp*627.51)])
+#    output.write(t_w4sapt.get_string())
 
 # Calculate Energy Difference
-min_energy_index = np.argmin(np.asarray(irc_energies))
+min_energy_index = np.argmin(np.asarray(energies))
 Del_E_raw = []
-for i in range(len(irc_energies)):
-    Del_E_raw.append(irc_energies[i] - irc_energies[min_energy_index])
+for i in range(len(energies)):
+    Del_E_raw.append(energies[i] - energies[min_energy_index])
 
-Del_E = Del_E_raw[2:len(coordinates)-2]
+Del_E = Del_E_raw
 
 #Create CSV File
 
@@ -336,28 +348,28 @@ Del_E = Del_E_raw[2:len(coordinates)-2]
 #for i in range(len(reaction_force_values)):
 #    output.write("       %.3f                           %.8f                             %.8f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i]))
 output.write("\n\n--Reaction Force and Electronic Flux Analysis--\n\n")
-t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux', 'Flux_A', 'Flux_B'])
+t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux', 'Pol Flux', 'Trans Flux'])
 #t.title = "pyREX Reaction Force Analysis Along Reaction Coordinate"
 for i in range(len(reaction_force_values)):
-    t.add_row(["%.2f" %force_coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i], "%.7f" %reaction_electronic_flux_A[i], "%.7f" %reaction_electronic_flux_B[i]])
+    t.add_row(["%.2f" %coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i], "%.7f" %polarization_flux[i], "%.7f" %transfer_flux[i]])
 output.write(t.get_string())
 
-potentials_truncated = chemical_potentials[2:len(coordinates)-2]
+#potentials_truncated = chemical_potentials[2:len(coordinates)-2]
 ref_csv = open("force_flux.csv","w+")
-ref_csv.write("Coordinate,DeltaE,Force,Chemical Potential,Reaction Electronic Flux, Flux A, Flux B\n")
+ref_csv.write("Coordinate,DeltaE,Force,Chemical Potential,Reaction Electronic Flux\n")
 for i in range(len(reaction_force_values)):
-    ref_csv.write("%f,%f,%f,%f,%f,%f,%f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i], potentials_truncated[i],reaction_electronic_flux[i], reaction_electronic_flux_A[i], reaction_electronic_flux_B[i]))
+    ref_csv.write("%f,%f,%f,%f,%f\n" %(coordinates[i], Del_E[i], reaction_force_values[i], potentials[i],reaction_electronic_flux[i]))
 
 if(do_sapt==True):
     sapt_e_csv = open("sapt_energy.csv" , "w+")
     sapt_e_csv.write("Coordinate, E_elst, E_exch, E_ind, E_disp\n")
     for i in range(len(coordinates)):
-        sapt_e_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], electrostatics[i], exchange[i], induction[i], dispersion[i]))
+        sapt_e_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], elst_[i], exch_[i], ind_[i], disp_[i]))
 
     sapt_f_csv = open("sapt_force.csv", "w+")
     sapt_f_csv.write("Coordinate, F_elst, F_exch, F_ind, F_disp\n")
-    for i in range(len(force_coordinates)): 
-        sapt_f_csv.write("%f, %f, %f, %f, %f\n" %(force_coordinates[i], reaction_force_elst[i], reaction_force_exch[i], reaction_force_ind[i], reaction_force_disp[i]))   
+    for i in range(len(coordinates)): 
+        sapt_f_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], reaction_force_elst[i], reaction_force_exch[i], reaction_force_ind[i], reaction_force_disp[i]))   
 
 output.write("\n\n**pyREX Has Exited Successfully!**\n")
 output.close()

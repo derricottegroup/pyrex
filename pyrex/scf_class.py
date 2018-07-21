@@ -3,50 +3,36 @@ import psi4
 
 class scf_class(object):
 
-    def __init__(self,geometries,level_of_theory,scf_options)
-        self.geometries = geometries
+    def __init__(self,level_of_theory):
         self.level_of_theory = level_of_theory
-        self.scf_options = scf_options
 
-    def psi4_scf(self)
+    def psi4_scf(self, geometries):
         energies = []
         wavefunctions = []
         count = 0
-        for geometry in self.geometries:
+        for geometry in geometries:
             psi4.core.set_output_file("psi4_output/irc_%d.out" %count, False)
-            geom = geometry[0]
+            geom = geometry
             geom += "symmetry c1"
             psi4.geometry(geom)
-            psi4.set_options(scf_options)
+            psi4.set_options({"reference" : "rhf"})
             print("pyREX:Single Point Calculation on IRC Point %d" %(count))
-            energy, wfn = psi4.energy(level_of_theory, return_wfn=True)
+            energy, wfn = psi4.energy(self.level_of_theory, return_wfn=True)
             energies.append(energy)
             wavefunctions.append(wfn)
-        return energy, wfn
+            count = count+1
+        return energies, wavefunctions
 
-    def frag_opt(self, natoms_A, natoms_B, opt_options):
-        frag_A = ""
-        geom = self.geometries[0][1]
-        geom = geom.split('\n')[:(natoms_A+2)]
-        for i in range(natoms_A+2):
-            frag_A += "%s\n" %geom[i]
-        frag_A += "symmetry c1"
-        print("%s Geometry Optimization on Fragment A")
-        psi4.set_options(opt_options)
-        psi4.geometry(frag_A_geom)
-        psidump = "psi4_output/fragment_A_opt.out"
+    def opt(self, label, natoms, geom):
+        frag = ""
+        geom = geom.split('\n')[:(natoms+2)]
+        for i in range(natoms+2):
+            frag += "%s\n" %geom[i]
+        frag += "symmetry c1"
+        print("Geometry Optimization on Fragment %s" %label)
+        psi4.set_options({"reference" : "rhf"})
+        psi4.geometry(frag)
+        psidump = "psi4_output/fragment_%s_opt.out" %label
         psi4.core.set_output_file(psidump, False)
-        e_A = psi4.optimize(self.level_of_theory)
-        frag_B = ""
-        geom = self.geometries[0][2]
-        geom = geom.split('\n')[:(natoms_B+2)]
-        for i in range(natoms_B+2):
-            frag_B += "%s\n" %geom[i]
-        frag_B += "symmetry c1"
-        print("%s Geometry Optimization on Fragment B")
-        psi4.set_options(opt_options)
-        psi4.geometry(frag_B_geom)
-        psidump = "psi4_output/fragment_A_opt.out"
-        psi4.core.set_output_file(psidump, False)
-        e_B = psi4.optimize(self.level_of_theory)
-        return e_A, e_B
+        e = psi4.optimize(self.level_of_theory)
+        return e
