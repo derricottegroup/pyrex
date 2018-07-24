@@ -9,14 +9,22 @@ def input_parser(input_file):
             inp = line.split()
             user_values['charge_dimer'] = int(inp[1])
             user_values['mult_dimer']   = int(inp[2])
-        if line.startswith('Frag_A'):
+        if line.startswith('r_Frag_A'):
             inp = line.split()
-            user_values['charge_A'] = int(inp[1])
-            user_values['mult_A'] = int(inp[2])
-        if line.startswith('Frag_B'):
+            user_values['r_charge_A'] = int(inp[1])
+            user_values['r_mult_A'] = int(inp[2])
+        if line.startswith('r_Frag_B'):
             inp = line.split()
-            user_values['charge_B'] = int(inp[1])
-            user_values['mult_B'] = int(inp[2])
+            user_values['r_charge_B'] = int(inp[1])
+            user_values['r_mult_B'] = int(inp[2])
+        if line.startswith('p_Frag_A'):
+            inp = line.split()
+            user_values['p_charge_A'] = int(inp[1])
+            user_values['p_mult_A'] = int(inp[2])
+        if line.startswith('p_Frag_B'):
+            inp = line.split()
+            user_values['p_charge_B'] = int(inp[1])
+            user_values['p_mult_B'] = int(inp[2])
         if line.startswith('irc_step_size'):
             inp = line.split()
             user_values['irc_step_size'] = float(inp[1])
@@ -44,16 +52,26 @@ def input_parser(input_file):
         if line.startswith('do_polarization'):
             inp = line.split()
             user_values['do_polarization'] = str_to_bool(inp[1])
-        if line.startswith('atom_list_Frag_A'):
+        if line.startswith('reactant_Frag_A'):
             inp = line.split('=')
             inp_array = inp[1].split()
             inp_array = [int(x) for x in inp_array]
-            user_values['atom_list_Frag_A'] = list(inp_array)
-        if line.startswith('atom_list_Frag_B'):
+            user_values['reactant_Frag_A'] = list(inp_array)
+        if line.startswith('reactant_Frag_B'):
             inp = line.split('=')
             inp_array = inp[1].split()
             inp_array = [int(x) for x in inp_array]
-            user_values['atom_list_Frag_B'] = list(inp_array)
+            user_values['reactant_Frag_B'] = list(inp_array)
+        if line.startswith('product_Frag_A'):
+            inp = line.split('=')
+            inp_array = inp[1].split()
+            inp_array = [int(x) for x in inp_array]
+            user_values['product_Frag_A'] = list(inp_array)
+        if line.startswith('product_Frag_B'):
+            inp = line.split('=')
+            inp_array = inp[1].split()
+            inp_array = [int(x) for x in inp_array]
+            user_values['product_Frag_B'] = list(inp_array)
         else:
             pass 
     return user_values

@@ -58,14 +58,22 @@ do_eda = user_values['do_eda']
 print(do_polarization)
 #charge_A = 0 #Specify total charge on Monomer B
 if(do_frag==True):
-    charge_A = user_values['charge_A']
-    mult_A = user_values['mult_A'] #Specify multiplicity on Monomer B
-    frag_A_atom_list = user_values['atom_list_Frag_A']
-    charge_B = user_values['charge_B'] #Specify total charge on Monomer B
-    mult_B = user_values['mult_B'] #Specify multiplicity on Monomer B
-    frag_B_atom_list = user_values['atom_list_Frag_B']
-    natoms_A = len(frag_A_atom_list)
-    natoms_B = len(frag_B_atom_list)
+    r_charge_A = user_values['r_charge_A']
+    r_mult_A = user_values['r_mult_A'] #Specify multiplicity on Monomer B
+    p_charge_A = user_values['p_charge_A']
+    p_mult_A = user_values['p_mult_A'] #Specify multiplicity on Monomer B
+    reactant_frag_A = user_values['reactant_Frag_A']
+    product_frag_A = user_values['product_Frag_A']
+    r_charge_B = user_values['r_charge_B'] #Specify total charge on Monomer B
+    r_mult_B = user_values['r_mult_B'] #Specify multiplicity on Monomer B
+    p_charge_B = user_values['p_charge_B'] #Specify total charge on Monomer B
+    p_mult_B = user_values['p_mult_B'] #Specify multiplicity on Monomer B
+    reactant_frag_B = user_values['reactant_Frag_B']
+    product_frag_B = user_values['product_Frag_B']
+    r_natoms_A = len(reactant_frag_A)
+    r_natoms_B = len(reactant_frag_B)
+    p_natoms_A = len(product_frag_A)
+    p_natoms_B = len(product_frag_B)
 else:
     charge_A = None
     mult_A = None
@@ -79,7 +87,7 @@ else:
 charge_dimer = user_values['charge_dimer'] #Specify total charge on the supermolecular complex
 mult_dimer = user_values['mult_dimer'] #Specify multiplicity of the supermolecular complex
 
-charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
+#charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
 irc_step_size = user_values['irc_step_size'] #in units au*amu^(1/2), Psi4 default is 0.2
 method = user_values['method']
 sapt_method = user_values['sapt_method']
@@ -148,44 +156,56 @@ t_sapt = PrettyTable(t_sapt_header)
 
 geomparser = Geomparser(natoms, charge_dimer, mult_dimer, geometries)
 
-scf_instance = scf_class(level_of_theory)
+scf_instance = scf_class(level_of_theory, output_filename)
 
 geoms = geomparser.geombuilder()
 
+#frag_geoms_no_ghost = geomparser.frag_no_ghost(charge_A, mult_A, frag_A_atom_list)
+
 if(do_sapt==True):
-    sapt_geometries = geomparser.sapt_geombuilder(charge_A, mult_A, charge_B, mult_B, frag_A_atom_list, frag_B_atom_list)
+    sapt_geometries = geomparser.sapt_geombuilder(r_charge_A, r_mult_A, r_charge_B, r_mult_B, reactant_frag_A, reactant_frag_B)
 
 if(do_frag==True):
-    iso_frag_A = geomparser.iso_frag(charge_A, mult_A, frag_A_atom_list)
-    iso_frag_B = geomparser.iso_frag(charge_B, mult_B, frag_B_atom_list)
-    e_A = scf_instance.opt("A", natoms_A, iso_frag_A[0])
-    e_B = scf_instance.opt("B", natoms_B, iso_frag_B[0]) 
+    r_iso_frag_A = geomparser.iso_frag(r_charge_A, r_mult_A, reactant_frag_A)
+    r_iso_frag_B = geomparser.iso_frag(r_charge_B, r_mult_B, reactant_frag_B)
+    p_iso_frag_A = geomparser.iso_frag(p_charge_A, p_mult_A, product_frag_A)
+    p_iso_frag_B = geomparser.iso_frag(p_charge_B, p_mult_B, product_frag_B)
+    r_e_A = scf_instance.opt("A", r_natoms_A, r_iso_frag_A[0])
+    r_e_B = scf_instance.opt("B", r_natoms_B, r_iso_frag_B[0])
+    p_e_A = scf_instance.opt("A", p_natoms_A, p_iso_frag_A[-1])
+    p_e_B = scf_instance.opt("B", p_natoms_B, p_iso_frag_B[-1]) 
 
 energies, wavefunctions = scf_instance.psi4_scf(geoms)
+nelec = wavefunctions[0].nalpha()
 
 if(do_polarization==True):
     frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
     frag_B_geoms = geomparser.frag_ghost(charge_B, mult_B, frag_B_atom_list)
     energies_A, wavefunctions_A = scf_instance.psi4_scf(frag_A_geoms)
     energies_B, wavefunctions_B = scf_instance.psi4_scf(frag_B_geoms)
-    
+    nelec_A = wavefunctions_A[0].nalpha()
+    nelec_B = wavefunctions_B[0].nalpha()
 
 if(do_sapt==True):
-    sapt = sapt(sapt_geometries, sapt_method, basis)
+    sapt = sapt(sapt_geometries, sapt_method, basis, output_filename)
     int_, elst_, exch_, ind_, disp_  = sapt.psi4_sapt()
 
 # Grabbing chemical potential and calculating REF using re_flux class
 ref = re_flux()
-potentials = ref.potential(wavefunctions)
+potentials = np.array(ref.potential(wavefunctions))
 reaction_electronic_flux = np.array(ref.electronic_flux(irc_step_size))
 
 if(do_polarization==True):
-    potentials_A = ref.potential(wavefunctions_A)
-    reaction_electronic_flux_A = (natoms_A/natoms)*np.array(ref.electronic_flux(irc_step_size))
-    potentials_B = ref.potential(wavefunctions_B)
-    reaction_electronic_flux_B = (natoms_B/natoms)*np.array(ref.electronic_flux(irc_step_size))
-    polarization_flux = reaction_electronic_flux_A + reaction_electronic_flux_B
-    transfer_flux = reaction_electronic_flux - polarization_flux
+    potentials_A = np.array(ref.potential(wavefunctions_A))
+    reaction_electronic_flux_A = (nelec_A/nelec)*np.array(ref.electronic_flux(irc_step_size))
+    potential_diff_A = (nelec_A/nelec)*(potentials_A - potentials)
+    transfer_flux_A = np.gradient(potential_diff_A)
+    potentials_B = np.array(ref.potential(wavefunctions_B))
+    reaction_electronic_flux_B = (nelec_B/nelec)*np.array(ref.electronic_flux(irc_step_size))
+    potential_diff_B = (nelec_B/nelec)*(potentials_B - potentials)
+    transfer_flux_B = np.gradient(potential_diff_B)
+    transfer_flux = transfer_flux_A + transfer_flux_B 
+    polarization_flux = reaction_electronic_flux - transfer_flux
 
 # List Comprehensions!!! WOOT! 
 #irc_energies = [energy[0] for energy in energies] # SCF Total Energies
@@ -201,6 +221,7 @@ output.close()
 for i in range(len(energies)):
     if(do_frag==True):
         strain_energies.append(del_E[i] - int_[i])
+    
     t.add_row([i+1,"%.7f" %energies[i],"%.7f" %del_E[i], "%.7f" %potentials[i]])
     #if(do_eda==True):
         #t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
@@ -282,7 +303,7 @@ if(do_sapt==True):
 
 
 #Calculate Work in Transition State Region 2
-#W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
+W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
 #if(do_sapt==True):
 #    W_3_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_ts, index_max)
 #    W_3_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int,index_ts, index_max)
@@ -292,7 +313,7 @@ if(do_sapt==True):
 #    W_3_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_ts, index_max)
 
 #Calculate Work in Product Region
-#W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force)-1)
+W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force)-1)
 #if(do_sapt==True):
 #    W_4_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_max, len(reaction_force)-1)
 #    W_4_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int, index_max, len(reaction_force)-1)
@@ -302,9 +323,9 @@ if(do_sapt==True):
 #    W_4_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_max, len(reaction_force)-1)
 
 output.write("\n\n--Work Integrals--\n\n")
-t_work = PrettyTable(["Unit","W_1", "W_2", "E_act"])
-t_work.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %(W_1+W_2)])
-t_work.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51),"%.7f" %((W_1+W_2)*627.51)])
+t_work = PrettyTable(["Unit","W_1", "W_2", "W_3", "W_4", "E_act", "E_react"])
+t_work.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %W_3, "%.7f" %W_4,"%.7f" %(W_1+W_2), "%.7f" %(W_1+W_2+W_3+W_4)])
+t_work.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %W_3,"%.7f" %W_4,"%.7f" %((W_1+W_2)*627.51), "%.7f" %((W_1+W_2+W_3+W_4)*627.51)])
 output.write(t_work.get_string())
 
 if(do_sapt==True):
@@ -348,10 +369,10 @@ Del_E = Del_E_raw
 #for i in range(len(reaction_force_values)):
 #    output.write("       %.3f                           %.8f                             %.8f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i]))
 output.write("\n\n--Reaction Force and Electronic Flux Analysis--\n\n")
-t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux', 'Pol Flux', 'Trans Flux'])
+t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux'])
 #t.title = "pyREX Reaction Force Analysis Along Reaction Coordinate"
 for i in range(len(reaction_force_values)):
-    t.add_row(["%.2f" %coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i], "%.7f" %polarization_flux[i], "%.7f" %transfer_flux[i]])
+    t.add_row(["%.2f" %coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i]])
 output.write(t.get_string())
 
 #potentials_truncated = chemical_potentials[2:len(coordinates)-2]
