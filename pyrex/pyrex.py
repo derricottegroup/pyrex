@@ -178,6 +178,47 @@ if(do_frag==True):
 energies, wavefunctions = scf_instance.psi4_scf(geoms)
 nelec = wavefunctions[0].nalpha()
 
+# Calculate Reaction Forces directly after scf
+reaction_force_values = -1.0*np.gradient(energies,irc_step_size)
+output = open(output_filename, "a")
+output.write('\n\n--Reaction Force Analysis--\n')
+output.write('\n-------------------------------------------------------------------------------------')
+output.write('\n{:>20} {:>20} {:>20}\n'.format('IRC Point', 'F (Hartree)', 'F (kcal)'))
+output.write('-------------------------------------------------------------------------------------\n')
+
+force_count = 0
+for reaction_force in reaction_force_values:
+    output.write('\n{:>20} {:>20.7f} {:>20.7f}\n'.format(force_count, reaction_force, reaction_force*627.51))
+    force_count = force_count+1
+output.close()
+
+index_min = np.argmin(np.asarray(reaction_force_values))
+index_ts  = coordinates.index(0.0000)
+index_max = np.argmax(np.asarray(reaction_force_values))
+
+output = open(output_filename, "a")
+output.write('\n\n--Reaction Partitioning--\n')
+output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], coordinates[index_min]))
+output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(coordinates[index_min], coordinates[index_max]))
+output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[index_max], coordinates[-1
+]))
+
+#Calculate Reaction Work For Each Region
+W_1 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, 0, index_min)
+W_2 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_min, index_ts)
+W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
+W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force_values)-1)
+
+output = open(output_filename, "a")
+output.write('\n\n--Reaction Works--\n')
+output.write('\n-------------------------------------------------------------------------------------')
+output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('Units', 'W_1', 'W_2', 'W_3', 'W_4'))
+output.write('\n-------------------------------------------------------------------------------------')
+output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Hartree', W_1, W_2, W_3, W_4))
+output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Kcal/mol', W_1*627.51, W_2*627.51, W_3*627.51, W_4*627.51))
+output.write('\n-------------------------------------------------------------------------------------')
+output.close()
+
 if(do_polarization==True):
     frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
     frag_B_geoms = geomparser.frag_ghost(charge_B, mult_B, frag_B_atom_list)
