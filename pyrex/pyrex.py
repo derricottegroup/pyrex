@@ -163,7 +163,8 @@ geoms = geomparser.geombuilder()
 #frag_geoms_no_ghost = geomparser.frag_no_ghost(charge_A, mult_A, frag_A_atom_list)
 
 if(do_sapt==True):
-    sapt_geometries = geomparser.sapt_geombuilder(r_charge_A, r_mult_A, r_charge_B, r_mult_B, reactant_frag_A, reactant_frag_B)
+    r_sapt_geometries = geomparser.sapt_geombuilder(r_charge_A, r_mult_A, r_charge_B, r_mult_B, reactant_frag_A, reactant_frag_B)
+    p_sapt_geometries = geomparser.sapt_geombuilder(p_charge_A, p_mult_A, p_charge_B, p_mult_B, product_frag_A, product_frag_B)
 
 if(do_frag==True):
     r_iso_frag_A = geomparser.iso_frag(r_charge_A, r_mult_A, reactant_frag_A)
@@ -190,6 +191,7 @@ force_count = 0
 for reaction_force in reaction_force_values:
     output.write('\n{:>20} {:>20.7f} {:>20.7f}\n'.format(force_count, reaction_force, reaction_force*627.51))
     force_count = force_count+1
+output.write('-------------------------------------------------------------------------------------\n')
 output.close()
 
 index_min = np.argmin(np.asarray(reaction_force_values))
@@ -227,10 +229,125 @@ if(do_polarization==True):
     nelec_A = wavefunctions_A[0].nalpha()
     nelec_B = wavefunctions_B[0].nalpha()
 
-if(do_sapt==True):
-    sapt = sapt(sapt_geometries, sapt_method, basis, output_filename)
-    int_, elst_, exch_, ind_, disp_  = sapt.psi4_sapt()
+r_del_E = [(energy - (r_e_A + r_e_B)) for energy in energies]
+p_del_E = [(energy - (p_e_A + p_e_B)) for energy in energies]
 
+if(do_sapt==True):
+    output = open(output_filename, "a")
+    output.write('\n\n--SAPT Energy Decomposition (Region 1)--\n')
+    output.close()
+    sapt_1 = sapt(r_sapt_geometries[0:index_min], sapt_method, basis, output_filename)
+    int_1, elst_1, exch_1, ind_1, disp_1  = sapt_1.psi4_sapt()
+    r_strain_e_1 = []
+    for i in range(len(energies[0:index_min])):
+        r_strain_e_1.append(r_del_E[i] - int_1[i])
+    reaction_force_strain_1 = -1.0*np.gradient(r_strain_e_1,irc_step_size)
+    reaction_force_int_1 = -1.0*np.gradient(int_1,irc_step_size)
+    reaction_force_elst_1 = -1.0*np.gradient(elst_1,irc_step_size)
+    reaction_force_exch_1 = -1.0*np.gradient(exch_1,irc_step_size)
+    reaction_force_ind_1 = -1.0*np.gradient(ind_1,irc_step_size)
+    reaction_force_disp_1 = -1.0*np.gradient(disp_1,irc_step_size)
+    W_1_strain = -1.0*np.trapz(reaction_force_strain_1, dx=irc_step_size)
+    W_1_int = -1.0*np.trapz(reaction_force_int_1, dx=irc_step_size)
+    W_1_elst = -1.0*np.trapz(reaction_force_elst_1, dx=irc_step_size)
+    W_1_exch = -1.0*np.trapz(reaction_force_exch_1, dx=irc_step_size)
+    W_1_ind = -1.0*np.trapz(reaction_force_ind_1, dx=irc_step_size)
+    W_1_disp = -1.0*np.trapz(reaction_force_disp_1, dx=irc_step_size)
+    output = open(output_filename, "a")
+    output.write('\n\n--Reaction Work Decomposition (Region 1 : %.4fkcal/mol)--\n' %(W_1*627.51))
+    output.write('\n-------------------------------------------------------------------------------------------------')
+    output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)', 'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
+    output.write('-------------------------------------------------------------------------------------------------\n')
+    output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_1_strain*627.51, W_1_int*627.51, W_1_elst*627.51, W_1_exch*627.51, W_1_ind*627.51, W_1_disp*627.51))
+    output.write('--------------------------------------------------------------------------------------------------\n')
+    output.close()
+
+    output = open(output_filename, "a")
+    output.write('\n\n--SAPT Energy Decomposition (Region 2)--\n')
+    output.close()
+    sapt_2 = sapt(r_sapt_geometries[index_min:index_ts], sapt_method, basis, output_filename)
+    int_2, elst_2, exch_2, ind_2, disp_2  = sapt_2.psi4_sapt()
+    r_strain_e_2 = []
+    for i in range(len(energies[index_min:index_ts])):
+        r_strain_e_2.append(r_del_E[index_min+i] - int_2[i])
+    reaction_force_strain_2 = -1.0*np.gradient(r_strain_e_2,irc_step_size)
+    reaction_force_int_2 = -1.0*np.gradient(int_2,irc_step_size)
+    reaction_force_elst_2 = -1.0*np.gradient(elst_2,irc_step_size)
+    reaction_force_exch_2 = -1.0*np.gradient(exch_2,irc_step_size)
+    reaction_force_ind_2 = -1.0*np.gradient(ind_2,irc_step_size)
+    reaction_force_disp_2 = -1.0*np.gradient(disp_2,irc_step_size)
+    W_2_strain = -1.0*np.trapz(reaction_force_strain_2, dx=irc_step_size)
+    W_2_int = -1.0*np.trapz(reaction_force_int_2, dx=irc_step_size)
+    W_2_elst = -1.0*np.trapz(reaction_force_elst_2, dx=irc_step_size)
+    W_2_exch = -1.0*np.trapz(reaction_force_exch_2, dx=irc_step_size)
+    W_2_ind = -1.0*np.trapz(reaction_force_ind_2, dx=irc_step_size)
+    W_2_disp = -1.0*np.trapz(reaction_force_disp_2, dx=irc_step_size)
+    output = open(output_filename, "a")
+    output.write('\n\n--Reaction Work Decomposition (Region 2 : %.4fkcal/mol)--\n' %(W_2*627.51))
+    output.write('\n-------------------------------------------------------------------------------------------------')
+    output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)',
+'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
+    output.write('--------------------------------------------------------------------------------------------------\n')
+    output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_2_strain*627.51, W_2_int*627.51, W_2_elst*627.51, W_2_exch*627.51, W_2_ind*627.51, W_2_disp*627.51))
+    output.write('--------------------------------------------------------------------------------------------------\n')
+    output.close()
+    output = open(output_filename, "a")
+    output.write('\n\n--SAPT Energy Decomposition (Region 3)--\n')
+    output.close()
+    sapt_3 = sapt(p_sapt_geometries[index_ts:index_max], sapt_method, basis, output_filename)
+    int_3, elst_3, exch_3, ind_3, disp_3  = sapt_3.psi4_sapt()
+    p_strain_e_3 = []
+    for i in range(len(energies[index_ts:index_max])):
+        p_strain_e_3.append(p_del_E[index_ts+i] - int_3[i])
+    reaction_force_strain_3 = -1.0*np.gradient(p_strain_e_3,irc_step_size)
+    reaction_force_int_3 = -1.0*np.gradient(int_3,irc_step_size)
+    reaction_force_elst_3 = -1.0*np.gradient(elst_3,irc_step_size)
+    reaction_force_exch_3 = -1.0*np.gradient(exch_3,irc_step_size)
+    reaction_force_ind_3 = -1.0*np.gradient(ind_3,irc_step_size)
+    reaction_force_disp_3 = -1.0*np.gradient(disp_3,irc_step_size)
+    W_3_strain = -1.0*np.trapz(reaction_force_strain_3, dx=irc_step_size)
+    W_3_int = -1.0*np.trapz(reaction_force_int_3, dx=irc_step_size)
+    W_3_elst = -1.0*np.trapz(reaction_force_elst_3, dx=irc_step_size)
+    W_3_exch = -1.0*np.trapz(reaction_force_exch_3, dx=irc_step_size)
+    W_3_ind = -1.0*np.trapz(reaction_force_ind_3, dx=irc_step_size)
+    W_3_disp = -1.0*np.trapz(reaction_force_disp_3, dx=irc_step_size)
+    output = open(output_filename, "a")
+    output.write('\n\n--Reaction Work Decomposition (Region 3 : %.4fkcal/mol)--\n' %(W_3*627.51))
+    output.write('\n--------------------------------------------------------------------------------------------------')
+    output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)',
+'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
+    output.write('---------------------------------------------------------------------------------------------------\n')
+    output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_3_strain*627.51, W_3_int*627.51, W_3_elst*627.51, W_3_exch*627.51, W_3_ind*627.51, W_3_disp*627.51))
+    output.write('---------------------------------------------------------------------------------------------------\n')
+    output.close()
+    output = open(output_filename, "a")
+    output.write('\n\n--SAPT Energy Decomposition (Region 4)--\n')
+    output.close()
+    sapt_4 = sapt(p_sapt_geometries[index_max:], sapt_method, basis, output_filename)
+    int_4, elst_4, exch_4, ind_4, disp_4  = sapt_4.psi4_sapt()
+    p_strain_e_4 = []
+    for i in range(len(energies[index_max:])):
+        p_strain_e_4.append(p_del_E[index_max+i] - int_4[i])
+    reaction_force_strain_4 = -1.0*np.gradient(p_strain_e_4,irc_step_size)
+    reaction_force_int_4 = -1.0*np.gradient(int_4,irc_step_size)
+    reaction_force_elst_4 = -1.0*np.gradient(elst_4,irc_step_size)
+    reaction_force_exch_4 = -1.0*np.gradient(exch_4,irc_step_size)
+    reaction_force_ind_4 = -1.0*np.gradient(ind_4,irc_step_size)
+    reaction_force_disp_4 = -1.0*np.gradient(disp_4,irc_step_size)
+    W_4_strain = -1.0*np.trapz(reaction_force_strain_4, dx=irc_step_size)
+    W_4_int = -1.0*np.trapz(reaction_force_int_4, dx=irc_step_size)
+    W_4_elst = -1.0*np.trapz(reaction_force_elst_4, dx=irc_step_size)
+    W_4_exch = -1.0*np.trapz(reaction_force_exch_4, dx=irc_step_size)
+    W_4_ind = -1.0*np.trapz(reaction_force_ind_4, dx=irc_step_size)
+    W_4_disp = -1.0*np.trapz(reaction_force_disp_4, dx=irc_step_size)
+    output = open(output_filename, "a")
+    output.write('\n\n--Reaction Work Decomposition (Region 4 : %.4fkcal/mol)--\n' %(W_4*627.51))
+    output.write('\n----------------------------------------------------------------------------------------------------')
+    output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)', 'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
+    output.write('----------------------------------------------------------------------------------------------------\n')
+    output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_4_strain*627.51, W_4_int*627.51, W_4_elst*627.51, W_4_exch*627.51, W_4_ind*627.51, W_4_disp*627.51))
+    output.write('---------------------------------------------------------------------------------------------------\n')
+    output.close()
 # Grabbing chemical potential and calculating REF using re_flux class
 ref = re_flux()
 potentials = np.array(ref.potential(wavefunctions))
@@ -251,29 +368,29 @@ if(do_polarization==True):
 # List Comprehensions!!! WOOT! 
 #irc_energies = [energy[0] for energy in energies] # SCF Total Energies
 #chemical_potentials = [potential[0] for potential in potentials] # Chemical Potentials
-del_E = [(energy - (e_A + e_B)) for energy in energies]  #Energy Change relative to optimized fragment
-for i in range(len(energies)):
-    t.add_row([i+1,"%.7f" %energies[i],"%.7f" %del_E[i], "%.7f" %potentials[i]])
-output = open(output_filename, "a")
-output.write("\n\n--Reaction Energy Analysis--\n\n")
-output.write("%s\n" %t.get_string())
-output.close()
-
-for i in range(len(energies)):
-    if(do_frag==True):
-        strain_energies.append(del_E[i] - int_[i])
-    
-    t.add_row([i+1,"%.7f" %energies[i],"%.7f" %del_E[i], "%.7f" %potentials[i]])
-    #if(do_eda==True):
-        #t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
-    if(do_sapt==True):
-        t_sapt.add_row([i+1, "%.7f" %int_[i], "%.7f" %elst_[i], "%.7f" %exch_[i], "%.7f" %ind_[i], "%.7f" %disp_[i]])
-
-
-output = open(output_filename, "a")
-output.write("\n\n--Reaction Energy Analysis--\n\n")
-output.write("%s\n" %t.get_string())
-output.close()
+#del_E = [(energy - (e_A + e_B)) for energy in energies]  #Energy Change relative to optimized fragment
+#for i in range(len(energies)):
+#    t.add_row([i+1,"%.7f" %energies[i],"%.7f" %del_E[i], "%.7f" %potentials[i]])
+#output = open(output_filename, "a")
+#output.write("\n\n--Reaction Energy Analysis--\n\n")
+#output.write("%s\n" %t.get_string())
+#output.close()
+#
+#for i in range(len(energies)):
+#    if(do_frag==True):
+#        strain_energies.append(del_E[i] - int_[i])
+#    
+#    t.add_row([i+1,"%.7f" %energies[i],"%.7f" %del_E[i], "%.7f" %potentials[i]])
+#    #if(do_eda==True):
+#        #t_pol.add_row([i+1,"%.7f" %del_E[i], "%.7f" %interaction_energies[i][0], "%.7f" %(del_E[i] - interaction_energies[i][0]),"%.7f" %interaction_energies[i][1], "%.7f" %interaction_energies[i][2],  "%.7f" %interaction_energies[i][3]])
+#    if(do_sapt==True):
+#        t_sapt.add_row([i+1, "%.7f" %int_[i], "%.7f" %elst_[i], "%.7f" %exch_[i], "%.7f" %ind_[i], "%.7f" %disp_[i]])
+#
+#
+#output = open(output_filename, "a")
+#output.write("\n\n--Reaction Energy Analysis--\n\n")
+#output.write("%s\n" %t.get_string())
+#output.close()
 
 if(do_eda==True):
     output = open(output_filename, "a")
@@ -281,70 +398,70 @@ if(do_eda==True):
     output.write("%s\n" %t_pol.get_string())
     output.close()
 
-if(do_sapt==True):
-    output = open(output_filename, "a")
-    output.write("\n\n--Symmetry Adapted Perturbation Theory--\n\n")
-    output.write("%s\n" %t_sapt.get_string())
-    output.close()
+#if(do_sapt==True):
+#    output = open(output_filename, "a")
+#    output.write("\n\n--Symmetry Adapted Perturbation Theory--\n\n")
+#    output.write("%s\n" %t_sapt.get_string())
+#    output.close()
 
 
 #force_coordinates = coordinates[2:len(coordinates)-2]
-reaction_force_values = -1.0*np.gradient(energies,irc_step_size)
+#reaction_force_values = -1.0*np.gradient(energies,irc_step_size)
 #reaction_electronic_flux = -1.0*np.gradient(potentials,irc_step_size)
 #reaction_electronic_flux_A = -1.0*np.gradient(chemical_potentials_A,irc_step_size)
 #reaction_electronic_flux_B = -1.0*np.gradient(chemical_potentials_B,irc_step_size)
 
 #print(reaction_force_values)
-if(do_sapt==True):
-    reaction_force_strain = -1.0*np.gradient(strain_energies,irc_step_size)
-    reaction_force_int = -1.0*np.gradient(int_,irc_step_size)
-    reaction_force_elst = -1.0*np.gradient(elst_,irc_step_size)
-    reaction_force_exch = -1.0*np.gradient(exch_,irc_step_size)
-    reaction_force_ind = -1.0*np.gradient(ind_,irc_step_size)
-    reaction_force_disp = -1.0*np.gradient(disp_,irc_step_size)
+#if(do_sapt==True):
+#    reaction_force_strain = -1.0*np.gradient(strain_energies,irc_step_size)
+#    reaction_force_int = -1.0*np.gradient(int_,irc_step_size)
+#    reaction_force_elst = -1.0*np.gradient(elst_,irc_step_size)
+#    reaction_force_exch = -1.0*np.gradient(exch_,irc_step_size)
+#    reaction_force_ind = -1.0*np.gradient(ind_,irc_step_size)
+#    reaction_force_disp = -1.0*np.gradient(disp_,irc_step_size)
 
 
-output = open(output_filename, "a")
-output.write("\n\n--IRC Force Partitioning--\n\n")
-output.write("Minimum Force =  %.10f\n" %(min(reaction_force_values)))
-output.write("Maximum Force =   %.10f\n" %(max(reaction_force_values)))
+#output = open(output_filename, "a")
+#output.write("\n\n--IRC Force Partitioning--\n\n")
+#output.write("Minimum Force =  %.10f\n" %(min(reaction_force_values)))
+#output.write("Maximum Force =   %.10f\n" %(max(reaction_force_values)))
 
 
-for i in range(len(reaction_force_values)):
-    reaction_force.append((coordinates[i],reaction_force_values[i]))
+#for i in range(len(reaction_force_values)):
+#    reaction_force.append((coordinates[i],reaction_force_values[i]))
 #print(reaction_force)
 
-index_min = np.argmin(np.asarray(reaction_force_values))
-index_ts  = coordinates.index(0.0000)
-index_max = np.argmax(np.asarray(reaction_force_values))
+#index_min = np.argmin(np.asarray(reaction_force_values))
+#index_ts  = coordinates.index(0.0000)
+#index_max = np.argmax(np.asarray(reaction_force_values))
 
-output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], coordinates[index_min]))
-output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(coordinates[index_min], coordinates[index_max]))
-output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[index_max], coordinates[-1]))
+#output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], coordinates[index_min]))
+#output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(coordinates[index_min], coordinates[index_max]))
+#output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[index_max], coordinates[-1]))
 
 # Calculate Work in Reactant Region
-W_1 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, 0, index_min)
-if(do_sapt==True):
-    W_1_strain = -1.0*calctools.num_integrate(coordinates, reaction_force_strain, 0, index_min)
-    W_1_int = -1.0*calctools.num_integrate(coordinates, reaction_force_int, 0, index_min)
-    W_1_elst = -1.0*calctools.num_integrate(coordinates, reaction_force_elst, 0, index_min)
-    W_1_exch = -1.0*calctools.num_integrate(coordinates, reaction_force_exch, 0, index_min)
-    W_1_ind = -1.0*calctools.num_integrate(coordinates, reaction_force_ind, 0, index_min)
-    W_1_disp = -1.0*calctools.num_integrate(coordinates, reaction_force_disp, 0, index_min)
+#W_1 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, 0, index_min)
+#if(do_sapt==True):
+#    W_1_strain = -1.0*calctools.num_integrate(coordinates, reaction_force_strain, 0, index_min)
+#    W_1_int = -1.0*calctools.num_integrate(coordinates, reaction_force_int, 0, index_min)
+#    W_1_elst = -1.0*calctools.num_integrate(coordinates, reaction_force_elst, 0, index_min)
+#    W_1_exch = -1.0*calctools.num_integrate(coordinates, reaction_force_exch, 0, index_min)
+#    W_1_ind = -1.0*calctools.num_integrate(coordinates, reaction_force_ind, 0, index_min)
+#    W_1_disp = -1.0*calctools.num_integrate(coordinates, reaction_force_disp, 0, index_min)
 
 #Calculate Work in Transition State Region 1
-W_2 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_min, index_ts)
-if(do_sapt==True):
-    W_2_strain = -1.0*calctools.num_integrate(coordinates,reaction_force_strain,index_min,index_ts)
-    W_2_int = -1.0*calctools.num_integrate(coordinates, reaction_force_int,index_min, index_ts)
-    W_2_elst = -1.0*calctools.num_integrate(coordinates, reaction_force_elst, index_min, index_ts)
-    W_2_exch = -1.0*calctools.num_integrate(coordinates, reaction_force_exch, index_min, index_ts)
-    W_2_ind = -1.0*calctools.num_integrate(coordinates, reaction_force_ind, index_min, index_ts)
-    W_2_disp = -1.0*calctools.num_integrate(coordinates, reaction_force_disp, index_min, index_ts)
+#W_2 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_min, index_ts)
+#if(do_sapt==True):
+#    W_2_strain = -1.0*calctools.num_integrate(coordinates,reaction_force_strain,index_min,index_ts)
+#    W_2_int = -1.0*calctools.num_integrate(coordinates, reaction_force_int,index_min, index_ts)
+#    W_2_elst = -1.0*calctools.num_integrate(coordinates, reaction_force_elst, index_min, index_ts)
+#    W_2_exch = -1.0*calctools.num_integrate(coordinates, reaction_force_exch, index_min, index_ts)
+#    W_2_ind = -1.0*calctools.num_integrate(coordinates, reaction_force_ind, index_min, index_ts)
+#    W_2_disp = -1.0*calctools.num_integrate(coordinates, reaction_force_disp, index_min, index_ts)
 
 
 #Calculate Work in Transition State Region 2
-W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
+#W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
 #if(do_sapt==True):
 #    W_3_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_ts, index_max)
 #    W_3_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int,index_ts, index_max)
@@ -354,7 +471,7 @@ W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts,
 #    W_3_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_ts, index_max)
 
 #Calculate Work in Product Region
-W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force)-1)
+#W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force)-1)
 #if(do_sapt==True):
 #    W_4_strain = -1.0*calctools.num_integrate(force_coordinates, reaction_force_strain, index_max, len(reaction_force)-1)
 #    W_4_int = -1.0*calctools.num_integrate(force_coordinates, reaction_force_int, index_max, len(reaction_force)-1)
@@ -363,44 +480,44 @@ W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max
 #    W_4_ind = -1.0*calctools.num_integrate(force_coordinates, reaction_force_ind, index_max, len(reaction_force)-1)
 #    W_4_disp = -1.0*calctools.num_integrate(force_coordinates, reaction_force_disp, index_max, len(reaction_force)-1)
 
-output.write("\n\n--Work Integrals--\n\n")
-t_work = PrettyTable(["Unit","W_1", "W_2", "W_3", "W_4", "E_act", "E_react"])
-t_work.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %W_3, "%.7f" %W_4,"%.7f" %(W_1+W_2), "%.7f" %(W_1+W_2+W_3+W_4)])
-t_work.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %W_3,"%.7f" %W_4,"%.7f" %((W_1+W_2)*627.51), "%.7f" %((W_1+W_2+W_3+W_4)*627.51)])
-output.write(t_work.get_string())
-
-if(do_sapt==True):
-    output.write("\n\n--Decomposition of Work Integrals Using SAPT--\n\n")
-    output.write("***DISCLAIMER: The sum of the components below will only be equal to the total work integral if you used a method that includes dispersion (i.e. MPn,CCSD, etc.) If the work was calculated with SCF or dispersionless DFT then W = W_strain + W_elst + W_exch + W_ind.")
-    output.write("\n\n--W_1 Decomposition (%.2f kcal/mol)--\n\n" %(W_1*627.51))
-    t_w1sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
-    t_w1sapt.add_row(["%.7f" %(W_1_strain*627.51), "%.7f" %(W_1_elst*627.51), "%.7f" %(W_1_exch*627.51), "%.7f" %(W_1_ind*627.51),"%.7f" %(W_1_disp*627.51)])
-    output.write(t_w1sapt.get_string())
-
-if(do_sapt==True):
-    output.write("\n\n--W_2 Decomposition (%.2f kcal/mol)--\n\n" %(W_2*627.51))
-    t_w2sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
-    t_w2sapt.add_row(["%.7f" %(W_2_strain*627.51), "%.7f" %(W_2_elst*627.51), "%.7f" %(W_2_exch*627.51), "%.7f" %(W_2_ind*627.51),"%.7f" %(W_2_disp*627.51)])
-    output.write(t_w2sapt.get_string())
-
+#output.write("\n\n--Work Integrals--\n\n")
+#t_work = PrettyTable(["Unit","W_1", "W_2", "W_3", "W_4", "E_act", "E_react"])
+#t_work.add_row(["Hartree", "%.7f" %W_1, "%.7f" %W_2, "%.7f" %W_3, "%.7f" %W_4,"%.7f" %(W_1+W_2), "%.7f" %(W_1+W_2+W_3+W_4)])
+#t_work.add_row(["kcal/mol","%.7f" %(W_1*627.51), "%.7f" %(W_2*627.51), "%.7f" %W_3,"%.7f" %W_4,"%.7f" %((W_1+W_2)*627.51), "%.7f" %((W_1+W_2+W_3+W_4)*627.51)])
+#output.write(t_work.get_string())
+#
 #if(do_sapt==True):
-#    output.write("\n\n--W_3 Decomposition (%.2f kcal/mol)--\n\n" %(W_3*627.51))
-#    t_w3sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
-#    t_w3sapt.add_row(["%.7f" %(W_3_strain*627.51), "%.7f" %(W_3_elst*627.51), "%.7f" %(W_3_exch*627.51), "%.7f" %(W_3_ind*627.51),"%.7f" %(W_3_disp*627.51)])
-#    output.write(t_w3sapt.get_string())
+#    output.write("\n\n--Decomposition of Work Integrals Using SAPT--\n\n")
+#    output.write("***DISCLAIMER: The sum of the components below will only be equal to the total work integral if you used a method that includes dispersion (i.e. MPn,CCSD, etc.) If the work was calculated with SCF or dispersionless DFT then W = W_strain + W_elst + W_exch + W_ind.")
+#    output.write("\n\n--W_1 Decomposition (%.2f kcal/mol)--\n\n" %(W_1*627.51))
+#    t_w1sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
+#    t_w1sapt.add_row(["%.7f" %(W_1_strain*627.51), "%.7f" %(W_1_elst*627.51), "%.7f" %(W_1_exch*627.51), "%.7f" %(W_1_ind*627.51),"%.7f" %(W_1_disp*627.51)])
+#    output.write(t_w1sapt.get_string())
+#
 #if(do_sapt==True):
-#    output.write("\n\n--W_4 Decomposition (%.2f kcal/mol)--\n\n" %(W_4*627.51))
-#    t_w4sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
-#    t_w4sapt.add_row(["%.7f" %(W_4_strain*627.51), "%.7f" %(W_4_elst*627.51), "%.7f" %(W_4_exch*627.51), "%.7f" %(W_4_ind*627.51),"%.7f" %(W_4_disp*627.51)])
-#    output.write(t_w4sapt.get_string())
+#    output.write("\n\n--W_2 Decomposition (%.2f kcal/mol)--\n\n" %(W_2*627.51))
+#    t_w2sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
+#    t_w2sapt.add_row(["%.7f" %(W_2_strain*627.51), "%.7f" %(W_2_elst*627.51), "%.7f" %(W_2_exch*627.51), "%.7f" %(W_2_ind*627.51),"%.7f" %(W_2_disp*627.51)])
+#    output.write(t_w2sapt.get_string())
+#
+##if(do_sapt==True):
+##    output.write("\n\n--W_3 Decomposition (%.2f kcal/mol)--\n\n" %(W_3*627.51))
+##    t_w3sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
+##    t_w3sapt.add_row(["%.7f" %(W_3_strain*627.51), "%.7f" %(W_3_elst*627.51), "%.7f" %(W_3_exch*627.51), "%.7f" %(W_3_ind*627.51),"%.7f" %(W_3_disp*627.51)])
+##    output.write(t_w3sapt.get_string())
+##if(do_sapt==True):
+##    output.write("\n\n--W_4 Decomposition (%.2f kcal/mol)--\n\n" %(W_4*627.51))
+##    t_w4sapt = PrettyTable(["W_strain", "W_elst", "W_exch" , "W_ind", "W_disp"])
+##    t_w4sapt.add_row(["%.7f" %(W_4_strain*627.51), "%.7f" %(W_4_elst*627.51), "%.7f" %(W_4_exch*627.51), "%.7f" %(W_4_ind*627.51),"%.7f" %(W_4_disp*627.51)])
+##    output.write(t_w4sapt.get_string())
 
 # Calculate Energy Difference
-min_energy_index = np.argmin(np.asarray(energies))
-Del_E_raw = []
-for i in range(len(energies)):
-    Del_E_raw.append(energies[i] - energies[min_energy_index])
-
-Del_E = Del_E_raw
+#min_energy_index = np.argmin(np.asarray(energies))
+#Del_E_raw = []
+#for i in range(len(energies)):
+#    Del_E_raw.append(energies[i] - energies[min_energy_index])
+#
+#Del_E = Del_E_raw
 
 #Create CSV File
 
@@ -409,29 +526,30 @@ Del_E = Del_E_raw
 #output.write("----------------------------------------------------------------------------------------\n")
 #for i in range(len(reaction_force_values)):
 #    output.write("       %.3f                           %.8f                             %.8f\n" %(force_coordinates[i], Del_E[i], reaction_force_values[i]))
-output.write("\n\n--Reaction Force and Electronic Flux Analysis--\n\n")
-t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux'])
-#t.title = "pyREX Reaction Force Analysis Along Reaction Coordinate"
-for i in range(len(reaction_force_values)):
-    t.add_row(["%.2f" %coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i]])
-output.write(t.get_string())
+#output.write("\n\n--Reaction Force and Electronic Flux Analysis--\n\n")
+#t = PrettyTable(['Coordinate(au amu^(1/2))', 'Delta E', 'Force', 'Electronic Flux'])
+##t.title = "pyREX Reaction Force Analysis Along Reaction Coordinate"
+#for i in range(len(reaction_force_values)):
+#    t.add_row(["%.2f" %coordinates[i], "%.7f" %Del_E[i], "%.7f" %reaction_force_values[i], "%.7f" %reaction_electronic_flux[i]])
+#output.write(t.get_string())
 
 #potentials_truncated = chemical_potentials[2:len(coordinates)-2]
-ref_csv = open("force_flux.csv","w+")
-ref_csv.write("Coordinate,DeltaE,Force,Chemical Potential,Reaction Electronic Flux\n")
-for i in range(len(reaction_force_values)):
-    ref_csv.write("%f,%f,%f,%f,%f\n" %(coordinates[i], Del_E[i], reaction_force_values[i], potentials[i],reaction_electronic_flux[i]))
+#ref_csv = open("force_flux.csv","w+")
+#ref_csv.write("Coordinate,DeltaE,Force,Chemical Potential,Reaction Electronic Flux\n")
+#for i in range(len(reaction_force_values)):
+#    ref_csv.write("%f,%f,%f,%f,%f\n" %(coordinates[i], Del_E[i], reaction_force_values[i], potentials[i],reaction_electronic_flux[i]))
+#
+#if(do_sapt==True):
+#    sapt_e_csv = open("sapt_energy.csv" , "w+")
+#    sapt_e_csv.write("Coordinate, E_elst, E_exch, E_ind, E_disp\n")
+#    for i in range(len(coordinates)):
+#        sapt_e_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], elst_[i], exch_[i], ind_[i], disp_[i]))
+#
+#    sapt_f_csv = open("sapt_force.csv", "w+")
+#    sapt_f_csv.write("Coordinate, F_elst, F_exch, F_ind, F_disp\n")
+#    for i in range(len(coordinates)): 
+#        sapt_f_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], reaction_force_elst[i], reaction_force_exch[i], reaction_force_ind[i], reaction_force_disp[i]))   
 
-if(do_sapt==True):
-    sapt_e_csv = open("sapt_energy.csv" , "w+")
-    sapt_e_csv.write("Coordinate, E_elst, E_exch, E_ind, E_disp\n")
-    for i in range(len(coordinates)):
-        sapt_e_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], elst_[i], exch_[i], ind_[i], disp_[i]))
-
-    sapt_f_csv = open("sapt_force.csv", "w+")
-    sapt_f_csv.write("Coordinate, F_elst, F_exch, F_ind, F_disp\n")
-    for i in range(len(coordinates)): 
-        sapt_f_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], reaction_force_elst[i], reaction_force_exch[i], reaction_force_ind[i], reaction_force_disp[i]))   
-
+output = open(output_filename, "a")
 output.write("\n\n**pyREX Has Exited Successfully!**\n")
 output.close()
