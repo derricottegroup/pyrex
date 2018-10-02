@@ -2,11 +2,12 @@ import numpy as np
 
 class Geomparser(object):
 
-    def __init__(self, natoms, charge, mult, geometries):
+    def __init__(self, natoms, charge, mult, geometries, coordinates):
         self.charge = charge
         self.mult = mult
         self.geometries = geometries
         self.natoms = natoms
+        self.coordinates = coordinates
 
     def geombuilder(self):
         self.mol_inputs = []
@@ -65,3 +66,76 @@ class Geomparser(object):
                 sapt_geom += line
             self.sapt_geoms.append(sapt_geom)
         return self.sapt_geoms
+    
+    def atomic_distances(self):
+        atomic_distance_csv = open("atomic_distances.csv", "w+")
+        bond_matrix = np.zeros((self.natoms,self.natoms))
+        atom_labels = []
+        unit_x = []
+        unit_y = []
+        unit_z = []
+        geometry_map = {}
+        for i in range(len(self.geometries)):
+            Distance_Matrix = np.zeros((self.natoms, 3))
+            for j in range(self.natoms):
+                line = self.geometries[i][j]
+                atom_position = line.split()
+                atom_labels.append("%s%d" %(atom_position[0],j+1))
+                Distance_Matrix[j][0] = atom_position[1]
+                Distance_Matrix[j][1] = atom_position[2]
+                Distance_Matrix[j][2] = atom_position[3]
+            geometry_map[self.coordinates[i]] = Distance_Matrix
+        #Make CSV Header
+        atomic_distance_csv.write("Coordinate,")
+        for i in range(self.natoms):
+            for j in range(self.natoms):
+                if(i>j):
+                    atomic_distance_csv.write("%s-%s," %(atom_labels[i], atom_labels[j]))
+                else:
+                    pass
+        atomic_distance_csv.write("\n")
+        for z in range(len(self.geometries)):
+            coord = self.coordinates[z]
+            Geom = geometry_map[coord]
+            atomic_distance_csv.write("%.3f," %coord)
+            ex = np.zeros((self.natoms,self.natoms))
+            ey = np.zeros((self.natoms,self.natoms))
+            ez = np.zeros((self.natoms,self.natoms))
+            for i in range(self.natoms):
+                for j in range(self.natoms):
+                    if(i>j):
+                        R = np.sqrt((Geom[i][0]- Geom[j][0])**(2.0) + (Geom[i][1]- Geom[j][1])**(2.0) + (Geom[i][2]- Geom[j][2])**(2.0))
+                        ex[i][j] = ex[j][i] = -(Geom[i][0]- Geom[j][0])/R
+                        ey[i][j] = ey[j][i] = -(Geom[i][1]- Geom[j][1])/R
+                        ez[i][j] = ez[j][i] = -(Geom[i][2]- Geom[j][2])/R
+                        bond_matrix[i][j] = R
+                        atomic_distance_csv.write("%.7f," %R)
+                    else:
+                        pass
+            unit_x.append(ex)
+            unit_y.append(ey)
+            unit_z.append(ez)    
+            atomic_distance_csv.write("\n")    
+        angles_csv = open("angles.csv", "w+")
+        angles_csv.write("Coordinate,")
+        for i in range(self.natoms):
+            for j in range(self.natoms):
+                for k in range(self.natoms):
+                    if(i>j and j>k and bond_matrix[i][j] < 4.0 and bond_matrix[j][k] < 4.0):
+                        angles_csv.write("%s-%s-%s," %(atom_labels[i], atom_labels[j], atom_labels[k]))
+        angles_csv.write("\n")
+        for z in range(len(self.geometries)):
+            unit_vec_x = unit_x[z]
+            unit_vec_y = unit_y[z]
+            unit_vec_z = unit_z[z]
+            for i in range(self.natoms):
+                for j in range(self.natoms):
+                    for k in range(self.natoms):
+                        if(i>j and j>k and bond_matrix[i][j] < 4.0 and bond_matrix[j][k] < 4.0):
+                            x = unit_vec_x[j][i]*unit_vec_x[j][k]
+                            y = unit_vec_y[j][i]*unit_vec_y[j][k]
+                            z = unit_vec_z[j][i]*unit_vec_z[j][k]
+                            dot_product = x + y + z
+                            angle = np.rad2deg(np.arccos(dot_product))
+                            angles_csv.write("%.7f," %angle)
+            angles_csv.write("\n") 
