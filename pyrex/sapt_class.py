@@ -16,6 +16,7 @@ class sapt(object):
         self.exch_ = []
         self.ind_ =  []
         self.disp_ = []
+        au_to_kcal = 627.51
         count = 0
         output = open(self.outfile, "a")
         output.write('\n\n--SAPT Decomposition--\n')
@@ -41,7 +42,7 @@ class sapt(object):
             self.exch_.append(e_exch)
             self.ind_.append(e_ind)
             self.disp_.append(e_disp)
-            output.write('\n{:>15} {:>15.4f} {:>15.4f} {:>15.4f} {:>15.4f} {:>15.4f}\n'.format(count, e_int*627.51, e_elst*627.51, e_exch*627.51, e_ind*627.51, e_disp*627.51))
+            output.write('\n{:>15} {:>15.4f} {:>15.4f} {:>15.4f} {:>15.4f} {:>15.4f}\n'.format(count, e_int*au_to_kcal, e_elst*au_to_kcal, e_exch*au_to_kcal, e_ind*au_to_kcal, e_disp*au_to_kcal))
             count = count+1
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()

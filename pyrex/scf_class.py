@@ -1,3 +1,7 @@
+"""
+Base class to run SCF calculations
+"""
+
 import numpy as np
 import psi4
 
@@ -8,6 +12,9 @@ class scf_class(object):
         self.outfile = outfile
 
     def psi4_scf(self, geometries):
+        """
+        Function to run SCF along IRC using PSI4, returns array of energies at each geometry. 
+        """
         output = open(self.outfile, "a")
         output.write('\n\n--Reaction Energy--\n')
         output.write('\n-------------------------------------------------------------------------------------')
@@ -41,6 +48,9 @@ class scf_class(object):
         return energies, wavefunctions
 
     def opt(self, label, natoms, geom):
+        """
+        Optimizes individual fragments for strain energy calculations.
+        """
         output = open(self.outfile, "a")
         frag = ""
         geom = geom.split('\n')[:(natoms+2)]
