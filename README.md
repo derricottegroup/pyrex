@@ -1,6 +1,6 @@
 <p align="center">
 <br>
-<img src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=200>
+<img src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=500>
 <br>
 </p>
 
