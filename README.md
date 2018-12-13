@@ -1,5 +1,5 @@
 <p align="left">
-<img src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=500>
+<img src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=350>
 </p>
 
 #### Code Authors: Derricotte Research Group
