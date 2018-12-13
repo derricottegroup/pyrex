@@ -28,6 +28,12 @@ import sys
 
 input_file = ""
 
+
+json_data=open("json_example.json").read()
+
+data = json.loads(json_data)
+print(data["molecule"]["fragments"][0])
+
 if len(sys.argv) == 1:
     input_file = "pyrex_input.dat"
 if len(sys.argv) > 1:
@@ -51,26 +57,26 @@ irc = []
 
 atom_symbols = []
 
-do_frag = user_values['do_frag']
-do_polarization = user_values['do_polarization']
-do_sapt = user_values['do_sapt']
-do_eda = user_values['do_eda']
+do_frag = data["pyrex"]["do_frag"]
+do_polarization = data["pyrex"]["do_polarization"]
+do_sapt = data["pyrex"]["do_sapt"]
+do_eda = data["pyrex"]["do_eda"]
 
 print(do_polarization)
 #charge_A = 0 #Specify total charge on Monomer B
 if(do_frag==True):
-    r_charge_A = user_values['r_charge_A']
-    r_mult_A = user_values['r_mult_A'] #Specify multiplicity on Monomer B
-    p_charge_A = user_values['p_charge_A']
-    p_mult_A = user_values['p_mult_A'] #Specify multiplicity on Monomer B
-    reactant_frag_A = user_values['reactant_Frag_A']
-    product_frag_A = user_values['product_Frag_A']
-    r_charge_B = user_values['r_charge_B'] #Specify total charge on Monomer B
-    r_mult_B = user_values['r_mult_B'] #Specify multiplicity on Monomer B
-    p_charge_B = user_values['p_charge_B'] #Specify total charge on Monomer B
-    p_mult_B = user_values['p_mult_B'] #Specify multiplicity on Monomer B
-    reactant_frag_B = user_values['reactant_Frag_B']
-    product_frag_B = user_values['product_Frag_B']
+    r_charge_A = data["molecule"]["fragment_charges"][0]
+    r_mult_A = data["molecule"]["fragment_multiplicities"][0] #Multiplicity on Monomer A
+    p_charge_A = data["molecule"]["fragment_charges"][0]
+    p_mult_A = data["molecule"]["fragment_multiplicities"][0] #Multiplicity on Monomer A
+    reactant_frag_A = data["molecule"]["fragments"][0]
+    product_frag_A = data["molecule"]["fragments"][0]
+    r_charge_B = data["molecule"]["fragment_charges"][1] #Specify total charge on Monomer B
+    r_mult_B = data["molecule"]["fragment_multiplicities"][1] #Multiplicity on Monomer B
+    p_charge_B = data["molecule"]["fragment_charges"][1] #Specify total charge on Monomer B
+    p_mult_B = data["molecule"]["fragment_multiplicities"][1]#Multiplicity on Monomer B
+    reactant_frag_B = data["molecule"]["fragments"][1]
+    product_frag_B = data["molecule"]["fragments"][1]
     r_natoms_A = len(reactant_frag_A)
     r_natoms_B = len(reactant_frag_B)
     p_natoms_A = len(product_frag_A)
@@ -85,14 +91,14 @@ else:
     natoms_A = None
     natoms_B = None
 
-charge_dimer = user_values['charge_dimer'] #Specify total charge on the supermolecular complex
-mult_dimer = user_values['mult_dimer'] #Specify multiplicity of the supermolecular complex
+charge_dimer = data["molecule"]["molecular_charge"] #Specify total charge on the supermolecular complex
+mult_dimer = data["molecule"]["molecular_multiplicity"] #Specify multiplicity of the supermolecular complex
 
 #charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
-irc_step_size = user_values['irc_step_size'] #in units au*amu^(1/2), Psi4 default is 0.2
-method = user_values['method']
-sapt_method = user_values['sapt_method']
-basis = user_values['basis']
+irc_step_size = data["pyrex"]["irc_stepsize"] #in units au*amu^(1/2), Psi4 default is 0.2
+method = data["model"]["method"]
+sapt_method = data["pyrex"]["sapt_method"]
+basis = data["model"]["basis"]
 
 level_of_theory = "%s/%s" %(method,basis) # Level of Theory for Total Energies
 
