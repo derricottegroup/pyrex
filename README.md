@@ -1,4 +1,5 @@
-<img aign="left" src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=350>
+<img aign="left" src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=350 hspace="40" vspace="6">
+
 **pyREX**(Python Reaction Energy eXtension), is a free open-sour
 ce implementation of reaction coordinate analysis techniques
  that interfaces with PSI4 ab-initio quantum chemistry softw
