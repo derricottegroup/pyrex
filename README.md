@@ -1,4 +1,4 @@
-<p align="center">
+<p align="left">
 <br>
 <img src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=500>
 <br>
