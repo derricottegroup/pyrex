@@ -163,7 +163,7 @@ t_sapt = PrettyTable(t_sapt_header)
 
 geomparser = Geomparser(natoms, charge_dimer, mult_dimer, geometries, coordinates)
 
-scf_instance = scf_class(level_of_theory, output_filename)
+scf_instance = scf_class(data, output_filename)
 
 geoms = geomparser.geombuilder()
 geomparser.atomic_distances()

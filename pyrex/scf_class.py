@@ -7,8 +7,8 @@ import psi4
 
 class scf_class(object):
 
-    def __init__(self,level_of_theory,outfile):
-        self.level_of_theory = level_of_theory
+    def __init__(self,data,outfile):
+        self.level_of_theory = "%s/%s" %(data["model"]["method"],data["model"]["basis"])
         self.outfile = outfile
 
     def psi4_scf(self, geometries):
@@ -28,6 +28,10 @@ class scf_class(object):
             output = open(self.outfile, "a")
             psi4.core.set_output_file("psi4_output/irc_%d.out" %count, False)
             geom = geometry
+            # Code Related to JSON testing #
+            #geom_parse = geom.split()
+            #del geom_parse[0:2] #Remove Charge and Multiplicity 
+            #print(geom_parse)
             geom += "symmetry c1"
             psi4.geometry(geom)
             psi4.set_options({"reference" : "rhf"})
