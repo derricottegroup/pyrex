@@ -1,4 +1,4 @@
-<img align="left" src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=300 hspace="40" vspace="6">
+<img align="left" src="logos/pyrex_logo_2019.png" alt="Pyrex logo" height=300>
 
 ### Overview
 
