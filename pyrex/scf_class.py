@@ -9,6 +9,7 @@ class scf_class(object):
 
     def __init__(self,data,outfile):
         self.level_of_theory = "%s/%s" %(data["model"]["method"],data["model"]["basis"])
+        self.basis = str(data["model"]["basis"])
         self.outfile = outfile
 
     def psi4_scf(self, geometries):
@@ -33,12 +34,15 @@ class scf_class(object):
             #del geom_parse[0:2] #Remove Charge and Multiplicity 
             #print(geom_parse)
             geom += "symmetry c1"
-            psi4.geometry(geom)
+            mol = psi4.geometry(geom)
             psi4.set_options({"reference" : "rhf"})
             #print("pyREX:Single Point Calculation on IRC Point %d" %(count))
             energy, wfn = psi4.energy(self.level_of_theory, return_wfn=True)
+            #wfn = psi4.core.Wavefunction.build(mol, self.basis)
             ndocc = wfn.doccpi()[0]
+            #print(ndocc)
             eps = np.array(wfn.epsilon_a())
+            #print(eps)
             homo_energy = eps[ndocc - 1]
             lumo_energy = eps[ndocc]
             energies.append(energy)

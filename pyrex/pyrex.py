@@ -32,7 +32,8 @@ input_file = ""
 json_data=open("json_example.json").read()
 
 data = json.loads(json_data)
-print(data["molecule"]["fragments"][0])
+if(data["molecule"]["fragments"]):
+	print("THIS LOGIC WORKS!!!")
 
 if len(sys.argv) == 1:
     input_file = "pyrex_input.dat"
