@@ -12,6 +12,7 @@ import numpy as np
 # Global Constants (Atomic Units conversion)
 fs_timeau = 41.34137314
 amu2au = 1822.8884850
+bohr2ang = 0.529177
 
 def JSON2XYZ(input_params):
     charge = input_params['molecule']['molecular_charge']
@@ -29,6 +30,29 @@ def JSON2XYZ(input_params):
                 geom += "   %f   " %geometry[(i + 2*i) + j]
     #print(geom)
     return geom
+
+def normal_mode_reader(input_params):
+    natoms = len(input_params['molecule']['symbols'])
+    normal_mode_file = open(input_params['dvv']['normal_mode_file'], 'r')
+    ts_vec = []
+    for line in normal_mode_file:
+        if("vibration %d" %input_params['dvv']['mode'] in line):
+            print(line)
+            line = next(normal_mode_file)
+            print(line)
+            for i in range(natoms):
+                trj = line.split()
+                print(trj)
+                trj = list(map(float, trj))
+                np_trj = np.array(trj)
+                print(np_trj)
+                print(bohr2ang)
+                np_trj_ang = bohr2ang*np_trj
+                print(np_trj_ang)
+                ts_vec.append(np_trj_ang)
+                line = next(normal_mode_file)
+    print(ts_vec)
+    return ts_vec
     
 class ToolKit():
     # Placeholder for Common Data
@@ -54,7 +78,7 @@ class ToolKit():
         self.prevgrad=0.0
         self.hessfn=''
         self.maxdispl=0.01
-        self.mode=4
+        self.mode=0
         self.dgrad=0.0
         self.npoints=25
         self.template=[]
@@ -65,7 +89,8 @@ class ToolKit():
         self.ComputeHessian()
         self.cons_vel = 0.04
         self.err_tol = 0.003
-        self.ts_vec = []
+        #self.ts_vec = []
+        self.normal_mode_file=''
     def printPars(self):
         stmp="  %13s: %s\n"
         ftmp="  %13s: %7.4f\n"
@@ -110,8 +135,13 @@ class ToolKit():
             self.cons_vel = input_params['dvv']['cons_vel']
         if input_params['dvv']['err_tol']:
             self.err_tol = input_params['dvv']['err_tol']
-        if input_params['dvv']['ts_vec']:
-            self.ts_vec = input_params['dvv']['ts_vec']
+        if input_params['dvv']['mode']:
+            self.mode = input_params['dvv']['mode']
+        if input_params['dvv']['normal_mode_file']:
+            self.normal_mode_file = input_params['dvv']['normal_mode_file']
+            print(input_params['dvv']['normal_mode_file'])
+            self.ts_vec = normal_mode_reader(input_params)
+            print(self.ts_vec) 
         if "irc" in input_params:
             if input_params['irc']['hessfile']:
                 self.hessfn = input_params['irc']['hessfile']
@@ -250,7 +280,7 @@ def printTrj(params, n):
 def md_main(params):
 #MD Options
     timestep =  0.120944                       # Time step for each iteration in time atomic units
-    max_md_step = 600                 # Number of MD iterations
+    max_md_step = 1000                 # Number of MD iterations
     #veloc0 = np.zeros((2,3))            # Numpy array (natoms,3) with inital velocities
     trajec = True                       # Boolean: Save all trajectories in a single xyz file 
     int_alg = 'veloc_verlet'            # Algorithm to use as integrator
@@ -263,12 +293,7 @@ def md_main(params):
     natoms = mol.natom()
     atom_mass = np.asarray([mol.mass(atom) for atom in range(natoms)])*amu2au
     veloc0 = np.zeros((natoms,3))            # Numpy array (natoms,3) with inital velocities
-    veloc = np.matrix([[0.00, 0.09, -0.02],
-                [-0.00, -0.08, 0.02],
-                [-0.02, 0.00, 0.00],
-                [0.09, 0.67, -0.16],
-                [0.27, -0.65, 0.11],
-                [-0.00, 0.00, 0.00]])
+    veloc = params.ts_vec
     print(veloc0)
     print(veloc)
     accel = forces/(atom_mass.reshape((natoms,1)))

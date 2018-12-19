@@ -68,6 +68,7 @@ def integrator(int_alg,timestep,pos,veloc,accel,molec,grad_method):
         vel_new =  veloc+0.5*timestep*accel
         pos_new =  pos+timestep*vel_new
         molec.set_geometry(psi4.core.Matrix.from_array(pos_new))
+        #molec.set_units(psi4.core.GeometryUnits.Bohr)
         E,force_new = get_forces(grad_method)
         accel_new = force_new/(atom_mass.reshape((natoms,1)))
         vel_new += 0*5*timestep*accel_new
@@ -91,7 +92,7 @@ def get_forces(grad_method):
             float E -- Energy of the system
             array force -- Numpy array (natoms,3) containing the forces acting on each atom of the system
     """
-
+   # psi4.core.set_output_file("psi4_out.dat", False)
     E,wfn = psi4.energy(grad_method,return_wfn=True)
     force = -np.asarray(psi4.gradient(grad_method,ref_wfn=wfn))
     return E,force
