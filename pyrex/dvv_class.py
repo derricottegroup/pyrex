@@ -46,10 +46,10 @@ def normal_mode_reader(input_params):
                 trj = list(map(float, trj))
                 np_trj = np.array(trj)
                 print(np_trj)
-                print(bohr2ang)
-                np_trj_ang = bohr2ang*np_trj
-                print(np_trj_ang)
-                ts_vec.append(np_trj_ang)
+                #print(bohr2ang)
+                #np_trj_ang = bohr2ang*np_trj
+                #print(np_trj_ang)
+                ts_vec.append(np_trj)
                 line = next(normal_mode_file)
     print(ts_vec)
     return ts_vec
@@ -91,6 +91,7 @@ class ToolKit():
         self.err_tol = 0.003
         #self.ts_vec = []
         self.normal_mode_file=''
+        #self.symbols=[]
     def printPars(self):
         stmp="  %13s: %s\n"
         ftmp="  %13s: %7.4f\n"
@@ -127,8 +128,11 @@ class ToolKit():
         if input_params['model']['method']:
             self.method = input_params['model']['method']
             self.level_of_theory = "%s/%s" %(self.method,self.basis)
-        if input_params['molecule']['symbols']: 
+        if input_params['molecule']['symbols']:
+            self.symbols = input_params['molecule']['symbols'] 
             self.natoms = len(input_params['molecule']['symbols'])
+            print(self.symbols)
+            print(self.natoms)
         if input_params['keywords']:
             self.keywords = input_params['keywords']
         if input_params['dvv']['cons_vel']:
@@ -279,8 +283,8 @@ def printTrj(params, n):
 
 def md_main(params):
 #MD Options
-    timestep =  0.120944                       # Time step for each iteration in time atomic units
-    max_md_step = 1000                 # Number of MD iterations
+    timestep =  1.0                       # Time step for each iteration in time atomic units
+    max_md_step = 400                 # Number of MD iterations
     #veloc0 = np.zeros((2,3))            # Numpy array (natoms,3) with inital velocities
     trajec = True                       # Boolean: Save all trajectories in a single xyz file 
     int_alg = 'veloc_verlet'            # Algorithm to use as integrator
@@ -318,7 +322,7 @@ def md_main(params):
             mol.save_xyz_file('md_step_'+str(i)+'.xyz',False)
     
         # Updating positions velocities and accelerations using Velocity Verlet Integrator
-        pos_new,vel_new,accel_new,energy_new = md_helper.integrator(int_alg,timestep,pos,veloc,accel,mol,params.level_of_theory)
+        pos_new,vel_new,accel_new,energy_new = md_helper.integrator(int_alg,timestep,pos,veloc,accel,mol,params.level_of_theory,params.symbols)
         if(i>3):
             # Compute Displacement point x(prime) eq 6. in paper
             print(len(pos_vec))
@@ -329,7 +333,7 @@ def md_main(params):
             i_minus_one = i-2 #Had to offset these since the loop starts at 1.
             print(i-2)
             print(i-1)
-            pos_disp = pos_vec[i_minus_two] + vel_vec[i_minus_two]*(time_vec[i_minus_one]+ timestep) + 0.5*accel_vec[i_minus_two]*(time_vec[i_minus_one] + timestep)**2.0
+            pos_disp = pos_vec[i_minus_two] + vel_vec[i_minus_two]*(time_vec[i_minus_one]+ timestep) + 0.5*accel_vec[i_minus_two]*((time_vec[i_minus_one] + timestep)**2.0)
             disp = pos_disp - pos # Error Estimate
             disp_norm = np.linalg.norm(disp)
             disp_matrix = np.asarray(disp)
@@ -340,7 +344,7 @@ def md_main(params):
             else:
                 err_est = max_disp
             # Update timestep based on error estimation
-            time_new = timestep*(params.err_tol/err_est)**(1.0/3.0)
+            time_new = timestep*((params.err_tol/err_est)**(1.0/3.0))
             print("New Timestep = %f" %time_new)
             timestep = time_new
             pos = pos_new

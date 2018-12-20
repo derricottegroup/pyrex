@@ -17,6 +17,7 @@ import os
 
 # Converting Atomic Mass Unit (amu) to atomic units (au)
 amu2au = 1822.8884850
+bohr2ang = 0.529177
 
 def md_trajectories(max_md_step):
     """ Creates single .xyz file with MD Trajectories with all points.
@@ -36,7 +37,7 @@ def md_trajectories(max_md_step):
             outfile.write(infile.read())
     os.system('rm md_step*')
 
-def integrator(int_alg,timestep,pos,veloc,accel,molec,grad_method):
+def integrator(int_alg,timestep,pos,veloc,accel,molec,grad_method,symbols):
     """ Selects the type of integration algorithm to propagate the trajectories
         Only velocity Verlet implemented (date: 05/23/17 - LAC)
 
@@ -65,13 +66,28 @@ def integrator(int_alg,timestep,pos,veloc,accel,molec,grad_method):
 
     # Velocity Verlet Integrator
     if int_alg=='veloc_verlet':
-        vel_new =  veloc+0.5*timestep*accel
-        pos_new =  pos+timestep*vel_new
+        #vel_new =  veloc+0.5*timestep*accel
+        pos = np.array(pos)
+        veloc = np.array(veloc)
+        accel = np.array(accel)
+        pos_new =  pos + timestep*veloc + 0.5*accel*(timestep**2.0)
+        geom_string = "\n%d %d\n" %(molec.molecular_charge(), molec.multiplicity())
+        for i in range(natoms):
+            print(symbols)
+            geom_string += "%s  " %symbols[i]
+            for j in range(3):
+                if(j==2):
+                    geom_string += "   %f   \n" %pos_new[i][j]
+                else:
+                    geom_string += "   %f   " %pos_new[i][j]
         molec.set_geometry(psi4.core.Matrix.from_array(pos_new))
         #molec.set_units(psi4.core.GeometryUnits.Bohr)
+        geom_string += "symmetry c1\n"
+        geom_string += "units bohr"
+        psi4.geometry(geom_string)
         E,force_new = get_forces(grad_method)
         accel_new = force_new/(atom_mass.reshape((natoms,1)))
-        vel_new += 0*5*timestep*accel_new
+        vel_new = veloc + 0.5*(accel + accel_new)*timestep
     return pos_new,vel_new,accel_new,E
 
 def damp_velocity(velocity, params):
@@ -92,7 +108,8 @@ def get_forces(grad_method):
             float E -- Energy of the system
             array force -- Numpy array (natoms,3) containing the forces acting on each atom of the system
     """
-   # psi4.core.set_output_file("psi4_out.dat", False)
+    psi4.core.set_output_file("psi4_out.dat", False)
+    #psi4.set_options({"mom_start" : 6})
     E,wfn = psi4.energy(grad_method,return_wfn=True)
     force = -np.asarray(psi4.gradient(grad_method,ref_wfn=wfn))
     return E,force
