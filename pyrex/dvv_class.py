@@ -13,6 +13,7 @@ import numpy as np
 fs_timeau = 41.34137314
 amu2au = 1822.8884850
 bohr2ang = 0.529177
+wave2bohr = 4.5563353e-6
 
 def JSON2XYZ(input_params):
     charge = input_params['molecule']['molecular_charge']
@@ -86,7 +87,7 @@ class ToolKit():
         self.tolerance=1.0e-04
         self.orcacmd='UNDEFINED'
         self.ReadInput(name)
-        self.ComputeHessian()
+        #self.ComputeHessian()
         self.cons_vel = 0.04
         self.err_tol = 0.003
         #self.ts_vec = []
@@ -131,8 +132,8 @@ class ToolKit():
         if input_params['molecule']['symbols']:
             self.symbols = input_params['molecule']['symbols'] 
             self.natoms = len(input_params['molecule']['symbols'])
-            print(self.symbols)
-            print(self.natoms)
+            #print(self.symbols)
+            #print(self.natoms)
         if input_params['keywords']:
             self.keywords = input_params['keywords']
         if input_params['dvv']['cons_vel']:
@@ -141,6 +142,8 @@ class ToolKit():
             self.err_tol = input_params['dvv']['err_tol']
         if input_params['dvv']['mode']:
             self.mode = input_params['dvv']['mode']
+        if input_params['dvv']['mode_freq']:
+            self.mode_freq = input_params['dvv']['mode_freq']
         if input_params['dvv']['normal_mode_file']:
             self.normal_mode_file = input_params['dvv']['normal_mode_file']
             print(input_params['dvv']['normal_mode_file'])
@@ -283,8 +286,8 @@ def printTrj(params, n):
 
 def md_main(params):
 #MD Options
-    timestep =  1.0                       # Time step for each iteration in time atomic units
-    max_md_step = 400                 # Number of MD iterations
+    timestep =  0.025                       # Time step for each iteration in time atomic units
+    max_md_step = 1200                 # Number of MD iterations
     #veloc0 = np.zeros((2,3))            # Numpy array (natoms,3) with inital velocities
     trajec = True                       # Boolean: Save all trajectories in a single xyz file 
     int_alg = 'veloc_verlet'            # Algorithm to use as integrator
@@ -297,13 +300,14 @@ def md_main(params):
     natoms = mol.natom()
     atom_mass = np.asarray([mol.mass(atom) for atom in range(natoms)])*amu2au
     veloc0 = np.zeros((natoms,3))            # Numpy array (natoms,3) with inital velocities
-    veloc = params.ts_vec
+    veloc = params.ts_vec # Bohr
     print(veloc0)
     print(veloc)
     accel = forces/(atom_mass.reshape((natoms,1)))
 
     # MD Loop
-    pos = np.asarray(mol.geometry())
+    pos = np.asarray(mol.geometry()) #Angstrom
+    #print(pos)
 
     # Save energy of each iteration on md_energy file
     md_energy = open('md_energy.dat','w')
@@ -314,6 +318,8 @@ def md_main(params):
     vel_vec = []
     accel_vec = []
     energy_vec = []
+    energy_new = 0.0
+    total_progress = 0.0
     time_vec = []
     for i in range(1,max_md_step+1):
         # Saving energies and trajectory points
@@ -322,33 +328,52 @@ def md_main(params):
             mol.save_xyz_file('md_step_'+str(i)+'.xyz',False)
     
         # Updating positions velocities and accelerations using Velocity Verlet Integrator
-        pos_new,vel_new,accel_new,energy_new = md_helper.integrator(int_alg,timestep,pos,veloc,accel,mol,params.level_of_theory,params.symbols)
+        i_minus_two = i-3 #Had to offset these since the loop starts at 1.
+        i_minus_one = i-2 #Had to offset these since the loop starts at 1.
+        print ("MD RUN %d" %i)
+        if(i>=2):
+            print(energy_new)
+            print(energy_vec[i_minus_two])
+            del_E = energy_new - energy_vec[i_minus_two]
+            step_length = np.sqrt(np.abs((2.0*del_E)/(params.mode_freq*wave2bohr)))
+            total_progress += step_length
+            print("Step Length %.6f" %step_length)
+            print("Total Progress %.6f" %total_progress)
+            if(energy_new > energy_vec[i_minus_two]):
+                opt = True
+                print("NEW ENERGY is GREATER!")
+                veloc = veloc0
+        pos_new,vel_new,accel_new,energy_new = md_helper.integrator(int_alg,timestep,pos,veloc,accel,mol,params.level_of_theory,params.symbols,opt)
         if(i>3):
             # Compute Displacement point x(prime) eq 6. in paper
-            print(len(pos_vec))
-            print(len(vel_vec))
-            print(len(accel_vec))
-            print(len(time_vec))
-            i_minus_two = i-3 #Had to offset these since the loop starts at 1. 
-            i_minus_one = i-2 #Had to offset these since the loop starts at 1.
+            #print(len(pos_vec))
+            #print(len(vel_vec))
+            #print(len(accel_vec))
+            #print(len(time_vec))
+            #i_minus_two = i-3 #Had to offset these since the loop starts at 1. 
+            #i_minus_one = i-2 #Had to offset these since the loop starts at 1.
             print(i-2)
             print(i-1)
             pos_disp = pos_vec[i_minus_two] + vel_vec[i_minus_two]*(time_vec[i_minus_one]+ timestep) + 0.5*accel_vec[i_minus_two]*((time_vec[i_minus_one] + timestep)**2.0)
-            disp = pos_disp - pos # Error Estimate
+            disp = pos_new - pos_disp # Error Estimate
             disp_norm = np.linalg.norm(disp)
-            disp_matrix = np.asarray(disp)
+            disp_matrix = np.abs(np.asarray(disp))
             max_disp = disp_matrix.max()
             err_est = 0.0
-            if(disp_norm > max_disp):
+            if(np.abs(disp_norm) > max_disp):
                 err_est = disp_norm
             else:
                 err_est = max_disp
             # Update timestep based on error estimation
             time_new = timestep*((params.err_tol/err_est)**(1.0/3.0))
-            print("New Timestep = %f" %time_new)
-            timestep = time_new
+            timestep = min(time_new, 1.0)
+            print(timestep)
+            timestep = max(timestep, 0.025)
+            print(timestep)
+            print("New Timestep = %f" %timestep)
             pos = pos_new
-            veloc = md_helper.damp_velocity(vel_new, params)
+            if (not opt):
+                veloc = md_helper.damp_velocity(vel_new, params)
             accel = accel_new
             energy = energy_new
             pos_vec.append(pos)
@@ -375,5 +400,7 @@ def md_main(params):
     print(natoms)
 
 inpname = sys.argv[1]
+print("starting....")
 params=ToolKit(inpname)
+print("params, read in")
 md_main(params)
