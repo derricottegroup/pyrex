@@ -34,6 +34,7 @@ def JSON2XYZ(input_params):
 
 def normal_mode_reader(input_params):
     natoms = len(input_params['molecule']['symbols'])
+    direction = input_params['dvv']['direction']
     normal_mode_file = open(input_params['dvv']['normal_mode_file'], 'r')
     ts_vec = []
     for line in normal_mode_file:
@@ -50,7 +51,10 @@ def normal_mode_reader(input_params):
                 #print(bohr2ang)
                 #np_trj_ang = bohr2ang*np_trj
                 #print(np_trj_ang)
-                ts_vec.append(np_trj)
+                if(direction=='backward'):
+                    ts_vec.append(-1.0*np_trj)
+                else:
+                    ts_vec.append(np_trj)
                 line = next(normal_mode_file)
     print(ts_vec)
     return ts_vec
@@ -142,6 +146,8 @@ class ToolKit():
             self.err_tol = input_params['dvv']['err_tol']
         if input_params['dvv']['e_conv']:
             self.e_conv = input_params['dvv']['e_conv']
+        if input_params['dvv']['direction']:
+            self.direction = input_params['dvv']['direction']
         if input_params['dvv']['mode']:
             self.mode = input_params['dvv']['mode']
         if input_params['dvv']['mode_freq']:
