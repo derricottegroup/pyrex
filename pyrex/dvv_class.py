@@ -197,7 +197,7 @@ class ToolKit():
    #                 geom += "   %f   \n" %geometry[(i + 2*i) + j]
    #             else:
    #                 geom += "   %f   " %geometry[(i + 2*i) + j]
-   #     self.geom = geom	
+   #     self.geom = geom   
 
     def ComputeHessian(self):
         # Use PSI4 to calculate Hessian matrix
@@ -321,7 +321,9 @@ def md_main(params):
     energy_new = 0.0
     total_progress = 0.0
     time_vec = []
-    for i in range(1,max_md_step+1):
+    i = 1
+    energy_diff = 1.0
+    while(np.abs(energy_diff) > 1.0e-8):
         # Saving energies and trajectory points
         md_energy.write('{0:>3d}\t\t\t{1:10.8f}\n'.format(i,energy))
         if trajec:
@@ -331,6 +333,9 @@ def md_main(params):
         i_minus_two = i-3 #Had to offset these since the loop starts at 1.
         i_minus_one = i-2 #Had to offset these since the loop starts at 1.
         print ("MD RUN %d" %i)
+        if (i > 20):
+            energy_diff = energy_new - energy_vec[i_minus_two]
+            print("energy Diff = %.12f" %energy_diff)
         if(i>=2):
             print(energy_new)
             print(energy_vec[i_minus_two])
@@ -381,6 +386,7 @@ def md_main(params):
             accel_vec.append(accel)
             energy_vec.append(energy)
             time_vec.append(timestep)
+            i = i+1
         else:
             pos = pos_new
             veloc = md_helper.damp_velocity(vel_new, params)
@@ -391,9 +397,10 @@ def md_main(params):
             accel_vec.append(accel)
             energy_vec.append(energy)
             time_vec.append(timestep)
+            i = i+1
     md_energy.close()
     if trajec:
-        md_helper.md_trajectories(max_md_step)
+        md_helper.md_trajectories(i-1)
     print("Done with Molecular Dynamics Program!")
     print(energy)
     print(forces)
