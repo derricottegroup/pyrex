@@ -140,6 +140,8 @@ class ToolKit():
             self.cons_vel = input_params['dvv']['cons_vel']
         if input_params['dvv']['err_tol']:
             self.err_tol = input_params['dvv']['err_tol']
+        if input_params['dvv']['e_conv']:
+            self.e_conv = input_params['dvv']['e_conv']
         if input_params['dvv']['mode']:
             self.mode = input_params['dvv']['mode']
         if input_params['dvv']['mode_freq']:
@@ -323,7 +325,7 @@ def md_main(params):
     time_vec = []
     i = 1
     energy_diff = 1.0
-    while(np.abs(energy_diff) > 1.0e-8):
+    while(np.abs(energy_diff) > params.e_conv):
         # Saving energies and trajectory points
         md_energy.write('{0:>3d}\t\t\t{1:10.8f}\n'.format(i,energy))
         if trajec:
