@@ -91,9 +91,9 @@ class ToolKit():
         self.tolerance=1.0e-04
         self.orcacmd='UNDEFINED'
         self.ReadInput(name)
-        #self.ComputeHessian()
-        self.cons_vel = 0.04
-        self.err_tol = 0.003
+        self.ComputeHessian()
+        #self.cons_vel = 0.04
+        #self.err_tol = 0.003
         #self.ts_vec = []
         self.normal_mode_file=''
         #self.symbols=[]
@@ -210,15 +210,26 @@ class ToolKit():
     def ComputeHessian(self):
         # Use PSI4 to calculate Hessian matrix
         psi4.core.set_output_file("hessian.out", False)
-        psi4.geometry(self.geometry)
+        mol = psi4.geometry(self.geometry)
         #print(self.keywords)
         psi4.set_options(self.keywords)
         H = psi4.hessian(self.method)
         Hess = np.array(H)
+        Hess_mw = np.zeros((self.natoms*3, self.natoms*3))
+        # Mass Weight Hessian
+        for i in range(self.natoms):
+            for j in range(self.natoms):
+                Hess_mw[i][j] = Hess[i][j]/(np.sqrt(mol.mass(int(i/3))*mol.mass(int(j/3))))
+        eigvals , eigvec = np.linalg.eig(Hess_mw)
+        print(mol.mass(1))
+        print("Hessian Size")
         print(Hess.shape)
+        print("done")
+        #print(Hess.shape)
         self.displacement = Hess[:,self.mode]
-        print(self.displacement.shape)
-        self.grad = np.zeros(3*self.natoms) 
+        #print(self.displacement.shape)
+        self.grad = np.zeros(3*self.natoms)
+        self.min_eigval = np.amin(eigvals) 
 
 
 ##########################
@@ -308,7 +319,7 @@ def md_main(params):
     natoms = mol.natom()
     atom_mass = np.asarray([mol.mass(atom) for atom in range(natoms)])*amu2au
     veloc0 = np.zeros((natoms,3))            # Numpy array (natoms,3) with inital velocities
-    veloc = params.ts_vec # Bohr
+    veloc = md_helper.damp_velocity(np.asarray(params.ts_vec), params) # Bohr
     print(veloc0)
     print(veloc)
     accel = forces/(atom_mass.reshape((natoms,1)))
@@ -327,6 +338,7 @@ def md_main(params):
     accel_vec = []
     energy_vec = []
     energy_new = 0.0
+    opt_mode_count = 0
     total_progress = 0.0
     time_vec = []
     i = 1
@@ -344,17 +356,19 @@ def md_main(params):
         if (i > 20):
             energy_diff = energy_new - energy_vec[i_minus_two]
             print("energy Diff = %.12f" %energy_diff)
+            print("Optimization started at Step %d" %opt_mode_count)
         if(i>=2):
             print(energy_new)
             print(energy_vec[i_minus_two])
             del_E = energy_new - energy_vec[i_minus_two]
-            step_length = np.sqrt(np.abs((2.0*del_E)/(params.mode_freq*wave2bohr)))
+            step_length = np.sqrt(np.abs((2.0*del_E)/(params.min_eigval)))
             total_progress += step_length
             print("Step Length %.6f" %step_length)
             print("Total Progress %.6f" %total_progress)
             if(energy_new > energy_vec[i_minus_two]):
                 opt = True
                 print("NEW ENERGY is GREATER!")
+                opt_mode_count = i
                 veloc = veloc0
         pos_new,vel_new,accel_new,energy_new = md_helper.integrator(int_alg,timestep,pos,veloc,accel,mol,params.level_of_theory,params.symbols,opt)
         if(i>3):
