@@ -141,6 +141,10 @@ def grad_calc(params,current_geom, mol):
             params(self) -- contains initialized shared parameters.
             current_geom(np array) -- Matrix of size natoms x 3 containing the geometry.
             mol(psi4.Molecule) -- Psi4 molecule object containing the current molecule.
+        Returns:
+        -------
+            grad_mw(np array) -- Mass weighted gradient matrix of size natoms x 3.
+            E(float) -- single-point energy from Psi4 calculation. 
     """
     mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
     grad_method = "%s/%s" %(params.method,params.basis)
