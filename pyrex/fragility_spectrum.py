@@ -90,14 +90,18 @@ for geom in geoms:
     H = compute_hessian(params,geom)
     #Grab Square blocks of Hessian
     increment = 0
-    fragilities = []
+    hess_traces = []
     for z in range(params.natoms):
         H_atom = np.zeros((3,3))
         for i in range(3):
             for j in range(3):
               H_atom[i][j] = H[i+increment][j+increment]
         print("Reaction Fragility for %s atom" %params.symbols[z])
-        fragility = np.trace(H_atom)
-        print(fragility)
+        hess_trace = np.trace(H_atom)
+        print(hess_trace)
         increment += 3 
     count += 1 
+
+#TODO This is almost done. Just have to take the numerical derivatives of the traces in order to
+#     get the fragility spectrum. This process is very slow, wonder if Hessian updating can 
+#     increase efficiency? (Potential Chem. Phys. Lett./IJQC paper idea!)
