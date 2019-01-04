@@ -15,6 +15,7 @@ import os
 from header import *
 from input_parser import *
 import calctools
+import random
 import re
 import datetime
 import json
@@ -37,12 +38,25 @@ if len(sys.argv) == 1:
 if len(sys.argv) > 1:
     input_file = sys.argv[1]
 
+quote_file = open("quotes.json").read()
+quotes = json.loads(quote_file)
+
 json_data=open(input_file).read()
 
 data = json.loads(json_data)
 
+# Load Output file
+output_filename = "pyrex_output.dat"
+header(output_filename, json_data)
+
+
 if(data["irc"]):
-    euler.irc()
+    euler.irc(output_filename)
+output = open(output_filename, "a")
+output.write("\n***pyREX Exiting Successfully***\n")
+rand_int = random.randint(0, len(quotes["quotes"])-1)
+print(rand_int)
+output.write(quotes["quotes"][rand_int])
 
 print(input_file)
 
@@ -53,8 +67,8 @@ if(os.path.isdir('psi4_output')):
 else:
     os.makedirs("psi4_output")
 
-output_filename = "pyrex_output.dat"
-header(output_filename)
+#output_filename = "pyrex_output.dat"
+#header(output_filename)
 irc_filename = user_values['irc_filename']
 full_irc = open(irc_filename, "r")
 #output = open(output_filename, "w+")

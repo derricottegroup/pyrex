@@ -1,13 +1,13 @@
 import os
 import datetime
 
-def header(outfile):
+def header(outfile,json_data):
     output = open(outfile, 'w+')
     header ='''
 -----------------------------------------------------------------------
      pyREX: Python Reaction Energy eXtension for Quantum Chemistry
 
-                         pyREX beta 0.1
+                         pyREX beta 0.2
 
                       Wallace D. Derricotte
                     Derricotte Research Group
@@ -22,4 +22,9 @@ def header(outfile):
     output.write(datetime_now)
     output.write("\n")
     output.write("Process ID: %d" %pid)
+
+    # Write input
+    output.write("\n\n======================> JSON Input File <======================\n\n")
+    output.write(json_data)
+    output.write("\n\n===============================================================\n\n")
     output.close()

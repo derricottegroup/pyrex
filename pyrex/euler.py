@@ -233,7 +233,7 @@ def euler_step(natoms,current_geom,grad,step_size,mol):
     current_geom = un_mass_weight_geom(natoms, current_geom,mol)
     return current_geom
 
-def irc():
+def irc(output_file):
     """
         This function runs the irc procedure
     """
@@ -250,6 +250,12 @@ def irc():
     energies = []
     current_geom = np.asarray(mol.geometry())
     #print(current_geom)
+    output = open(output_file, "a")
+    output.write('\n\n--Intrinsic Reaction Coordinate (%s)--\n' %(params.direction))
+    output.write('\n-------------------------------------------------------------------------------------')
+    output.write('\n{:>20} {:>20} {:>20} {:>20}\n'.format('Coordinate', 'E', 'Delta E', 'Gradient Norm'))
+    output.write('-------------------------------------------------------------------------------------\n')
+    output.close()
     while (steps <= max_steps):
         mol.save_xyz_file('euler_step_'+str(steps)+'.xyz',False)
         if(steps==0):
@@ -258,14 +264,29 @@ def irc():
             grad, E  = grad_calc(params, current_geom, mol)
     
         current_geom = euler_step(params.natoms, current_geom, grad,params.step_size,mol)
-        if(steps > 100):
+        if(steps > 5):
             if(E>previous_E):
-                print("pyREX: New energy is greater! Likely near a minimum!")
+                #print("pyREX: New energy is greater! Likely near a minimum!")
                 break
         steps = steps + 1
+        del_E = E - previous_E
         previous_E = E
+        if(params.direction=="backward"):
+            coord = -1*steps*params.step_size
+        else:
+            coord = steps*params.step_size
+        print_step(output_file,coord, E, del_E, grad)
+    output = open(output_file, "a")
+    output.write('-------------------------------------------------------------------------------------\n')
+    output.close()
     with open('irc_%s.xyz' %params.direction,'w') as outfile:
         for i in range(steps):
             with open('euler_step_'+str(i)+'.xyz')as infile:
                 outfile.write(infile.read())
         os.system('rm euler_step*')
+
+def print_step(output_file, coord, energy, del_E, grad):
+    output = open(output_file, "a")
+    grad_norm = np.linalg.norm(grad)
+    output.write('\n{:>20.2f} {:>20.7f} {:>20.7f} {:>20.7f}\n'.format(coord, energy, del_E, grad_norm)) 
+    output.close()  
