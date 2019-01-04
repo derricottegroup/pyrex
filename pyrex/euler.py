@@ -152,10 +152,10 @@ def grad_calc(params,current_geom, mol):
     psi4.set_options(params.keywords)
     E, wfn = psi4.energy(grad_method,return_wfn=True)
     grad = np.asarray(psi4.gradient(grad_method,ref_wfn=wfn))
-    grad_mw = mass_weight(params.natoms, grad)
+    grad_mw = mass_weight(params.natoms, grad, mol)
     return grad_mw, E
 
-def mass_weight(natoms,grad):
+def mass_weight(natoms,grad, mol):
     """
         Mass weights the given gradient
 
@@ -173,7 +173,7 @@ def mass_weight(natoms,grad):
             grad_mw[i][j] = grad[i][j]/np.sqrt(mol.mass(i))
     return grad_mw
 
-def mass_weight_geom(natoms,geom):
+def mass_weight_geom(natoms,geom,mol):
     """
         Mass weights the given coordinates
 
@@ -192,7 +192,7 @@ def mass_weight_geom(natoms,geom):
             coord_mw[i][j] = geom[i][j]*np.sqrt(mol.mass(i))
     return coord_mw
 
-def un_mass_weight_geom(natoms,geom_mw):
+def un_mass_weight_geom(natoms,geom_mw,mol):
     """
         Un-Mass weights the given coordinates. Displacements are done along the mass weighted
         coordinate and then un-mass-weighted prior to gradient calculations.
@@ -212,7 +212,7 @@ def un_mass_weight_geom(natoms,geom_mw):
             coord[i][j] = geom_mw[i][j]/np.sqrt(mol.mass(i))
     return coord
 
-def euler_step(natoms,current_geom,grad,step_size):
+def euler_step(natoms,current_geom,grad,step_size,mol):
     """
         Take a single Euler step along the gradient. The coordinates are first mass weighted prior
         to the Euler step and then un-mass-weighted for printing/gradient calculation. This 
@@ -227,42 +227,45 @@ def euler_step(natoms,current_geom,grad,step_size):
             the gradients in units amu^(1/2)*bohr.
             step_size(float) -- user provided IRC step size in units amu^(1/2)*bohr. 
     """
-    current_geom = mass_weight_geom(natoms, current_geom)
+    current_geom = mass_weight_geom(natoms, current_geom,mol)
     grad_norm = np.asarray(np.linalg.norm(grad))
     current_geom -= step_size*(grad/grad_norm)
-    current_geom = un_mass_weight_geom(natoms, current_geom)
+    current_geom = un_mass_weight_geom(natoms, current_geom,mol)
     return current_geom
 
-max_steps = 1000
-params = Params()
+def irc():
+    """
+        This function runs the irc procedure
+    """
+    max_steps = 1000
+    params = Params()
+    
+    mol = psi4.geometry(params.geometry)
+    print(mol)
+    starting_vec = np.asarray(params.ts_vec)
 
-mol = psi4.geometry(params.geometry)
-#grad, E = grad_calc(params)
-starting_vec = np.asarray(params.ts_vec)
-#print(starting_vec)
-steps = 0
-E = 0.0
-previous_E = 0.0
-energies = []
-current_geom = np.asarray(mol.geometry())
-#print(current_geom)
-while (steps <= max_steps):
-    mol.save_xyz_file('euler_step_'+str(steps)+'.xyz',False)
-    if(steps==0):
-        grad = mass_weight(params.natoms, starting_vec)
-        #grad = starting_vec
-    else:
-        grad, E  = grad_calc(params, current_geom, mol)
-
-    current_geom = euler_step(params.natoms, current_geom, grad,params.step_size)
-    if(steps > 100):
-        if(E>previous_E):
-            print("pyREX: New energy is greater! Likely near a minimum!")
-            break
-    steps = steps + 1
-    previous_E = E
-with open('irc_%s.xyz' %params.direction,'w') as outfile:
-    for i in range(steps):
-        with open('euler_step_'+str(i)+'.xyz')as infile:
-            outfile.write(infile.read())
-    os.system('rm euler_step*')
+    steps = 0
+    E = 0.0
+    previous_E = 0.0
+    energies = []
+    current_geom = np.asarray(mol.geometry())
+    #print(current_geom)
+    while (steps <= max_steps):
+        mol.save_xyz_file('euler_step_'+str(steps)+'.xyz',False)
+        if(steps==0):
+            grad = mass_weight(params.natoms, starting_vec, mol)
+        else:
+            grad, E  = grad_calc(params, current_geom, mol)
+    
+        current_geom = euler_step(params.natoms, current_geom, grad,params.step_size,mol)
+        if(steps > 100):
+            if(E>previous_E):
+                print("pyREX: New energy is greater! Likely near a minimum!")
+                break
+        steps = steps + 1
+        previous_E = E
+    with open('irc_%s.xyz' %params.direction,'w') as outfile:
+        for i in range(steps):
+            with open('euler_step_'+str(i)+'.xyz')as infile:
+                outfile.write(infile.read())
+        os.system('rm euler_step*')

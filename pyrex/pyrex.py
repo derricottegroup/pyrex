@@ -18,6 +18,7 @@ import calctools
 import re
 import datetime
 import json
+import euler
 from re_flux import *
 from scf_class import *
 from geomparser import *
@@ -28,17 +29,20 @@ import sys
 
 input_file = ""
 
-
-json_data=open("json_example.json").read()
-
-data = json.loads(json_data)
-if(data["molecule"]["fragments"]):
-	print("THIS LOGIC WORKS!!!")
+#if(data["molecule"]["fragments"]):
+#	print("THIS LOGIC WORKS!!!")
 
 if len(sys.argv) == 1:
     input_file = "pyrex_input.dat"
 if len(sys.argv) > 1:
-    input_file = sys.arv[1]
+    input_file = sys.argv[1]
+
+json_data=open(input_file).read()
+
+data = json.loads(json_data)
+
+if(data["irc"]):
+    euler.irc()
 
 print(input_file)
 
