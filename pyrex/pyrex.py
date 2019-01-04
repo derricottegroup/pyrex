@@ -39,6 +39,7 @@ class Params():
         self.do_sapt = False
         self.do_polarization = False
         self.do_eda = False
+        self.do_flux = False
         json_input = sys.argv[1]
         self.read_input(json_input)
         # Load Output file
@@ -48,11 +49,11 @@ class Params():
     def read_input(self, json_input):
         json_data=open(json_input).read()
         input_params = json.loads(json_data)
-        if input_params['molecule']['symbols']:
+        if 'molecular_charge' in input_params['molecule']:
             self.symbols = input_params['molecule']['symbols']
-        if input_params["molecule"]["molecular_charge"]:
+        if 'molecular_charge' in input_params["molecule"]:
             self.molecular_charge = int(input_params["molecule"]["molecular_charge"])
-        if input_params["molecule"]["molecular_multiplicity"]:
+        if 'molecular_multiplicity' in input_params["molecule"]:
             self.molecular_multiplicity = input_params["molecule"]["molecular_multiplicity"]
         if 'fragments' in input_params["molecule"]:
             self.frag_A = input_params["molecule"]["fragments"][0]
@@ -65,32 +66,34 @@ class Params():
         if 'fragment_multiplicities' in input_params["molecule"]:
             self.mult_A = input_params["molecule"]["fragment_multiplicities"][0]
             self.mult_B = input_params["molecule"]["fragment_multiplicities"][1]
-        if input_params['model']['basis']:
+        if 'basis' in input_params['model']:
             self.basis = input_params['model']['basis']
-        if input_params['model']['method']:
+        if 'method' in input_params['model']:
             self.method = input_params['model']['method']
             self.natoms = len(input_params['molecule']['symbols'])
-        if input_params['keywords']:
+        if 'keywords' in input_params:
             self.keywords = input_params['keywords']
         if 'irc' in input_params:
             self.do_irc = True
-        if input_params['pyrex']['do_energy']:
+        if 'do_energy' in input_params['pyrex']:
             self.do_energy = bool(input_params['pyrex']['do_energy'])
+        if 'do_flux' in input_params['pyrex']:
+            self.do_flux = bool(input_params['pyrex']['do_flux'])
         if 'energy_read' in input_params['pyrex']:
             self.energy_file = input_params['pyrex']['energy_read'] #TODO Implement this functionality
         if 'restart' in input_params['pyrex']:
             self.restart = bool(input_params['pyrex']['restart']) #TODO Implement this functionality
-        if input_params['pyrex']['do_frag']:
+        if 'do_frag' in input_params['pyrex']:
             self.do_frag = bool(input_params['pyrex']['do_frag'])
-        if input_params['pyrex']['do_sapt']:
+        if 'do_sapt' in input_params['pyrex']:
             self.do_sapt = bool(input_params['pyrex']['do_sapt'])
-        if input_params['pyrex']['do_polarization']:
+        if 'do_polarization' in input_params['pyrex']:
             self.do_polarization = bool(input_params['pyrex']['do_sapt'])
-        if input_params["pyrex"]["sapt_method"]:
+        if 'sapt_method' in input_params["pyrex"]:
             self.sapt_method = input_params["pyrex"]["sapt_method"]
-        if input_params['pyrex']['irc_stepsize']:
+        if 'irc_stepsize' in input_params['pyrex']:
             self.irc_stepsize = input_params['pyrex']['irc_stepsize']
-        if input_params['pyrex']['irc_filename']:
+        if 'irc_filename' in input_params['pyrex']:
             self.irc_filename = input_params['pyrex']['irc_filename']
             self.irc_grab()
 
@@ -225,6 +228,23 @@ if(params.do_energy):
     output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(coordinates[index_min], coordinates[index_max]))
     output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[index_max], coordinates[-1]))
 
+############################
+# Reaction Electronic Flux #
+############################
+
+# Grabbing chemical potential and calculating REF using re_flux class
+if(params.do_flux):
+    ref = re_flux()
+    potentials = np.array(ref.potential(wavefunctions))
+    reaction_electronic_flux = np.array(ref.electronic_flux(params.irc_stepsize))
+
+    flux_csv = open("flux.csv", "w+")
+    flux_csv.write("Coordinate,Flux\n")
+    for i in range(len(coordinates)):
+        flux_csv.write("%f, %f\n" %(coordinates[i], reaction_electronic_flux[i]))
+    flux_csv.close()
+
+
 ###########################
 # Reaction Work Integrals #
 ###########################
@@ -242,88 +262,6 @@ if(params.do_energy):
     output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Kcal/mol', W_1*627.51, W_2*627.51, W_3*627.51, W_4*627.51))
     output.write('\n-------------------------------------------------------------------------------------')
     output.close()
-
-#user_values = input_parser(input_file)
-#output_filename = "pyrex_output.dat"
-#header(output_filename)
-#irc_filename = user_values['irc_filename']
-#full_irc = open(irc_filename, "r")
-#output = open(output_filename, "w+")
-#irc = []
-
-#atom_symbols = []
-
-#do_frag = data["pyrex"]["do_frag"]
-#do_polarization = data["pyrex"]["do_polarization"]
-#do_sapt = data["pyrex"]["do_sapt"]
-#do_eda = data["pyrex"]["do_eda"]
-
-#print(do_polarization)
-#charge_A = 0 #Specify total charge on Monomer B
-#if(do_frag==True):
-#    r_charge_A = data["molecule"]["fragment_charges"][0]
-#    r_mult_A = data["molecule"]["fragment_multiplicities"][0] #Multiplicity on Monomer A
-#    p_charge_A = data["molecule"]["fragment_charges"][0]
-#    p_mult_A = data["molecule"]["fragment_multiplicities"][0] #Multiplicity on Monomer A
-#    reactant_frag_A = data["molecule"]["fragments"][0]
-#    product_frag_A = data["molecule"]["fragments"][0]
-#    r_charge_B = data["molecule"]["fragment_charges"][1] #Specify total charge on Monomer B
-#    r_mult_B = data["molecule"]["fragment_multiplicities"][1] #Multiplicity on Monomer B
-#    p_charge_B = data["molecule"]["fragment_charges"][1] #Specify total charge on Monomer B
-#    p_mult_B = data["molecule"]["fragment_multiplicities"][1]#Multiplicity on Monomer B
-#    reactant_frag_B = data["molecule"]["fragments"][1]
-#    product_frag_B = data["molecule"]["fragments"][1]
-#    r_natoms_A = len(reactant_frag_A)
-#    r_natoms_B = len(reactant_frag_B)
-#    p_natoms_A = len(product_frag_A)
-#    p_natoms_B = len(product_frag_B)
-#else:
-#    charge_A = None
-#    mult_A = None
-#    frag_A_atom_list = None
-#    charge_B = None
-#    mult_B = None
-#    frag_B_atom_list = None
-#    natoms_A = None
-#    natoms_B = None
-
-#charge_dimer = data["molecule"]["molecular_charge"] #Specify total charge on the supermolecular complex
-#mult_dimer = data["molecule"]["molecular_multiplicity"] #Specify multiplicity of the supermolecular complex
-
-#charge_mult = [charge_dimer,mult_dimer,charge_A,mult_A,charge_B,mult_B]
-#irc_step_size = data["pyrex"]["irc_stepsize"] #in units au*amu^(1/2), Psi4 default is 0.2
-#method = data["model"]["method"]
-#sapt_method = data["pyrex"]["sapt_method"]
-#basis = data["model"]["basis"]
-
-#level_of_theory = "%s/%s" %(params.method,params.basis) # Level of Theory for Total Energies
-
-
-# Grab number of atoms (natoms) from the top of the XYZ file.
-#natoms = int(full_irc.readline())
-#coordinates = []
-#geometries = []
-# Grab and store geometries from the IRC
-#for line in full_irc:
-#    if "Full IRC Point" in line:
-#        geom = []
-#        irc_num_line = line.split()
-#        irc_num = int(irc_num_line[3])
-#        for i in range(natoms):
-#            line = next(full_irc)
-#            geom.append(line.lstrip())
-#        irc.append((irc_num, geom))
-#        geometries.append(geom)
-#        coordinates.append(irc_num*irc_step_size)
-#TODO Store all coordinates in tuple array --> (,(dimer_geom,frag_a,frag_b),) prior to scf calls 
-#irc_energies = []
-reaction_force = []
-reaction_force_strain = []
-reaction_force_int = []
-reaction_force_elst = []
-reaction_force_exch = []
-reaction_force_ind = []
-reaction_force_disp = []
 
 strain_energies = []
 chemical_potentials = []
@@ -344,115 +282,25 @@ transfer_flux = []
 e_A = 0.0
 e_B = 0.0
 
-table_header = ['IRC Point', 'E', 'Delta E', 'Potential']
-
-t_pol_header = ['IRC Point', 'Del E', 'E_int', 'E_strain' ,'E_elst', 'E_pauli', 'E_orb']
-
-t_sapt_header = ['IRC Point', 'E_int', 'E_elst', 'E_exch', 'E_ind', 'E_disp']
-
-#TODO Incorporate the functions below into the main pyREX interface!
-#table_header = ['IRC Point', 'E', 'Delta E', 'Potential', 'Potential A', 'Potential B']
-t = PrettyTable(table_header)
-t_pol = PrettyTable(t_pol_header)
-t_sapt = PrettyTable(t_sapt_header)
-
-
-#geomparser = Geomparser(natoms, charge_dimer, mult_dimer, geometries, coordinates)
-
-#scf_instance = scf_class(data, output_filename)
-
-#geoms = geomparser.geombuilder()
-#geomparser.atomic_distances()
-
-#frag_geoms_no_ghost = geomparser.frag_no_ghost(charge_A, mult_A, frag_A_atom_list)
-
 if(params.do_sapt==True):
     r_sapt_geometries = geomparser.sapt_geombuilder(r_charge_A, r_mult_A, r_charge_B, r_mult_B, reactant_frag_A, reactant_frag_B)
     p_sapt_geometries = geomparser.sapt_geombuilder(p_charge_A, p_mult_A, p_charge_B, p_mult_B, product_frag_A, product_frag_B)
 
-#if(do_frag==True):
-#    r_iso_frag_A = geomparser.iso_frag(r_charge_A, r_mult_A, reactant_frag_A)
-#    r_iso_frag_B = geomparser.iso_frag(r_charge_B, r_mult_B, reactant_frag_B)
-#    p_iso_frag_A = geomparser.iso_frag(p_charge_A, p_mult_A, product_frag_A)
-#    p_iso_frag_B = geomparser.iso_frag(p_charge_B, p_mult_B, product_frag_B)
-#    r_e_A = scf_instance.opt("A", r_natoms_A, r_iso_frag_A[0])
-#    r_e_B = scf_instance.opt("B", r_natoms_B, r_iso_frag_B[0])
-#    #p_e_A = scf_instance.opt("A", p_natoms_A, p_iso_frag_A[-1])
-#    #p_e_B = scf_instance.opt("B", p_natoms_B, p_iso_frag_B[-1]) 
+#if(params.do_polarization==True):
+#    frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
+#    frag_B_geoms = geomparser.frag_ghost(charge_B, mult_B, frag_B_atom_list)
+#    energies_A, wavefunctions_A = scf_instance.psi4_scf(frag_A_geoms)
+#    energies_B, wavefunctions_B = scf_instance.psi4_scf(frag_B_geoms)
+#    nelec_A = wavefunctions_A[0].nalpha()
+#    nelec_B = wavefunctions_B[0].nalpha()
 
-#energies, wavefunctions = scf_instance.psi4_scf(geoms)
-#nelec = wavefunctions[0].nalpha()
-#
-#energy_csv = open("energy.csv", "w+")
-#energy_csv.write("Coordinate,Energy\n")
-#for i in range(len(coordinates)):
-#    energy_csv.write("%f, %f\n" %(coordinates[i], energies[i]))
-#energy_csv.close()
-#
-## Calculate Reaction Forces directly after scf
-#reaction_force_values = -1.0*np.gradient(energies,irc_step_size)
-#output = open(output_filename, "a")
-#output.write('\n\n--Reaction Force Analysis--\n')
-#output.write('\n-------------------------------------------------------------------------------------')
-#output.write('\n{:>20} {:>20} {:>20}\n'.format('IRC Point', 'F (Hartree)', 'F (kcal)'))
-#output.write('-------------------------------------------------------------------------------------\n')
-#
-#force_count = 0
-#for reaction_force in reaction_force_values:
-#    output.write('\n{:>20} {:>20.7f} {:>20.7f}\n'.format(force_count, reaction_force, reaction_force*627.51))
-#    force_count = force_count+1
-#output.write('-------------------------------------------------------------------------------------\n')
-#output.close()
-#
-#force_csv = open("force.csv", "w+")
-#force_csv.write("Coordinate,Force\n")
-#for i in range(len(coordinates)):
-#    force_csv.write("%f, %f\n" %(coordinates[i], reaction_force_values[i]))
-#force_csv.close()
-#
-#index_min = np.argmin(np.asarray(reaction_force_values))
-#print(reaction_force_values[index_min])
-#index_ts  = coordinates.index(0.0000)
-#index_max = np.argmax(np.asarray(reaction_force_values))
-#
-#output = open(output_filename, "a")
-#output.write('\n\n--Reaction Partitioning--\n')
-#output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], coordinates[index_min]))
-#output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(coordinates[index_min], coordinates[index_max]))
-#output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[index_max], coordinates[-1
-#]))
-
-#Calculate Reaction Work For Each Region
-#W_1 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, 0, index_min)
-#W_2 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_min, index_ts)
-#W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
-#W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force_values)-1)
-#
-#output = open(output_filename, "a")
-#output.write('\n\n--Reaction Works--\n')
-#output.write('\n-------------------------------------------------------------------------------------')
-#output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('Units', 'W_1', 'W_2', 'W_3', 'W_4'))
-#output.write('\n-------------------------------------------------------------------------------------')
-#output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Hartree', W_1, W_2, W_3, W_4))
-#output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Kcal/mol', W_1*627.51, W_2*627.51, W_3*627.51, W_4*627.51))
-#output.write('\n-------------------------------------------------------------------------------------')
-#output.close()
-
-if(params.do_polarization==True):
-    frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
-    frag_B_geoms = geomparser.frag_ghost(charge_B, mult_B, frag_B_atom_list)
-    energies_A, wavefunctions_A = scf_instance.psi4_scf(frag_A_geoms)
-    energies_B, wavefunctions_B = scf_instance.psi4_scf(frag_B_geoms)
-    nelec_A = wavefunctions_A[0].nalpha()
-    nelec_B = wavefunctions_B[0].nalpha()
-
-#r_del_E = [(energy - (r_e_A + r_e_B)) for energy in energies]
-#p_del_E = [(energy - (p_e_A + p_e_B)) for energy in energies]
-
-
-
+######################################################
+# Symmetry-Adapted Perturbation Theory Decomposition #
+######################################################
 
 if(params.do_sapt==True):
+    irc_step_size = params.irc_stepsize
+    coordinates = params.coordinates
     output = open(output_filename, "a")
     output.write('\n\n--SAPT Energy Decomposition (Region 1)--\n')
     output.close()
@@ -702,11 +550,11 @@ if(params.do_polarization==True):
 #output.write("%s\n" %t.get_string())
 #output.close()
 
-if(params.do_eda==True):
-    output = open(output_filename, "a")
-    output.write("\n\n--Energy Decomposition Analysis--\n\n")
-    output.write("%s\n" %t_pol.get_string())
-    output.close()
+#if(params.do_eda==True):
+#    output = open(output_filename, "a")
+#    output.write("\n\n--Energy Decomposition Analysis--\n\n")
+#    output.write("%s\n" %t_pol.get_string())
+#    output.close()
 
 #if(do_sapt==True):
 #    output = open(output_filename, "a")
