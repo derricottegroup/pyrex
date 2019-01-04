@@ -8,8 +8,8 @@ import psi4
 class scf_class(object):
 
     def __init__(self,data,outfile):
-        self.level_of_theory = "%s/%s" %(data["model"]["method"],data["model"]["basis"])
-        self.basis = str(data["model"]["basis"])
+        self.level_of_theory = "%s/%s" %(data.method,data.basis)
+        self.basis = str(data.basis)
         self.outfile = outfile
 
     def psi4_scf(self, geometries):
