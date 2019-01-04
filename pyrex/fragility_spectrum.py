@@ -116,14 +116,17 @@ def bofill_hess_update(hess, del_g, del_x):
 def fragility_spec(output_file):
     params = Params()
     geoms = params.geoms
+    output = open(output_file, "a")
+    output.write("\nReaction Fragility Spectrum")
+    output.write("\n-----------------------------------")
+    output.close()
     count = 0
     hess_update_track = 0
     hess_traces = []
-    output = open(output_file, "a")
     grad_method = "%s/%s" %(params.method,params.basis)
     for geom in geoms:
+        output = open(output_file, "a")
         output.write("\nCalculating Hessian Trace for IRC Point %.3f\n" %params.coordinates[count])
-        output.close()
        # if(hess_update_track==0 or params.coordinates[count]==0.0):
         #print("prior to Hessian calc")
         H = compute_hessian(params,geom)
@@ -158,10 +161,11 @@ def fragility_spec(output_file):
             output.write("\nHessian Trace for %s%d atom\n" %(params.symbols[z],z))
             hess_trace = np.trace(H_atom)
             hess_trace_atoms.append(hess_trace)
-            #print(hess_trace)
+            output.write("%.5f\n" %hess_trace)
             increment += 3 
         hess_traces.append(hess_trace_atoms)
         count += 1
+        output.close()
         #hess_update_track +=1
         #if(hess_update_track==2):
         #    hess_update_track = 0
