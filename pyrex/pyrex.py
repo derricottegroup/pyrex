@@ -162,15 +162,17 @@ if(params.do_irc):
 #############################
 # Initialize Common Classes #
 #############################
-geomparser = Geomparser(params.natoms, params.molecular_charge, params.molecular_multiplicity, params.geometries, params.coordinates)
+if(params.do_energy):
+    geomparser = Geomparser(params.natoms, params.molecular_charge, params.molecular_multiplicity, params.geometries, params.coordinates)
 
-scf_instance = scf_class(params, output_filename)
+    scf_instance = scf_class(params, output_filename)
 
 ####################################################
 # Build Geometries and Print Geometric Information #
 ####################################################
-geoms = geomparser.geombuilder()
-geomparser.atomic_distances()
+if(params.do_energy):
+    geoms = geomparser.geombuilder()
+    geomparser.atomic_distances()
 
 ##########################
 # Fragment Optimizations #
