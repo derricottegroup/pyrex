@@ -21,6 +21,7 @@ import datetime
 import json
 import euler
 import fragility_spectrum
+import quotes
 from re_flux import *
 from scf_class import *
 from geomparser import *
@@ -137,8 +138,8 @@ if(os.path.isdir('psi4_output')):
 else:
     os.makedirs("psi4_output")
 
-quote_file = open("quotes.json").read()
-quotes = json.loads(quote_file)
+#quote_file = open("quotes.json").read()
+#quotes = json.loads(quote_file)
 
 #json_data=open(input_file).read()
 
@@ -468,6 +469,6 @@ if(params.do_polarization==True):
 
 output = open(output_filename, "a")
 output.write("\n***pyREX Exiting Successfully***\n")
-rand_int = random.randint(0, len(quotes["quotes"])-1)
+rand_int = random.randint(0, len(quotes.quotes)-1)
 #print(rand_int)
-output.write(quotes["quotes"][rand_int])
+output.write(quotes.quotes[rand_int])

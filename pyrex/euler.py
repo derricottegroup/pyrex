@@ -168,7 +168,7 @@ def ishida_morokuma(output_file):
     """
         This function runs the Ishida-Morokuma irc procedure
     """
-    max_steps = 1000
+    max_steps = 100
     params = Params()
     line_step_size = 0.3333*params.step_size
     mol = psi4.geometry(params.geometry)
@@ -198,9 +198,9 @@ def ishida_morokuma(output_file):
         
         if(last_energy):
             del_E = E_0 - last_energy
-        if(last_energy and (del_E > 0.0001)):
+        if((last_energy and (E_0 > last_energy) and steps> 50)):
             print(del_E)
-            print("Energy increased! Ending IRC)")
+            print("IRC Has Converged")
             break
         mol.save_xyz_file('imk_step_'+str(steps)+'.xyz',False)
         coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
