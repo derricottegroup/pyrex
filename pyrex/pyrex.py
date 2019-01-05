@@ -157,7 +157,7 @@ level_of_theory = "%s/%s" %(params.method,params.basis) # Level of Theory for To
 #########
 
 if(params.do_irc):
-    euler.irc(output_filename)
+    euler.ishida_morokuma(output_filename)
 
 #############################
 # Initialize Common Classes #

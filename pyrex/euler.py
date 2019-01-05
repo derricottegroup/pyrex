@@ -155,6 +155,135 @@ def grad_calc(params,current_geom, mol):
     grad_mw = mass_weight(params.natoms, grad, mol)
     return grad_mw, E
 
+
+def parabolic_fit(xs, ys):
+    fit = np.polyfit(xs, ys, deg=2)
+    fit = np.poly1d(fit)
+    minima = fit.deriv().r
+    real_minima = minima[minima.imag==0].real
+    return real_minima
+
+
+def ishida_morokuma(output_file):
+    """
+        This function runs the Ishida-Morokuma irc procedure
+    """
+    max_steps = 1000
+    params = Params()
+    line_step_size = 0.3333*params.step_size
+    mol = psi4.geometry(params.geometry)
+    print(mol)
+    starting_vec = np.asarray(params.ts_vec)
+    grad_method = "%s/%s" %(params.method,params.basis)
+    steps = 0
+    E = 0.0
+    previous_E = 0.0
+    del_E = 0.0
+    energies = []
+    current_geom = np.asarray(mol.geometry())
+    #print(current_geom)
+    output = open(output_file, "a")
+    output.write('\n\n--Intrinsic Reaction Coordinate (%s)--\n' %(params.direction))
+    output.write('\n--------------------------------------------------------------------------------------\n')
+    output.write('\n{:>20} {:>20} {:>20} {:>20}\n'.format('Coordinate', 'E', 'Delta E', 'Gradient Norm'))
+    output.write('-------------------------------------------------------------------------------------\n')
+    output.close()
+    last_energy = None
+    while (steps <= max_steps):
+        if(steps==0):
+            grad_0 = mass_weight(params.natoms, starting_vec, mol)
+            E_0 = psi4.energy(grad_method)
+        else:
+            grad_0, E_0  = grad_calc(params, current_geom, mol)
+        
+        if(last_energy):
+            del_E = E_0 - last_energy
+        if(last_energy and (del_E > 0.0001)):
+            print(del_E)
+            print("Energy increased! Ending IRC)")
+            break
+        mol.save_xyz_file('imk_step_'+str(steps)+'.xyz',False)
+        coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
+        current_geom = coords_1
+        #mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        grad_1, E_1 = grad_calc(params, current_geom, mol) 
+        grad_0_norm = np.linalg.norm(grad_0)
+        grad_1_norm = np.linalg.norm(grad_1)
+
+        # Calculate Bisector (Eq. 6)
+        D = grad_0/grad_0_norm - grad_1/grad_1_norm
+        D_normed = D/np.linalg.norm(D)
+
+        line_xs = [0,]
+        line_energies = [E_1,]
+
+        line_step_size_thresh = 1.5*line_step_size
+        
+        # Find useful point by projecting grad_1 on D
+        grad_1_normed = grad_1/grad_1_norm
+        step_D1 = grad_1*D_normed*D_normed*line_step_size
+        step_D1_norm = np.linalg.norm(step_D1)
+        if step_D1_norm < line_step_size_thresh:
+            coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
+            current_geom = coords_1 + step_D1
+            current_geom = un_mass_weight_geom(params.natoms, current_geom, mol) 
+            mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+            step_D1_E = psi4.energy(grad_method)
+            line_xs.append(step_D1_norm)
+            line_energies.append(step_D1_E)
+        # Otherwise take a step along D
+        else:
+            step_D2 = line_step_size*D_normed
+            coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
+            current_geom = coords_1 + step_D2
+            current_geom = un_mass_weight_geom(params.natoms, coords_1, mol)
+            mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+            step_D2_E = psi4.energy(grad_method)
+            line_xs.append(step_D2_norm)
+            line_energies.append(step_D2_E)
+
+        # Calculate 3rd point by taking a half step size
+        if(line_energies[1] >= line_energies[0]):
+            step_D3 = 0.5*line_step_size*D_normed # Half Step Size
+        else:
+            step_D3 = 2.0*line_step_size*D_normed #Double Step Size
+        
+        step_D3_norm = np.linalg.norm(step_D3)
+        #coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
+        current_geom = coords_1 + step_D3
+        current_geom = un_mass_weight_geom(params.natoms, current_geom, mol)
+        mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        step_D3_E = psi4.energy(grad_method)
+        line_xs.append(step_D3_norm)
+        line_energies.append(step_D3_E) 
+
+        real_minimum = parabolic_fit(line_xs, line_energies)
+        
+        current_geom = coords_1 + (real_minimum*D_normed)
+        current_geom = un_mass_weight_geom(params.natoms, current_geom, mol)
+        
+        mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+
+        last_energy = E_0
+
+        if(params.direction=="backward"):
+            coord = -1*steps*params.step_size
+        else:
+            coord = steps*params.step_size
+        print_step(output_file,coord, E_0, del_E, grad_0)
+        steps = steps+1
+    output = open(output_file, "a")
+    output.write('-------------------------------------------------------------------------------------\n')
+    output.close()
+    with open('irc_%s.xyz' %params.direction,'w') as outfile:
+        for i in range(steps):
+            with open('imk_step_'+str(i)+'.xyz')as infile:
+                outfile.write(infile.read())
+        os.system('rm imk_step*')
+
+            
+
+
 def mass_weight(natoms,grad, mol):
     """
         Mass weights the given gradient
@@ -264,7 +393,7 @@ def irc(output_file):
             grad, E  = grad_calc(params, current_geom, mol)
     
         current_geom = euler_step(params.natoms, current_geom, grad,params.step_size,mol)
-        if(steps > 5):
+        if(steps > 20):
             if(E>previous_E):
                 #print("pyREX: New energy is greater! Likely near a minimum!")
                 break
