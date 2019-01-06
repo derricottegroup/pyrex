@@ -22,6 +22,7 @@ import json
 import euler
 import fragility_spectrum
 import quotes
+import csvread
 from re_flux import *
 from scf_class import *
 from geomparser import *
@@ -43,6 +44,7 @@ class Params():
         self.do_eda = False
         self.do_flux = False
         self.do_fragility_spec = False
+        self.do_rexplot = False
         json_input = sys.argv[1]
         self.read_input(json_input)
         # Load Output file
@@ -100,6 +102,8 @@ class Params():
         if 'irc_filename' in input_params['pyrex']:
             self.irc_filename = input_params['pyrex']['irc_filename']
             self.irc_grab()
+        if 'rexplot' in input_params:
+            self.do_rexplot = True
 
     def irc_grab(self):
         irc = []
@@ -456,6 +460,13 @@ if(params.do_sapt==True):
 
 if(params.do_fragility_spec):
     fragility_spectrum.fragility_spec(output_filename)
+
+############################
+# Rexplot Plotting Utility #
+############################
+
+if(params.do_rexplot):
+    csvread.plot()
 
 if(params.do_polarization==True):
     potentials_A = np.array(ref.potential(wavefunctions_A))
