@@ -9,6 +9,8 @@ import numpy as np
 class Params():
     def __init__(self):
         self.do_saveplot = False
+        self.force_min = 0.0
+        self.force_max = 0.0
         self.fontsize = 16
         self.ticklabel_size = 10
         self.linewidth = 5.0
@@ -27,6 +29,10 @@ class Params():
                 self.properties = input_params['rexplot']['properties']
             if 'coordinate' in input_params['rexplot']:
                 self.coordinate = input_params['rexplot']['coordinate']
+            if 'force_min' in input_params['rexplot']:
+                self.force_min = input_params['rexplot']['force_min']
+            if 'force_min' in input_params['rexplot']:
+                self.force_max = input_params['rexplot']['force_max']
             if 'x_label' in input_params['rexplot']:    
                 self.x_label = input_params['rexplot']['x_label']
             if 'y_label' in input_params['rexplot']:
@@ -79,7 +85,10 @@ def plot():
     fontsize = params.fontsize
     plt.ylabel(params.y_label, fontsize=fontsize)
     plt.xlabel(params.x_label, fontsize=fontsize)
-
+    if(params.force_min!=0):
+        axvline(x=params.force_min, linewidth=3.0, color='k', linestyle=':')
+    if(params.force_max!=0):
+        axvline(x=params.force_max, linewidth=3.0, color='k', linestyle=':')
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
     for i in range(len(params.properties)):
@@ -90,10 +99,10 @@ def plot():
     simpleaxis(ax) 
     for tick in ax.xaxis.get_major_ticks():
         tick.label1.set_fontsize(params.ticklabel_size)
-        tick.label1.set_fontweight('bold')
+        #tick.label1.set_fontweight('bold')
     for tick in ax.yaxis.get_major_ticks():
         tick.label1.set_fontsize(params.ticklabel_size)
-        tick.label1.set_fontweight('bold')
+        #tick.label1.set_fontweight('bold')
     for axis in ['bottom','left']:
         ax.spines[axis].set_linewidth(params.axiswidth)
     ax.xaxis.set_tick_params(width=3)
