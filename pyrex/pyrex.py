@@ -63,6 +63,7 @@ class Params():
             self.natoms_A = len(self.frag_A)
             self.frag_B = input_params["molecule"]["fragments"][1]
             self.natoms_B = len(self.frag_B)
+            self.do_frag = True
         if 'fragment_charges' in input_params["molecule"]:
             self.charge_A = input_params["molecule"]["fragment_charges"][0]
             self.charge_B = input_params["molecule"]["fragment_charges"][1]
@@ -88,12 +89,10 @@ class Params():
             self.energy_file = input_params['pyrex']['energy_read'] #TODO Implement this functionality
         if 'restart' in input_params['pyrex']:
             self.restart = bool(input_params['pyrex']['restart']) #TODO Implement this functionality
-        if 'do_frag' in input_params['pyrex']:
-            self.do_frag = bool(input_params['pyrex']['do_frag'])
         if 'do_sapt' in input_params['pyrex']:
             self.do_sapt = bool(input_params['pyrex']['do_sapt'])
         if 'do_polarization' in input_params['pyrex']:
-            self.do_polarization = bool(input_params['pyrex']['do_sapt'])
+            self.do_polarization = bool(input_params['pyrex']['do_polarization'])
         if 'sapt_method' in input_params["pyrex"]:
             self.sapt_method = input_params["pyrex"]["sapt_method"]
         if 'irc_stepsize' in input_params['pyrex']:
@@ -163,7 +162,7 @@ if(params.do_irc):
 #############################
 # Initialize Common Classes #
 #############################
-if(params.do_energy):
+if(params.do_energy or params.do_sapt):
     geomparser = Geomparser(params.natoms, params.molecular_charge, params.molecular_multiplicity, params.geometries, params.coordinates)
 
     scf_instance = scf_class(params, output_filename)
@@ -171,7 +170,7 @@ if(params.do_energy):
 ####################################################
 # Build Geometries and Print Geometric Information #
 ####################################################
-if(params.do_energy):
+if(params.do_energy or params.do_sapt):
     geoms = geomparser.geombuilder()
     geomparser.atomic_distances()
 
@@ -290,8 +289,8 @@ e_A = 0.0
 e_B = 0.0
 
 if(params.do_sapt==True):
-    r_sapt_geometries = geomparser.sapt_geombuilder(r_charge_A, r_mult_A, r_charge_B, r_mult_B, reactant_frag_A, reactant_frag_B)
-    p_sapt_geometries = geomparser.sapt_geombuilder(p_charge_A, p_mult_A, p_charge_B, p_mult_B, product_frag_A, product_frag_B)
+    sapt_geometries = geomparser.sapt_geombuilder(params.charge_A, params.mult_A, params.charge_B, params.mult_B, params.frag_A, params.frag_B)
+    #p_sapt_geometries = geomparser.sapt_geombuilder(p_charge_A, p_mult_A, p_charge_B, p_mult_B, product_frag_A, product_frag_B)
 
 #if(params.do_polarization==True):
 #    frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
@@ -308,15 +307,18 @@ if(params.do_sapt==True):
 if(params.do_sapt==True):
     irc_step_size = params.irc_stepsize
     coordinates = params.coordinates
+    sapt_method = params.sapt_method
+    basis = params.basis
     output = open(output_filename, "a")
     output.write('\n\n--SAPT Energy Decomposition (Region 1)--\n')
     output.close()
-    sapt_1 = sapt(r_sapt_geometries[0:index_min+1], sapt_method, basis, output_filename)
+    del_E = [(energy - (e_A + e_B)) for energy in energies]
+    sapt_1 = sapt(sapt_geometries[0:index_min+1], sapt_method, basis, output_filename)
     int_1, elst_1, exch_1, ind_1, disp_1  = sapt_1.psi4_sapt()
-    r_strain_e_1 = []
+    strain_e_1 = []
     for i in range(len(energies[0:index_min+1])):
-        r_strain_e_1.append(r_del_E[i] - int_1[i])
-    reaction_force_strain_1 = -1.0*np.gradient(r_strain_e_1,irc_step_size)
+        strain_e_1.append(del_E[i] - int_1[i])
+    reaction_force_strain_1 = -1.0*np.gradient(strain_e_1,irc_step_size)
     reaction_force_int_1 = -1.0*np.gradient(int_1,irc_step_size)
     reaction_force_elst_1 = -1.0*np.gradient(elst_1,irc_step_size)
     reaction_force_exch_1 = -1.0*np.gradient(exch_1,irc_step_size)
@@ -345,12 +347,12 @@ if(params.do_sapt==True):
     output = open(output_filename, "a")
     output.write('\n\n--SAPT Energy Decomposition (Region 2)--\n')
     output.close()
-    sapt_2 = sapt(r_sapt_geometries[index_min:index_ts+1], sapt_method, basis, output_filename)
+    sapt_2 = sapt(sapt_geometries[index_min:index_ts+1], sapt_method, basis, output_filename)
     int_2, elst_2, exch_2, ind_2, disp_2  = sapt_2.psi4_sapt()
-    r_strain_e_2 = []
+    strain_e_2 = []
     for i in range(len(energies[index_min:index_ts+1])):
-        r_strain_e_2.append(r_del_E[index_min+i] - int_2[i])
-    reaction_force_strain_2 = -1.0*np.gradient(r_strain_e_2,irc_step_size)
+        strain_e_2.append(del_E[index_min+i] - int_2[i])
+    reaction_force_strain_2 = -1.0*np.gradient(strain_e_2,irc_step_size)
     reaction_force_int_2 = -1.0*np.gradient(int_2,irc_step_size)
     reaction_force_elst_2 = -1.0*np.gradient(elst_2,irc_step_size)
     reaction_force_exch_2 = -1.0*np.gradient(exch_2,irc_step_size)
@@ -379,12 +381,12 @@ if(params.do_sapt==True):
     output = open(output_filename, "a")
     output.write('\n\n--SAPT Energy Decomposition (Region 3)--\n')
     output.close()
-    sapt_3 = sapt(r_sapt_geometries[index_ts:index_max+1], sapt_method, basis, output_filename)
+    sapt_3 = sapt(sapt_geometries[index_ts:index_max+1], sapt_method, basis, output_filename)
     int_3, elst_3, exch_3, ind_3, disp_3  = sapt_3.psi4_sapt()
-    r_strain_e_3 = []
+    strain_e_3 = []
     for i in range(len(energies[index_ts:index_max+1])):
-        r_strain_e_3.append(r_del_E[index_ts+i] - int_3[i])
-    reaction_force_strain_3 = -1.0*np.gradient(r_strain_e_3,irc_step_size)
+        strain_e_3.append(del_E[index_ts+i] - int_3[i])
+    reaction_force_strain_3 = -1.0*np.gradient(strain_e_3,irc_step_size)
     reaction_force_int_3 = -1.0*np.gradient(int_3,irc_step_size)
     reaction_force_elst_3 = -1.0*np.gradient(elst_3,irc_step_size)
     reaction_force_exch_3 = -1.0*np.gradient(exch_3,irc_step_size)
@@ -393,12 +395,12 @@ if(params.do_sapt==True):
     output = open(output_filename, "a")
     output.write('\n\n--SAPT Energy Decomposition (Region 4)--\n')
     output.close()
-    sapt_4 = sapt(r_sapt_geometries[index_max:], sapt_method, basis, output_filename)
+    sapt_4 = sapt(sapt_geometries[index_max:], sapt_method, basis, output_filename)
     int_4, elst_4, exch_4, ind_4, disp_4  = sapt_4.psi4_sapt()
-    r_strain_e_4 = []
+    strain_e_4 = []
     for i in range(len(energies[index_ts:index_max+1])):
-        r_strain_e_4.append(r_del_E[index_max+i] - int_4[i])
-    reaction_force_strain_4 = -1.0*np.gradient(r_strain_e_4,irc_step_size)
+        strain_e_4.append(del_E[index_max+i] - int_4[i])
+    reaction_force_strain_4 = -1.0*np.gradient(strain_e_4,irc_step_size)
     reaction_force_int_4 = -1.0*np.gradient(int_4,irc_step_size)
     reaction_force_elst_4 = -1.0*np.gradient(elst_4,irc_step_size)
     reaction_force_exch_4 = -1.0*np.gradient(exch_4,irc_step_size)
@@ -428,10 +430,10 @@ if(params.do_sapt==True):
     exch_all = exch_1 + exch_2 + exch_3 + exch_4
     ind_all = ind_1 + ind_2 + ind_3 + ind_4
     disp_all = disp_1 + disp_2 + disp_3 + disp_4
-    r_strain_e_all = []
+    strain_e_all = []
     for i in range(len(energies)):
-        r_strain_e_all.append(r_del_E[i] - int_all[i])
-    reaction_force_strain_all = -1.0*np.gradient(r_strain_e_all,irc_step_size)
+        strain_e_all.append(del_E[i] - int_all[i])
+    reaction_force_strain_all = -1.0*np.gradient(strain_e_all,irc_step_size)
     reaction_force_int_all = -1.0*np.gradient(int_all,irc_step_size)
     reaction_force_elst_all = -1.0*np.gradient(elst_all,irc_step_size)
     reaction_force_exch_all = -1.0*np.gradient(exch_all,irc_step_size)
@@ -445,7 +447,7 @@ if(params.do_sapt==True):
     sapt_e_csv_all = open("sapt_energy.csv", "w+")
     sapt_e_csv_all.write("Coordinate,E_strain,E_int,E_elst,E_exch,E_ind,E_disp\n")
     for i in range(len(coordinates)):
-        sapt_e_csv_all.write("%f, %f, %f, %f, %f, %f, %f\n" %(coordinates[i], r_strain_e_all[i], int_all[i], elst_all[i], exch_all[i], ind_all[i], disp_all[i]))
+        sapt_e_csv_all.write("%f, %f, %f, %f, %f, %f, %f\n" %(coordinates[i], strain_e_all[i], int_all[i], elst_all[i], exch_all[i], ind_all[i], disp_all[i]))
     sapt_e_csv_all.close()
 
 ###############################
