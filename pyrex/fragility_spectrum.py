@@ -185,12 +185,13 @@ def fragility_spec(output_file):
         #print("Fragility for atom %s%d" %(params.symbols[i], i))
         #print(fragility)
     
-    csv_output = open("frag_spec_updated.csv", "w")
+    csv_output = open("frag_spec.csv", "w")
     csv_output.write("Coordinate,")
     for i in range(params.natoms):
         csv_output.write("%s%d," %(params.symbols[i], i))
     csv_output.write("\n")
     for i in range(len(params.geoms)):
+        csv_output.write("%.4f," %params.coordinates[i])
         for j in range(params.natoms):
             csv_output.write("%.8f," %fragilities[j][i])
         csv_output.write("\n")

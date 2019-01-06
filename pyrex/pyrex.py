@@ -54,54 +54,57 @@ class Params():
     def read_input(self, json_input):
         json_data=open(json_input).read()
         input_params = json.loads(json_data)
-        if 'molecular_charge' in input_params['molecule']:
-            self.symbols = input_params['molecule']['symbols']
-        if 'molecular_charge' in input_params["molecule"]:
-            self.molecular_charge = int(input_params["molecule"]["molecular_charge"])
-        if 'molecular_multiplicity' in input_params["molecule"]:
-            self.molecular_multiplicity = input_params["molecule"]["molecular_multiplicity"]
-        if 'fragments' in input_params["molecule"]:
-            self.frag_A = input_params["molecule"]["fragments"][0]
-            self.natoms_A = len(self.frag_A)
-            self.frag_B = input_params["molecule"]["fragments"][1]
-            self.natoms_B = len(self.frag_B)
-            self.do_frag = True
-        if 'fragment_charges' in input_params["molecule"]:
-            self.charge_A = input_params["molecule"]["fragment_charges"][0]
-            self.charge_B = input_params["molecule"]["fragment_charges"][1]
-        if 'fragment_multiplicities' in input_params["molecule"]:
-            self.mult_A = input_params["molecule"]["fragment_multiplicities"][0]
-            self.mult_B = input_params["molecule"]["fragment_multiplicities"][1]
-        if 'basis' in input_params['model']:
-            self.basis = input_params['model']['basis']
-        if 'method' in input_params['model']:
-            self.method = input_params['model']['method']
-            self.natoms = len(input_params['molecule']['symbols'])
+        if 'molecule' in input_params:
+            if 'molecular_charge' in input_params['molecule']:
+                self.symbols = input_params['molecule']['symbols']
+                self.natoms = len(input_params['molecule']['symbols'])
+            if 'molecular_charge' in input_params["molecule"]:
+                self.molecular_charge = int(input_params["molecule"]["molecular_charge"])
+            if 'molecular_multiplicity' in input_params["molecule"]:
+                self.molecular_multiplicity = input_params["molecule"]["molecular_multiplicity"]
+            if 'fragments' in input_params["molecule"]:
+                self.frag_A = input_params["molecule"]["fragments"][0]
+                self.natoms_A = len(self.frag_A)
+                self.frag_B = input_params["molecule"]["fragments"][1]
+                self.natoms_B = len(self.frag_B)
+                self.do_frag = True
+            if 'fragment_charges' in input_params["molecule"]:
+                self.charge_A = input_params["molecule"]["fragment_charges"][0]
+                self.charge_B = input_params["molecule"]["fragment_charges"][1]
+            if 'fragment_multiplicities' in input_params["molecule"]:
+                self.mult_A = input_params["molecule"]["fragment_multiplicities"][0]
+                self.mult_B = input_params["molecule"]["fragment_multiplicities"][1]
+        if 'model' in input_params:
+            if 'basis' in input_params['model']:
+                self.basis = input_params['model']['basis']
+            if 'method' in input_params['model']:
+                self.method = input_params['model']['method']
         if 'keywords' in input_params:
             self.keywords = input_params['keywords']
         if 'irc' in input_params:
             self.do_irc = True
-        if 'do_energy' in input_params['pyrex']:
-            self.do_energy = bool(input_params['pyrex']['do_energy'])
-        if 'do_flux' in input_params['pyrex']:
-            self.do_flux = bool(input_params['pyrex']['do_flux'])
-        if 'do_fragility_spec' in input_params['pyrex']:
-            self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
-        if 'energy_read' in input_params['pyrex']:
-            self.energy_file = input_params['pyrex']['energy_read'] #TODO Implement this functionality
-        if 'restart' in input_params['pyrex']:
-            self.restart = bool(input_params['pyrex']['restart']) #TODO Implement this functionality
-        if 'do_sapt' in input_params['pyrex']:
-            self.do_sapt = bool(input_params['pyrex']['do_sapt'])
-        if 'do_polarization' in input_params['pyrex']:
-            self.do_polarization = bool(input_params['pyrex']['do_polarization'])
-        if 'sapt_method' in input_params["pyrex"]:
-            self.sapt_method = input_params["pyrex"]["sapt_method"]
-        if 'irc_stepsize' in input_params['pyrex']:
-            self.irc_stepsize = input_params['pyrex']['irc_stepsize']
-        if 'irc_filename' in input_params['pyrex']:
-            self.irc_filename = input_params['pyrex']['irc_filename']
-            self.irc_grab()
+        if 'pyrex' in input_params:
+            if 'do_energy' in input_params['pyrex']:
+                self.do_energy = bool(input_params['pyrex']['do_energy'])
+            if 'do_flux' in input_params['pyrex']:
+                self.do_flux = bool(input_params['pyrex']['do_flux'])
+            if 'do_fragility_spec' in input_params['pyrex']:
+                self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
+            if 'energy_read' in input_params['pyrex']:
+                self.energy_file = input_params['pyrex']['energy_read'] #TODO Implement this functionality
+            if 'restart' in input_params['pyrex']:
+                self.restart = bool(input_params['pyrex']['restart']) #TODO Implement this functionality
+            if 'do_sapt' in input_params['pyrex']:
+                self.do_sapt = bool(input_params['pyrex']['do_sapt'])
+            if 'do_polarization' in input_params['pyrex']:
+                self.do_polarization = bool(input_params['pyrex']['do_polarization'])
+            if 'sapt_method' in input_params["pyrex"]:
+                self.sapt_method = input_params["pyrex"]["sapt_method"]
+            if 'irc_stepsize' in input_params['pyrex']:
+                self.irc_stepsize = input_params['pyrex']['irc_stepsize']
+            if 'irc_filename' in input_params['pyrex']:
+                self.irc_filename = input_params['pyrex']['irc_filename']
+                self.irc_grab()
         if 'rexplot' in input_params:
             self.do_rexplot = True
 
@@ -154,7 +157,7 @@ output_filename = "pyrex_output.dat"
 
 # Load User Parameters
 params = Params()
-level_of_theory = "%s/%s" %(params.method,params.basis) # Level of Theory for Total Energies
+#level_of_theory = "%s/%s" %(params.method,params.basis) # Level of Theory for Total Energies
 
 #########
 ## IRC ##
