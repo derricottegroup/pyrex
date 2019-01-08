@@ -168,7 +168,7 @@ def ishida_morokuma(output_file):
     """
         This function runs the Ishida-Morokuma irc procedure
     """
-    max_steps = 100
+    max_steps = 1000
     params = Params()
     line_step_size = 0.3333*params.step_size
     mol = psi4.geometry(params.geometry)
@@ -218,35 +218,40 @@ def ishida_morokuma(output_file):
         line_energies = [E_1,]
 
         line_step_size_thresh = 1.5*line_step_size
+        #line_step_size_thresh = 0.5*line_step_size
         
         # Find useful point by projecting grad_1 on D
         grad_1_normed = grad_1/grad_1_norm
         step_D1 = grad_1*D_normed*D_normed*line_step_size
         step_D1_norm = np.linalg.norm(step_D1)
-        if step_D1_norm < line_step_size_thresh:
-            coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
-            current_geom = coords_1 + step_D1
-            current_geom = un_mass_weight_geom(params.natoms, current_geom, mol) 
-            mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
-            step_D1_E = psi4.energy(grad_method)
-            line_xs.append(step_D1_norm)
-            line_energies.append(step_D1_E)
+       # if step_D1_norm < line_step_size_thresh:
+       #     coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
+       #     current_geom = coords_1 + step_D1
+       #     current_geom = un_mass_weight_geom(params.natoms, current_geom, mol) 
+       #     mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+       #     step_D1_E = psi4.energy(grad_method)
+       #     line_xs.append(step_D1_norm)
+       #     line_energies.append(step_D1_E)
         # Otherwise take a step along D
-        else:
-            step_D2 = line_step_size*D_normed
-            coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
-            current_geom = coords_1 + step_D2
-            current_geom = un_mass_weight_geom(params.natoms, coords_1, mol)
-            mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
-            step_D2_E = psi4.energy(grad_method)
-            line_xs.append(step_D2_norm)
-            line_energies.append(step_D2_E)
+       # else:
+        step_D2 = line_step_size*D_normed
+        step_D2_norm = np.linalg.norm(step_D2)
+        coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
+        current_geom = coords_1 + step_D2
+        current_geom = un_mass_weight_geom(params.natoms, coords_1, mol)
+        mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        step_D2_E = psi4.energy(grad_method)
+        #line_xs.append(step_D2_norm)
+        line_xs.append(step_D2_norm)
+        line_energies.append(step_D2_E)
 
         # Calculate 3rd point by taking a half step size
         if(line_energies[1] >= line_energies[0]):
             step_D3 = 0.5*line_step_size*D_normed # Half Step Size
+            #new_del = 0.5*line_step_size
         else:
             step_D3 = 2.0*line_step_size*D_normed #Double Step Size
+            #new_del = 2.0*line_step_size
         
         step_D3_norm = np.linalg.norm(step_D3)
         #coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
@@ -359,6 +364,9 @@ def euler_step(natoms,current_geom,grad,step_size,mol):
     current_geom = mass_weight_geom(natoms, current_geom,mol)
     grad_norm = np.asarray(np.linalg.norm(grad))
     current_geom -= step_size*(grad/grad_norm)
+    #real_step = step_size/grad_norm
+    #current_geom -= step_size*(grad)
+    #current_geom -= real_step*(grad)
     current_geom = un_mass_weight_geom(natoms, current_geom,mol)
     return current_geom
 

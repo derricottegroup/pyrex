@@ -11,6 +11,8 @@ class Params():
         self.do_saveplot = False
         self.force_min = 0.0
         self.force_max = 0.0
+        self.x_min = None
+        self.x_max = None
         self.fontsize = 16
         self.ticklabel_size = 10
         self.linewidth = 5.0
@@ -31,8 +33,12 @@ class Params():
                 self.coordinate = input_params['rexplot']['coordinate']
             if 'force_min' in input_params['rexplot']:
                 self.force_min = input_params['rexplot']['force_min']
-            if 'force_min' in input_params['rexplot']:
+            if 'force_max' in input_params['rexplot']:
                 self.force_max = input_params['rexplot']['force_max']
+            if 'x_min' in input_params['rexplot']:
+                self.x_min = input_params['rexplot']['x_min']
+            if 'x_max' in input_params['rexplot']:
+                self.x_max = input_params['rexplot']['x_max']
             if 'x_label' in input_params['rexplot']:    
                 self.x_label = input_params['rexplot']['x_label']
             if 'y_label' in input_params['rexplot']:
@@ -64,8 +70,14 @@ def plot():
     df = pd.read_csv(input_file)
 
     x = df[params.coordinate]
-    x_min = x[0]
-    x_max = x[len(x)-1]
+    if(params.x_min!=None):
+        x_min = params.x_min
+    else:
+        x_min = x[0]
+    if(params.x_max!=None):
+        x_max = params.x_max
+    else:
+        x_max = x[len(x)-1]
     y = []
     for i in range(len(params.properties)):
         y.append(df[params.properties[i]])
