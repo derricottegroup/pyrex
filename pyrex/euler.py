@@ -30,7 +30,7 @@ class Params():
             Initialize .json file provided by user in command line, read input and store variables.
         """
         self.grace_period = 50
-        self.e_conve = 1e-5
+        self.e_conv = 1e-5
         json_input = sys.argv[1]
         self.read_input(json_input)            
         
@@ -78,30 +78,33 @@ class Params():
         """
         json_data=open(json_input).read()
         input_params = json.loads(json_data)
-        if input_params['molecule']['geometry']:
-            self.geometry = self.json2xyz(input_params)
-        if input_params['model']['basis']:
-            self.basis = input_params['model']['basis']
-        if input_params['model']['method']:
-            self.method = input_params['model']['method']
-        if input_params['molecule']['symbols']:
-            self.symbols = input_params['molecule']['symbols']
-            self.natoms = len(input_params['molecule']['symbols'])
-        if input_params['keywords']:
-            self.keywords = input_params['keywords']    
-        if input_params['irc']['direction']:
-            self.direction = input_params['irc']['direction']
-        if input_params['irc']['step_size']:
-            self.step_size = input_params['irc']['step_size']
-        if input_params['irc']['mode']:
-            self.mode = input_params['irc']['mode']
-        if input_params['irc']['normal_mode_file']:
-            self.normal_mode_file = input_params['irc']['normal_mode_file']
-            self.ts_vec = self.normal_mode_reader()
-        if input_params['irc']['grace_period']:
-            self.grade_period = input_params['irc']['grace_period']
-        if input_params['irc']['e_conv']:
-            self.e_conv = input_params['irc']['e_conv']
+        if 'molecule' in input_params:
+            if 'geometry' in input_params['molecule']:
+                self.geometry = self.json2xyz(input_params)
+            if 'symbols' in input_params['molecule']:
+                self.symbols = input_params['molecule']['symbols']
+                self.natoms = len(input_params['molecule']['symbols'])
+        if 'model' in input_params:
+            if 'basis' in input_params['model']:
+                self.basis = input_params['model']['basis']
+            if 'method' in input_params['model']:
+                self.method = input_params['model']['method']
+        if 'keywords' in input_params:
+            self.keywords = input_params['keywords']
+        if 'irc' in input_params:    
+            if 'direction' in input_params['irc']:
+                self.direction = input_params['irc']['direction']
+            if 'step_size' in input_params['irc']:
+                self.step_size = input_params['irc']['step_size']
+            if 'mode' in input_params['irc']:
+                self.mode = input_params['irc']['mode']
+            if 'normal_mode_file' in input_params['irc']:
+                self.normal_mode_file = input_params['irc']['normal_mode_file']
+                self.ts_vec = self.normal_mode_reader()
+            if 'grace_period' in input_params['irc']:
+                self.grade_period = input_params['irc']['grace_period']
+            if 'e_conv' in input_params['irc']:
+                self.e_conv = input_params['irc']['e_conv']
     def normal_mode_reader(self):
         """
             Reads the file containing the normal modes of vibration. This function currently
@@ -287,7 +290,7 @@ def ishida_morokuma(output_file):
             coord = -1*steps*params.step_size
         else:
             coord = steps*params.step_size
-        print_step(output_file,coord, E_0, del_E, grad_0)
+        print_step(output_file,coord, E_0, del_E, grad_0_norm)
         steps = steps+1
     output = open(output_file, "a")
     output.write('-------------------------------------------------------------------------------------\n')

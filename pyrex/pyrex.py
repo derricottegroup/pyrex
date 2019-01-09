@@ -87,7 +87,7 @@ class Params():
             if 'do_energy' in input_params['pyrex']:
                 self.do_energy = bool(input_params['pyrex']['do_energy'])
             if 'do_conceptualdft' in input_params['pyrex']:
-                self.do_conceptualdft = bool(input_params['pyrex']['do_flux'])
+                self.do_conceptualdft = bool(input_params['pyrex']['do_conceptualdft'])
             if 'do_fragility_spec' in input_params['pyrex']:
                 self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
             if 'energy_read' in input_params['pyrex']:
@@ -259,7 +259,7 @@ if(params.do_conceptualdft):
     flux_csv = open("conceptual_dft.csv", "w+")
     flux_csv.write("Coordinate,Chemical Potential, Hardness, Electrophilicity, Reaction Electronic Flux\n")
     for i in range(len(coordinates)):
-        flux_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], potentials[i], hardness[i], electrophilicity[i], reaction_electronic_flux[i]))
+        flux_csv.write("%f,%f,%f,%f,%f\n" %(coordinates[i], potentials[i], hardness[i], electrophilicity[i], reaction_electronic_flux[i]))
     flux_csv.close()
 
 
@@ -339,7 +339,7 @@ if(params.do_sapt==True):
     sapt_f_csv_1 = open("sapt_force_region_1.csv", "w+")
     sapt_f_csv_1.write("Coordinate,F_strain,F_int,F_elst,F_exch,F_ind,F_disp\n")
     for i in range(len(coordinates[0:index_min+1])):
-        sapt_f_csv_1.write("%f, %f, %f, %f, %f, %f, %f\n" %(coordinates[i], reaction_force_strain_1[i], reaction_force_int_1[i], reaction_force_elst_1[i], reaction_force_exch_1[i], reaction_force_ind_1[i], reaction_force_disp_1[i]))
+        sapt_f_csv_1.write("%f,%f,%f,%f,%f,%f,%f\n" %(coordinates[i], reaction_force_strain_1[i], reaction_force_int_1[i], reaction_force_elst_1[i], reaction_force_exch_1[i], reaction_force_ind_1[i], reaction_force_disp_1[i]))
     sapt_f_csv_1.close()
     W_1_strain = -1.0*np.trapz(reaction_force_strain_1, dx=irc_step_size)
     W_1_int = -1.0*np.trapz(reaction_force_int_1, dx=irc_step_size)
@@ -454,12 +454,12 @@ if(params.do_sapt==True):
     sapt_f_csv_all = open("sapt_force.csv", "w+")
     sapt_f_csv_all.write("Coordinate,F_strain,F_int,F_elst,F_exch,F_ind,F_disp\n")
     for i in range(len(coordinates)):
-        sapt_f_csv_all.write("%f, %f, %f, %f, %f, %f, %f\n" %(coordinates[i], reaction_force_strain_all[i], reaction_force_int_all[i], reaction_force_elst_all[i], reaction_force_exch_all[i], reaction_force_ind_all[i], reaction_force_disp_all[i]))
+        sapt_f_csv_all.write("%f,%f,%f,%f,%f,%f,%f\n" %(coordinates[i], reaction_force_strain_all[i], reaction_force_int_all[i], reaction_force_elst_all[i], reaction_force_exch_all[i], reaction_force_ind_all[i], reaction_force_disp_all[i]))
     sapt_f_csv_all.close()
     sapt_e_csv_all = open("sapt_energy.csv", "w+")
     sapt_e_csv_all.write("Coordinate,E_strain,E_int,E_elst,E_exch,E_ind,E_disp\n")
     for i in range(len(coordinates)):
-        sapt_e_csv_all.write("%f, %f, %f, %f, %f, %f, %f\n" %(coordinates[i], strain_e_all[i], int_all[i], elst_all[i], exch_all[i], ind_all[i], disp_all[i]))
+        sapt_e_csv_all.write("%f,%f,%f,%f,%f,%f,%f\n" %(coordinates[i], strain_e_all[i], int_all[i], elst_all[i], exch_all[i], ind_all[i], disp_all[i]))
     sapt_e_csv_all.close()
 
 ###############################
