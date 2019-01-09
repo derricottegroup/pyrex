@@ -23,7 +23,7 @@ import euler
 import fragility_spectrum
 import quotes
 import csvread
-from re_flux import *
+from concept_dft import *
 from scf_class import *
 from geomparser import *
 from sapt_class import *
@@ -42,7 +42,7 @@ class Params():
         self.do_sapt = False
         self.do_polarization = False
         self.do_eda = False
-        self.do_flux = False
+        self.do_conceptualdft = False
         self.do_fragility_spec = False
         self.do_rexplot = False
         json_input = sys.argv[1]
@@ -86,8 +86,8 @@ class Params():
         if 'pyrex' in input_params:
             if 'do_energy' in input_params['pyrex']:
                 self.do_energy = bool(input_params['pyrex']['do_energy'])
-            if 'do_flux' in input_params['pyrex']:
-                self.do_flux = bool(input_params['pyrex']['do_flux'])
+            if 'do_conceptualdft' in input_params['pyrex']:
+                self.do_conceptualdft = bool(input_params['pyrex']['do_flux'])
             if 'do_fragility_spec' in input_params['pyrex']:
                 self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
             if 'energy_read' in input_params['pyrex']:
@@ -242,19 +242,24 @@ if(params.do_energy):
     output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[index_max], coordinates[-1]))
 
 ############################
-# Reaction Electronic Flux #
+# Conceptual DFT Analysis  #
 ############################
 
 # Grabbing chemical potential and calculating REF using re_flux class
-if(params.do_flux):
-    ref = re_flux()
-    potentials = np.array(ref.potential(wavefunctions))
-    reaction_electronic_flux = np.array(ref.electronic_flux(params.irc_stepsize))
+if(params.do_conceptualdft):
+    c_dft = concept_dft()
+    potentials = np.array(c_dft.potential(wavefunctions))
+    hardness = np.array(c_dft.hardness(wavefunctions))
+    reaction_electronic_flux = np.array(c_dft.electronic_flux(params.irc_stepsize))
+    electrophilicity = []
+    for i in range(len(hardness)):
+        electrophil = (potentials[i]*potentials[i])/(2.0*hardness[i])
+        electrophilicity.append(electrophil)
 
-    flux_csv = open("flux.csv", "w+")
-    flux_csv.write("Coordinate,Flux\n")
+    flux_csv = open("conceptual_dft.csv", "w+")
+    flux_csv.write("Coordinate,Chemical Potential, Hardness, Electrophilicity, Reaction Electronic Flux\n")
     for i in range(len(coordinates)):
-        flux_csv.write("%f, %f\n" %(coordinates[i], reaction_electronic_flux[i]))
+        flux_csv.write("%f, %f, %f, %f, %f\n" %(coordinates[i], potentials[i], hardness[i], electrophilicity[i], reaction_electronic_flux[i]))
     flux_csv.close()
 
 

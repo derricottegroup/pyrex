@@ -29,6 +29,8 @@ class Params():
         """
             Initialize .json file provided by user in command line, read input and store variables.
         """
+        self.grace_period = 50
+        self.e_conve = 1e-5
         json_input = sys.argv[1]
         self.read_input(json_input)            
         
@@ -96,6 +98,10 @@ class Params():
         if input_params['irc']['normal_mode_file']:
             self.normal_mode_file = input_params['irc']['normal_mode_file']
             self.ts_vec = self.normal_mode_reader()
+        if input_params['irc']['grace_period']:
+            self.grade_period = input_params['irc']['grace_period']
+        if input_params['irc']['e_conv']:
+            self.e_conv = input_params['irc']['e_conv']
     def normal_mode_reader(self):
         """
             Reads the file containing the normal modes of vibration. This function currently
@@ -198,9 +204,15 @@ def ishida_morokuma(output_file):
         
         if(last_energy):
             del_E = E_0 - last_energy
-        if((last_energy and (E_0 > last_energy) and steps> 50)):
-            print(del_E)
-            print("IRC Has Converged")
+        if((last_energy and (E_0 > last_energy) and steps > params.grace_period)):
+            output = open(output_file, "a") 
+            print("\nIRC Energy Has Increased! You're Likely Near a Minimum!\n")
+            output.close()
+            break
+        if(last_energy and np.abs(del_E)<params.e_conv and steps > params.grace_period):
+            output = open(output_file, "a")
+            print("\nIRC Has Converged!\n")
+            output.close()
             break
         mol.save_xyz_file('imk_step_'+str(steps)+'.xyz',False)
         coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
