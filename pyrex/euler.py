@@ -31,6 +31,7 @@ class Params():
         """
         self.grace_period = 50
         self.e_conv = 1e-5
+        #self.damp = -0.1
         json_input = sys.argv[1]
         self.read_input(json_input)            
         
@@ -218,7 +219,10 @@ def ishida_morokuma(output_file):
             output.close()
             break
         mol.save_xyz_file('imk_step_'+str(steps)+'.xyz',False)
-        coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
+        if(steps==0):
+            coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
+        else:
+            coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
         current_geom = coords_1
         #mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
         grad_1, E_1 = grad_calc(params, current_geom, mol) 
@@ -285,6 +289,8 @@ def ishida_morokuma(output_file):
         mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
 
         last_energy = E_0
+        
+        #params.damp -= 0.5
 
         if(params.direction=="backward"):
             coord = -1*steps*params.step_size
