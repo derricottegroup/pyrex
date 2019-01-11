@@ -23,6 +23,8 @@ import euler
 import fragility_spectrum
 import quotes
 import csvread
+import pandas as pd
+from decimal import Decimal
 from concept_dft import *
 from scf_class import *
 from geomparser import *
@@ -45,6 +47,7 @@ class Params():
         self.do_conceptualdft = False
         self.do_fragility_spec = False
         self.do_rexplot = False
+        self.energy_file = None
         json_input = sys.argv[1]
         self.read_input(json_input)
         # Load Output file
@@ -91,7 +94,11 @@ class Params():
             if 'do_fragility_spec' in input_params['pyrex']:
                 self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
             if 'energy_read' in input_params['pyrex']:
-                self.energy_file = input_params['pyrex']['energy_read'] #TODO Implement this functionality
+                self.energy_file = input_params['pyrex']['energy_read']
+            if 'force_max' in input_params['pyrex']:
+                self.force_max = input_params['pyrex']['force_max']
+            if 'force_min' in input_params['pyrex']:
+                self.force_min = input_params['pyrex']['force_min']
             if 'restart' in input_params['pyrex']:
                 self.restart = bool(input_params['pyrex']['restart']) #TODO Implement this functionality
             if 'do_sapt' in input_params['pyrex']:
@@ -124,7 +131,8 @@ class Params():
                     geom.append(line.lstrip())
                 irc.append((irc_num, geom))
                 geometries.append(geom)
-                coordinates.append(irc_num*self.irc_stepsize)
+                coordinate = irc_num*self.irc_stepsize
+                coordinates.append(round(coordinate,3))
         self.irc = irc
         self.geometries = geometries
         self.coordinates = coordinates
@@ -204,6 +212,12 @@ if(params.do_energy):
     for i in range(len(params.coordinates)):
         energy_csv.write("%f, %f\n" %(params.coordinates[i], energies[i]))
     energy_csv.close()
+
+# Read in energy values if given
+
+if(params.energy_file!=None):
+    data = pd.read_csv(params.energy_file)
+    energies = data['Energy'].values
 
 ###########################
 # Reaction Force Analysis #
@@ -316,6 +330,13 @@ if(params.do_sapt==True):
 # Symmetry-Adapted Perturbation Theory Decomposition #
 ######################################################
 
+if(params.energy_file!=None):
+    #print(params.coordinates)
+    index_min = params.coordinates.index(params.force_min)
+    index_max = params.coordinates.index(params.force_max)
+    index_ts = params.coordinates.index(0.0000)
+
+
 if(params.do_sapt==True):
     irc_step_size = params.irc_stepsize
     coordinates = params.coordinates
@@ -348,7 +369,7 @@ if(params.do_sapt==True):
     W_1_ind = -1.0*np.trapz(reaction_force_ind_1, dx=irc_step_size)
     W_1_disp = -1.0*np.trapz(reaction_force_disp_1, dx=irc_step_size)
     output = open(output_filename, "a")
-    output.write('\n\n--Reaction Work Decomposition (Region 1 : %.4fkcal/mol)--\n' %(W_1*627.51))
+    output.write('\n\n--Reaction Work Decomposition (Region 1)--\n')
     output.write('\n-------------------------------------------------------------------------------------------------')
     output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)', 'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
     output.write('-------------------------------------------------------------------------------------------------\n')
@@ -382,7 +403,7 @@ if(params.do_sapt==True):
     W_2_ind = -1.0*np.trapz(reaction_force_ind_2, dx=irc_step_size)
     W_2_disp = -1.0*np.trapz(reaction_force_disp_2, dx=irc_step_size)
     output = open(output_filename, "a")
-    output.write('\n\n--Reaction Work Decomposition (Region 2 : %.4fkcal/mol)--\n' %(W_2*627.51))
+    output.write('\n\n--Reaction Work Decomposition (Region 2)--\n')
     output.write('\n-------------------------------------------------------------------------------------------------')
     output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)',
 'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))

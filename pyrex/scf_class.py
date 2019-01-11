@@ -11,6 +11,7 @@ class scf_class(object):
         self.level_of_theory = "%s/%s" %(data.method,data.basis)
         self.basis = str(data.basis)
         self.outfile = outfile
+        self.keywords = data.keywords
 
     def psi4_scf(self, geometries):
         """
@@ -35,7 +36,7 @@ class scf_class(object):
             #print(geom_parse)
             geom += "symmetry c1"
             mol = psi4.geometry(geom)
-            psi4.set_options({"reference" : "rhf"})
+            psi4.set_options(self.keywords)
             #print("pyREX:Single Point Calculation on IRC Point %d" %(count))
             energy, wfn = psi4.energy(self.level_of_theory, return_wfn=True)
             #wfn = psi4.core.Wavefunction.build(mol, self.basis)
@@ -66,9 +67,10 @@ class scf_class(object):
             frag += "%s\n" %geom[i]
         frag += "symmetry c1"
         print("Geometry Optimization on Fragment %s" %label)
-        psi4.set_options({"reference" : "rhf"})
+        psi4.set_options(self.keywords)
         psi4.geometry(frag)
         psidump = "psi4_output/fragment_%s_opt.out" %label
         psi4.core.set_output_file(psidump, False)
         e = psi4.optimize(self.level_of_theory)
+        #psi4.core.clean()
         return e

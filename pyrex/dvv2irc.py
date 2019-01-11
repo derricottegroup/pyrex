@@ -1,3 +1,6 @@
+import os
+import sys
+
 
 
 irc_forward = open("irc_forward.xyz", "r") #opens forward direction of irc file from psi4
@@ -8,10 +11,17 @@ count = 0
 
 natoms = int(irc_forward.readline())
 
+real_step = float(sys.argv[1])
+
+desired_step = float(sys.argv[2])
+
+step_condense = int(desired_step/real_step)
+
 block_size = 2+natoms
 total_number_of_lines = sum(1 for line in irc_forward) + 1
 irc_forward.close()
 num_structs_f = int(total_number_of_lines/block_size)
+print(num_structs_f)
 total_number_of_lines = sum(1 for line in irc_backward) + 1
 irc_backward.close()
 num_structs_b = int(total_number_of_lines/block_size)
@@ -22,18 +32,19 @@ backward = irc_backward.readlines()
 
 count = 0
 new_irc_for = open("irc_forward_new.xyz", "w")
-for i in range(int(round(num_structs_f/5))):
+for i in range(int(round(num_structs_f/step_condense))):
     for j in range(block_size):
         new_irc_for.write(forward[j+count])
-    count += 5*block_size
+    count += step_condense*block_size
+    print(i)
 new_irc_for.close()
 
 count = 0
 new_irc_back = open("irc_backward_new.xyz", "w")
-for i in range(int(round(num_structs_b/5))):
+for i in range(int(round(num_structs_b/step_condense))):
     for j in range(block_size):
         new_irc_back.write(backward[j+count])
-    count += 5*block_size
+    count += step_condense*block_size
 new_irc_back.close()
 
 count = 0
