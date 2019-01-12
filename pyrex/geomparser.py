@@ -1,4 +1,5 @@
 import numpy as np
+from pyscf import gto
 
 class Geomparser(object):
 
@@ -18,6 +19,16 @@ class Geomparser(object):
                 mol_input += line
             self.mol_inputs.append(mol_input)
         return self.mol_inputs
+
+    def pyscf_geombuilder(self):
+        self.mol_objs = []
+        for geometry in self.geometries:
+            mol = ""
+            for j in range(self.natoms):
+                line = geometry[j]
+                mol += line
+            self.mol_objs.append(mol)
+        return self.mol_objs
 
     def iso_frag(self, frag_charge, frag_mult, fraglist):
         # This function returns ONLY the isolated fragment

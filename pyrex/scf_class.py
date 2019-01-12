@@ -2,13 +2,17 @@
 Base class to run SCF calculations
 """
 
+import os
 import numpy as np
 import psi4
+from pyscf import scf, gto
 
 class scf_class(object):
 
     def __init__(self,data,outfile):
         self.level_of_theory = "%s/%s" %(data.method,data.basis)
+        self.charge = data.molecular_charge
+        self.mult = data.molecular_multiplicity
         self.basis = str(data.basis)
         self.outfile = outfile
         self.keywords = data.keywords
@@ -55,6 +59,49 @@ class scf_class(object):
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()
         return energies, wavefunctions
+
+    def pyscf_scf(self, geometries):
+        """
+        Function to run SCF along IRC using pySCF, returns array of energies at each geometry.
+        """
+        if(os.path.isdir('pyscf_output')):
+            pass
+        else:
+            os.makedirs("pyscf_output")
+        output = open(self.outfile, "a")
+        output.write('\n\n--Reaction Energy--\n')
+        output.write('\n-------------------------------------------------------------------------------------')
+        output.write('\n{:>20} {:>20} {:>20} {:>20}\n'.format('IRC Point', 'E (Hartree)', 'HOMO (a.u.)','LUMO (a.u.)'))
+        output.write('-------------------------------------------------------------------------------------\n')
+        output.close()
+        energies = []
+        wavefunctions = []
+        count = 0
+        for geometry in geometries:
+            output = open(self.outfile, "a")
+            mol = gto.Mole()
+            mol.output = 'pyscf_output/irc_%d.dat' %count
+            mol.verbose = 0
+            mol.atom = geometry
+            mol.basis = self.basis
+            mol.charge = self.charge
+            mol.spin = 0
+            mol.build() 
+            scf_obj = scf.RHF(mol)
+            energy = scf_obj.scf()
+            mo_e = scf_obj.mo_energy
+            nocc = np.count_nonzero(scf_obj.mo_occ)
+            homo_energy = mo_e[nocc - 1]
+            lumo_energy = mo_e[nocc]
+            energies.append(energy)
+            output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
+            count = count+1
+            output.close()
+        output = open(self.outfile, "a")
+        output.write('-------------------------------------------------------------------------------------\n')
+        output.close()
+    
+        return energies
 
     def opt(self, label, natoms, geom):
         """
