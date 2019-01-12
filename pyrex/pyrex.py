@@ -199,7 +199,7 @@ if(params.do_energy or params.do_sapt):
     geoms = geomparser.geombuilder()
     geomparser.atomic_distances()
 
-if(params.qm_program == 'pyscf'):
+if(params.do_energy and params.qm_program == 'pyscf'):
     pyscf_geoms = geomparser.pyscf_geombuilder()
     #print(pyscf_geoms)
 
