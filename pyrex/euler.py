@@ -19,7 +19,7 @@ import psi4
 import os
 import sys
 import json
-from pyscf import gto, scf, dft, grad 
+from pyscf import gto, scf, dft, grad, solvent 
 from pyscf.solvent import ddcosmo, ddcosmo_grad
 
 #####################
@@ -34,6 +34,7 @@ class Params():
         self.grace_period = 50
         self.e_conv = 1e-5
         self.qm_program = 'psi4'
+        self.do_solvent = False
         #self.damp = -0.1
         json_input = sys.argv[1]
         self.read_input(json_input)            
@@ -118,6 +119,10 @@ class Params():
                 self.qm_program = input_params['pyrex']['qm_program']
             if 'xc_functional' in input_params['pyrex']:
                 self.xc_functional = input_params['pyrex']['xc_functional']
+            if 'eps' in input_params['pyrex']:
+                self.eps = input_params['pyrex']['eps']
+            if 'do_solvent' in input_params['pyrex']:
+                self.do_solvent = input_params['pyrex']['do_solvent']
     def normal_mode_reader(self):
         """
             Reads the file containing the normal modes of vibration. This function currently
@@ -174,7 +179,13 @@ def energy_calc(params, current_geom, mol):
         pymol.spin = params.mult - 1
         pymol.build()
         scf_obj = scf.RHF(pymol)
-        energy = scf_obj.scf()
+        if(params.do_solvent):
+            solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
+            solv_obj.with_solvent.eps = params.eps
+            solv_cosmo = solvent.ddCOSMO(solv_obj)
+            energy = solv_cosmo.scf()
+        else:
+            energy = scf_obj.scf()
 
     if(params.qm_program=='psi4'):
         mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
@@ -221,8 +232,15 @@ def grad_calc(params,current_geom, mol):
         pymol.spin = params.mult - 1
         pymol.build()
         scf_obj = scf.RHF(pymol)
-        E = scf_obj.kernel()
-        grad = scf_obj.nuc_grad_method().kernel()
+        if(params.do_solvent):
+            solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
+            solv_obj.with_solvent.eps = params.eps
+            solv_cosmo = solvent.ddCOSMO(solv_obj).run()
+            E = solv_cosmo.scf()
+            grad = solv_obj.nuc_grad_method().kernel()
+        else:
+            E = scf_obj.kernel()
+            grad = scf_obj.nuc_grad_method().kernel()
         #print(grad)
         grad_mw = mass_weight(params.natoms, grad, mol)        
     if(params.qm_program=='psi4'):
