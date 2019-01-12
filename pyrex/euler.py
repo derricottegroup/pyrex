@@ -19,6 +19,8 @@ import psi4
 import os
 import sys
 import json
+from pyscf import gto, scf, dft, grad 
+from pyscf.solvent import ddcosmo, ddcosmo_grad
 
 #####################
 # Read in Parameters#
@@ -31,6 +33,7 @@ class Params():
         """
         self.grace_period = 50
         self.e_conv = 1e-5
+        self.qm_program = 'psi4'
         #self.damp = -0.1
         json_input = sys.argv[1]
         self.read_input(json_input)            
@@ -106,6 +109,11 @@ class Params():
                 self.grade_period = input_params['irc']['grace_period']
             if 'e_conv' in input_params['irc']:
                 self.e_conv = input_params['irc']['e_conv']
+        if 'pyrex' in input_params:
+            if 'qm_program' in input_params['pyrex']:
+                self.qm_program = input_params['pyrex']['qm_program']
+            if 'xc_functional' in input_params['pyrex']:
+                self.xc_functional = input_params['pyrex']['xc_functional']
     def normal_mode_reader(self):
         """
             Reads the file containing the normal modes of vibration. This function currently
@@ -139,6 +147,19 @@ class Params():
 ########################
 ## Gradient Functions ##
 ########################
+
+def energy_calc(params, current_geom):
+    energy = 0.0
+    if(params.qm_program=='pyscf'):
+        mol.atom = current_geom
+        mol.basis = params.basis
+        mol.charge = self.charge
+        mol.spin = self.mult-1
+        mol.build()
+        scf_obj = scf.RHF(mol)
+        energy = scf_obj.scf()
+    return energy
+
 
 def grad_calc(params,current_geom, mol):
     """

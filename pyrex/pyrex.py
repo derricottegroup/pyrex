@@ -39,16 +39,17 @@ class Params():
             Initialize .json file provided by user in command line, read input and store variables.
         """
         self.do_irc = False
+        self.do_solvent = False
         self.do_energy = False
         self.do_frag = False
         self.do_sapt = False
         self.do_polarization = False
-        self.pyscf_energy = False
         self.do_eda = False
         self.do_conceptualdft = False
         self.do_fragility_spec = False
         self.do_rexplot = False
         self.energy_file = None
+        self.qm_program = "psi4"
         json_input = sys.argv[1]
         self.read_input(json_input)
         # Load Output file
@@ -88,10 +89,16 @@ class Params():
         if 'irc' in input_params:
             self.do_irc = True
         if 'pyrex' in input_params:
+            if 'qm_program' in input_params['pyrex']:
+                self.qm_program = input_params['pyrex']['qm_program']
             if 'do_energy' in input_params['pyrex']:
                 self.do_energy = bool(input_params['pyrex']['do_energy'])
-            if 'pyscf_energy' in input_params['pyrex']:
-                self.pyscf_energy = bool(input_params['pyrex']['pyscf_energy'])
+            if 'xc_functional' in input_params['pyrex']:
+                self.xc_functional = input_params['pyrex']['xc_functional']
+            if 'do_solvent' in input_params['pyrex']:
+                self.do_solvent = input_params['pyrex']['do_solvent']
+            if 'eps' in input_params['pyrex']:
+                self.eps = input_params['pyrex']['eps']
             if 'do_conceptualdft' in input_params['pyrex']:
                 self.do_conceptualdft = bool(input_params['pyrex']['do_conceptualdft'])
             if 'do_fragility_spec' in input_params['pyrex']:
@@ -180,7 +187,7 @@ if(params.do_irc):
 #############################
 # Initialize Common Classes #
 #############################
-if(params.do_energy or params.do_sapt or params.pyscf_energy):
+if(params.do_energy or params.do_sapt):
     geomparser = Geomparser(params.natoms, params.molecular_charge, params.molecular_multiplicity, params.geometries, params.coordinates)
 
     scf_instance = scf_class(params, output_filename)
@@ -192,7 +199,7 @@ if(params.do_energy or params.do_sapt):
     geoms = geomparser.geombuilder()
     geomparser.atomic_distances()
 
-if(params.pyscf_energy):
+if(params.qm_program == 'pyscf'):
     pyscf_geoms = geomparser.pyscf_geombuilder()
     #print(pyscf_geoms)
 
@@ -210,17 +217,16 @@ if(params.do_frag==True):
 ###########################
 
 if(params.do_energy):
-    energies, wavefunctions = scf_instance.psi4_scf(geoms)
-    nelec = wavefunctions[0].nalpha()
-# Store energies in .csv file
-    energy_csv = open("energy.csv", "w+")
-    energy_csv.write("Coordinate,Energy\n")
-    for i in range(len(params.coordinates)):
-        energy_csv.write("%f, %f\n" %(params.coordinates[i], energies[i]))
-    energy_csv.close()
+    if(params.qm_program == 'psi4'):
+        energies, wavefunctions = scf_instance.psi4_scf(geoms)
+        nelec = wavefunctions[0].nalpha()
 
-if(params.pyscf_energy):
-    energies = scf_instance.pyscf_scf(pyscf_geoms)
+    if(params.qm_program == 'pyscf' and params.method == 'scf'):
+        energies = scf_instance.pyscf_scf(pyscf_geoms)
+     
+    if(params.qm_program == 'pyscf' and params.method == 'dft'):
+        energies = scf_instance.pyscf_dft(pyscf_geoms, params.xc_functional)
+
 # Store energies in .csv file
     energy_csv = open("energy.csv", "w+")
     energy_csv.write("Coordinate,Energy\n")

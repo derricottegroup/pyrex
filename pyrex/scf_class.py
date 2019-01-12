@@ -2,10 +2,12 @@
 Base class to run SCF calculations
 """
 
+import time
 import os
 import numpy as np
 import psi4
-from pyscf import scf, gto
+from pyscf import scf, dft ,gto, solvent
+from pyscf.solvent import ddcosmo
 
 class scf_class(object):
 
@@ -13,6 +15,8 @@ class scf_class(object):
         self.level_of_theory = "%s/%s" %(data.method,data.basis)
         self.charge = data.molecular_charge
         self.mult = data.molecular_multiplicity
+        self.do_solvent = data.do_solvent
+        self.eps = data.eps
         self.basis = str(data.basis)
         self.outfile = outfile
         self.keywords = data.keywords
@@ -30,6 +34,7 @@ class scf_class(object):
         energies = []
         wavefunctions = []
         count = 0
+        start = time.time()
         for geometry in geometries:
             output = open(self.outfile, "a")
             psi4.core.set_output_file("psi4_output/irc_%d.out" %count, False)
@@ -58,6 +63,8 @@ class scf_class(object):
         output = open(self.outfile, "a")
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()
+        end = time.time()
+        print("psi4 Time = %f" %(end - start))
         return energies, wavefunctions
 
     def pyscf_scf(self, geometries):
@@ -77,6 +84,7 @@ class scf_class(object):
         energies = []
         wavefunctions = []
         count = 0
+        start = time.time()
         for geometry in geometries:
             output = open(self.outfile, "a")
             mol = gto.Mole()
@@ -85,14 +93,25 @@ class scf_class(object):
             mol.atom = geometry
             mol.basis = self.basis
             mol.charge = self.charge
-            mol.spin = 0
+            mol.spin = self.mult - 1
             mol.build() 
             scf_obj = scf.RHF(mol)
-            energy = scf_obj.scf()
-            mo_e = scf_obj.mo_energy
-            nocc = np.count_nonzero(scf_obj.mo_occ)
-            homo_energy = mo_e[nocc - 1]
-            lumo_energy = mo_e[nocc]
+            if(self.do_solvent):
+                solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
+                solv_obj.with_solvent.eps = self.eps
+                solv_cosmo = solvent.ddCOSMO(solv_obj)
+                energy = solv_cosmo.scf()
+                mo_e = solv_cosmo.mo_energy
+                nocc = np.count_nonzero(solv_cosmo.mo_occ)
+                nocc = np.count_nonzero(solv_cosmo.mo_occ)
+                homo_energy = mo_e[nocc - 1]
+                lumo_energy = mo_e[nocc]
+            else:
+                energy = scf_obj.scf()
+                mo_e = scf_obj.mo_energy
+                nocc = np.count_nonzero(scf_obj.mo_occ)
+                homo_energy = mo_e[nocc - 1]
+                lumo_energy = mo_e[nocc]
             energies.append(energy)
             output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
             count = count+1
@@ -100,9 +119,66 @@ class scf_class(object):
         output = open(self.outfile, "a")
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()
-    
+        end = time.time()
+        print("pySCF Time = %f" %(end - start)) 
         return energies
 
+    def pyscf_dft(self, geometries, xc_functional):
+        """
+        Function to run DFT along IRC using pySCF, returns array of energies at each geometry.
+        """
+        if(os.path.isdir('pyscf_output')):
+            pass
+        else:
+            os.makedirs("pyscf_output")
+        output = open(self.outfile, "a")
+        output.write('\n\n--Reaction Energy--\n')
+        output.write('\n-------------------------------------------------------------------------------------')
+        output.write('\n{:>20} {:>20} {:>20} {:>20}\n'.format('IRC Point', 'E (Hartree)', 'HOMO (a.u.)','LUMO (a.u.)'))
+        output.write('-------------------------------------------------------------------------------------\n')
+        output.close()
+        energies = []
+        wavefunctions = []
+        count = 0
+        start = time.time()
+        for geometry in geometries:
+            output = open(self.outfile, "a")
+            mol = gto.Mole()
+            mol.output = 'pyscf_output/irc_%d.dat' %count
+            mol.verbose = 0
+            mol.atom = geometry
+            mol.basis = self.basis
+            mol.charge = self.charge
+            mol.spin = self.mult - 1
+            mol.build()
+            dft_obj = dft.RKS(mol)
+            dft_obj.xc = xc_functional
+            if(self.do_solvent):
+                solv_obj = ddcosmo.ddcosmo_for_scf(dft_obj)
+                solv_obj.with_solvent.eps = self.eps
+                solv_cosmo = solvent.ddCOSMO(solv_obj)
+                energy = solv_cosmo.scf()
+                mo_e = solv_cosmo.mo_energy
+                nocc = np.count_nonzero(solv_cosmo.mo_occ)
+                nocc = np.count_nonzero(solv_cosmo.mo_occ)
+                homo_energy = mo_e[nocc - 1]
+                lumo_energy = mo_e[nocc]
+            else:
+                energy = dft_obj.scf()
+                mo_e = dft_obj.mo_energy
+                nocc = np.count_nonzero(dft_obj.mo_occ)
+                homo_energy = mo_e[nocc - 1]
+                lumo_energy = mo_e[nocc]
+            energies.append(energy)
+            output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
+            count = count+1
+            output.close()
+        output = open(self.outfile, "a")
+        output.write('-------------------------------------------------------------------------------------\n')
+        output.close()
+        end = time.time()
+        print("pySCF Time = %f" %(end - start))
+        return energies
     def opt(self, label, natoms, geom):
         """
         Optimizes individual fragments for strain energy calculations.
