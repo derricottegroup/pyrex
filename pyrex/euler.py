@@ -43,8 +43,8 @@ class Params():
             Geometries in the .json format (MOLSSI standard) are given as an array. This functions
             takes the given geometry and converts it to a string with a format similar to xyz files.
         """
-        charge = input_params['molecule']['molecular_charge']
-        mult = input_params['molecule']['molecular_multiplicity']
+        charge = int(input_params['molecule']['molecular_charge'])
+        mult = int(input_params['molecule']['molecular_multiplicity'])
         geom = ''
         geom += '\n%d %d\n' %(charge, mult)
         symbols = input_params['molecule']['symbols']
@@ -88,6 +88,10 @@ class Params():
             if 'symbols' in input_params['molecule']:
                 self.symbols = input_params['molecule']['symbols']
                 self.natoms = len(input_params['molecule']['symbols'])
+            if 'molecular_charge' in input_params['molecule']:
+                self.charge = int(input_params['molecule']['molecular_charge'])
+            if 'molecular_multiplicity' in input_params['molecule']:
+                self.mult = int(input_params['molecule']['molecular_multiplicity'])
         if 'model' in input_params:
             if 'basis' in input_params['model']:
                 self.basis = input_params['model']['basis']
@@ -148,16 +152,36 @@ class Params():
 ## Gradient Functions ##
 ########################
 
-def energy_calc(params, current_geom):
+def energy_calc(params, current_geom, mol):
     energy = 0.0
     if(params.qm_program=='pyscf'):
-        mol.atom = current_geom
-        mol.basis = params.basis
-        mol.charge = self.charge
-        mol.spin = self.mult-1
-        mol.build()
-        scf_obj = scf.RHF(mol)
+        pymol = gto.Mole()
+        pymol.verbose = 0
+        geom_vec = []
+        for i in range(params.natoms):
+            atom = [params.symbols[i],]
+            atom_coords = []
+            for j in range(3):
+                atom_coords.append(current_geom[i][j])
+            atom_coords = tuple(atom_coords)
+            atom.append(atom_coords)
+            geom_vec.append(atom)
+        #print(geom_vec)
+        pymol.atom = geom_vec
+        pymol.unit = 'Bohr'
+        pymol.basis = params.basis
+        pymol.charge = params.charge
+        pymol.spin = params.mult - 1
+        pymol.build()
+        scf_obj = scf.RHF(pymol)
         energy = scf_obj.scf()
+
+    if(params.qm_program=='psi4'):
+        mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        grad_method = "%s/%s" %(params.method,params.basis)
+        psi4.core.set_output_file("psi4_out.dat", False)
+        psi4.set_options(params.keywords)
+        energy = psi4.energy(grad_method) 
     return energy
 
 
@@ -177,13 +201,39 @@ def grad_calc(params,current_geom, mol):
             grad_mw(np array) -- Mass weighted gradient matrix of size natoms x 3.
             E(float) -- single-point energy from Psi4 calculation. 
     """
-    mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
-    grad_method = "%s/%s" %(params.method,params.basis)
-    psi4.core.set_output_file("psi4_out.dat", False)
-    psi4.set_options(params.keywords)
-    E, wfn = psi4.energy(grad_method,return_wfn=True)
-    grad = np.asarray(psi4.gradient(grad_method,ref_wfn=wfn))
-    grad_mw = mass_weight(params.natoms, grad, mol)
+    if(params.qm_program=='pyscf'):
+        pymol = gto.Mole()
+        pymol.verbose = 0
+        geom_vec = []
+        for i in range(params.natoms):
+            atom = [params.symbols[i],]
+            atom_coords = []
+            for j in range(3):
+                atom_coords.append(current_geom[i][j])
+            atom_coords = tuple(atom_coords)
+            atom.append(atom_coords)
+            geom_vec.append(atom)
+        #print(geom_vec)
+        pymol.atom = geom_vec
+        pymol.unit = 'Bohr'
+        pymol.basis = params.basis
+        pymol.charge = params.charge
+        pymol.spin = params.mult - 1
+        pymol.build()
+        scf_obj = scf.RHF(pymol)
+        E = scf_obj.kernel()
+        grad = scf_obj.nuc_grad_method().kernel()
+        #print(grad)
+        grad_mw = mass_weight(params.natoms, grad, mol)        
+    if(params.qm_program=='psi4'):
+        mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        grad_method = "%s/%s" %(params.method,params.basis)
+        psi4.core.set_output_file("psi4_out.dat", False)
+        psi4.set_options(params.keywords)
+        E, wfn = psi4.energy(grad_method,return_wfn=True)
+        grad = np.asarray(psi4.gradient(grad_method,ref_wfn=wfn))
+        #print(grad)
+        grad_mw = mass_weight(params.natoms, grad, mol)
     return grad_mw, E
 
 
@@ -202,6 +252,7 @@ def ishida_morokuma(output_file):
     max_steps = 1000
     params = Params()
     line_step_size = 0.3333*params.step_size
+    current_geom = params.geometry
     mol = psi4.geometry(params.geometry)
     print(mol)
     starting_vec = np.asarray(params.ts_vec)
@@ -223,7 +274,7 @@ def ishida_morokuma(output_file):
     while (steps <= max_steps):
         if(steps==0):
             grad_0 = mass_weight(params.natoms, starting_vec, mol)
-            E_0 = psi4.energy(grad_method)
+            E_0 = energy_calc(params, current_geom, mol)
         else:
             grad_0, E_0  = grad_calc(params, current_geom, mol)
         
@@ -240,10 +291,7 @@ def ishida_morokuma(output_file):
             output.close()
             break
         mol.save_xyz_file('imk_step_'+str(steps)+'.xyz',False)
-        if(steps==0):
-            coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
-        else:
-            coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
+        coords_1 = euler_step(params.natoms, current_geom, grad_0,params.step_size,mol)
         current_geom = coords_1
         #mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
         grad_1, E_1 = grad_calc(params, current_geom, mol) 
@@ -279,8 +327,9 @@ def ishida_morokuma(output_file):
         coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
         current_geom = coords_1 + step_D2
         current_geom = un_mass_weight_geom(params.natoms, coords_1, mol)
-        mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
-        step_D2_E = psi4.energy(grad_method)
+        #mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        #step_D2_E = psi4.energy(grad_method)
+        step_D2_E = energy_calc(params, current_geom, mol)
         #line_xs.append(step_D2_norm)
         line_xs.append(step_D2_norm)
         line_energies.append(step_D2_E)
@@ -297,8 +346,9 @@ def ishida_morokuma(output_file):
         #coords_1 = mass_weight_geom(params.natoms, coords_1, mol)
         current_geom = coords_1 + step_D3
         current_geom = un_mass_weight_geom(params.natoms, current_geom, mol)
-        mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
-        step_D3_E = psi4.energy(grad_method)
+        #mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        #step_D3_E = psi4.energy(grad_method)
+        step_D3_E = energy_calc(params, current_geom, mol)
         line_xs.append(step_D3_norm)
         line_energies.append(step_D3_E) 
 
