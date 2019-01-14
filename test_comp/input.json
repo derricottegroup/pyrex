@@ -1,37 +1,31 @@
 {
+  "schema_name": "qc_schema_input",
+  "schema_version": 1,
   "molecule": {
-    "geometry": [-0.305435853158,     0.069049290944,     0.002676079934, 
-                  0.222538498473,     1.228258803032,     0.035736645511,
-                  1.173643139727,    -0.703461269652,    -0.097708856932,
-                 -1.329707968965,    -0.531671970405,     0.013016251451,
-                  1.265268701252,     0.537643851855,     0.043483687593,
-                  1.316518306632,    -1.250699625608,     0.701619298293], 
-    "symbols" : ["C", "O", "O", "O", "H", "H"],
+    "symbols" : ["C", "O", "H", "H"],
     "molecular_charge" : "0",
     "molecular_multiplicity" : 1
   },
+  "driver" : "energy",
 
   "model": {
-    "method": "scf",
+    "method": "mp2",
     "basis": "6-31G*"
   },
 
   "keywords": {
     "scf_type": "df",
-    "freeze_core" : "True",
+    "freeze_core": "True",
     "reference" : "rhf",
     "basis": "6-31G*"
   },
+
   "pyrex": {
-    "qm_program" : "pyscf"
-
-  },
-
-  "irc": {
-    "direction" : "forward",
-    "step_size" : 0.01,
-    "mode" : 1,
-    "normal_mode_file" : "normal_modes.dat"
+    "irc_filename" : "full_irc.xyz",
+    "do_energy" : true,
+    "do_conceptualdft" : true,
+    "irc_stepsize" : 0.05,
+    "sapt_method" : "sapt0"
   }
 
 }
