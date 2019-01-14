@@ -19,7 +19,7 @@ import psi4
 import os
 import sys
 import json
-from pyscf import gto, scf, dft, grad, solvent 
+from pyscf import gto, scf, dft, grad, solvent, mp 
 from pyscf.solvent import ddcosmo, ddcosmo_grad
 
 #####################
@@ -178,14 +178,21 @@ def energy_calc(params, current_geom, mol):
         pymol.charge = params.charge
         pymol.spin = params.mult - 1
         pymol.build()
-        scf_obj = scf.RHF(pymol)
+        if(params.method == "scf"):
+            scf_obj = scf.RHF(pymol)
+        if(params.method == "mp2"): #TODO Doesn't work yet. Few things left to figure out. 
+            mf = scf.RHF(pymol).kernel()
+            scf_obj = mp.MP2(mf)
+        #if(params.method == "dft"):
+        #    scf_obj = dft.RKS(mol)
+        #    scf_obj.xc = params.xc_functional
         if(params.do_solvent):
             solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
             solv_obj.with_solvent.eps = params.eps
             solv_cosmo = solvent.ddCOSMO(solv_obj)
-            energy = solv_cosmo.scf()
+            energy = solv_cosmo.kernel()
         else:
-            energy = scf_obj.scf()
+            energy = scf_obj.kernel()
 
     if(params.qm_program=='psi4'):
         mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
