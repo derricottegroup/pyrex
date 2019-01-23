@@ -1,0 +1,102 @@
+
+-----------------------------------------------------------------------
+     pyREX: Python Reaction Energy eXtension for Quantum Chemistry
+
+                         pyREX beta 0.2
+
+                      Wallace D. Derricotte
+                    Derricotte Research Group
+                        Morehouse College
+                         Atlanta,Georgia
+-----------------------------------------------------------------------
+
+pyREX Run on Monday January 21, 2019 at 14:48PM
+Process ID: 18340
+
+======================> JSON Input File <======================
+
+{
+  "molecule": { 
+    "symbols" : ["C", "O", "H", "H", "H", "C", "H", "H", "O", "H", "C", "H", "H"],
+    "molecular_charge" : "0",
+    "molecular_multiplicity" : 1,
+    "fragments" : [[0,1,2,3,10,11,12],[4,5,6,7,8,9]],
+    "fragment_charges" : [0,0],
+    "fragment_multiplicities" : [1,1]
+
+  },
+
+  "model": {
+    "method": "m06-2x",
+    "basis": "6-311++G(d,p)"
+  },
+
+  "keywords": {
+    "scf_type": "df",
+    "freeze_core" : "True",
+    "reference" : "rhf",
+    "basis": "6-311++G(d,p)"
+  },
+
+  "pyrex" : {
+    "nthreads" : 25,
+    "irc_filename" : "full_irc.xyz",
+    "do_sapt" : true,
+    "energy_read" : "energy.csv",
+    "sapt_read" : "sapt_energy.csv",
+    "force_max" : 0.65,
+    "force_min" : -0.65,
+    "irc_stepsize" : 0.05,
+    "sapt_method" : "sapt0"
+  }
+}
+
+
+===============================================================
+
+
+
+--Symmetry-Adapted Perturbation Theory Energy Decomposition--
+
+
+--Reaction Work Decomposition (Region 1)--
+
+-------------------------------------------------------------------------------------------------
+ W_strain(kcal)     W_int(kcal)    W_elst(kcal)    W_exch(kcal)     W_ind(kcal)    W_disp(kcal)
+-------------------------------------------------------------------------------------------------
+
+       18.27246         9.69221       -76.41127       152.24224       -52.21746       -13.92131
+--------------------------------------------------------------------------------------------------
+
+
+--Reaction Work Decomposition (Region 2)--
+
+-------------------------------------------------------------------------------------------------
+ W_strain(kcal)     W_int(kcal)    W_elst(kcal)    W_exch(kcal)     W_ind(kcal)    W_disp(kcal)
+--------------------------------------------------------------------------------------------------
+
+       24.79433       -19.35006       -29.23961        64.24008       -48.07872        -6.27243
+--------------------------------------------------------------------------------------------------
+
+
+--Reaction Work Decomposition (Region 3)--
+
+---------------------------------------------------------------------------------------------------
+ W_strain(kcal)     W_int(kcal)    W_elst(kcal)    W_exch(kcal)     W_ind(kcal)    W_disp(kcal)
+---------------------------------------------------------------------------------------------------
+
+       67.01273       -77.72151       -32.35159        85.66861      -119.49751       -11.54148
+---------------------------------------------------------------------------------------------------
+
+
+--Reaction Work Decomposition (Region 4)--
+
+-----------------------------------------------------------------------------------------------------
+ W_strain(kcal)     W_int(kcal)    W_elst(kcal)    W_exch(kcal)     W_ind(kcal)    W_disp(kcal)
+---------------------------------------------------------------------------------------------------
+
+      192.63129      -226.26473      -134.17560       226.00008      -282.36585       -35.72226
+---------------------------------------------------------------------------------------------------
+
+***pyREX Exiting Successfully***
+Love yourself and your expression, you can’t go wrong. --KRS One

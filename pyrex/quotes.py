@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 quotes =  [
     "The ink of a scholar is worth a thousand times more than the blood of a martyr -- Lupe Fiasco",
@@ -12,7 +13,6 @@ quotes =  [
     "Nevermind what the haters say, ignore em til they fade away -- T.I.",
     "Life without knowledge is death in disguise -- Talib Kweli",
     "Never become so involved with something that it blinds you. Never forget where you from; someone will remind you. -- DMX",
-    "I’ve done a lot of work to get where I’m at, but I have to keep working. -- Wiz Khalifa",
     "Life is a wheel of fortune and it’s my turn to spin it. -- Tupac",
     "Life is too short to live the same day twice. So each new day make sure you live your life. -- Machine Gun Kelly",
     "Life without dreaming is a life without meaning. -- Wale",

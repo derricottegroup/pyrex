@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 """
 An Implementation of Euler Integration for reaction path following.
 
@@ -34,6 +32,7 @@ class Params():
         self.grace_period = 50
         self.e_conv = 1e-5
         self.qm_program = 'psi4'
+        self.nthreads = 1
         self.do_solvent = False
         #self.damp = -0.1
         json_input = sys.argv[1]
@@ -123,6 +122,8 @@ class Params():
                 self.eps = input_params['pyrex']['eps']
             if 'do_solvent' in input_params['pyrex']:
                 self.do_solvent = input_params['pyrex']['do_solvent']
+            if 'nthreads' in input_params['pyrex']:
+                self.nthreads = input_params['pyrex']['nthreads'] 
     def normal_mode_reader(self):
         """
             Reads the file containing the normal modes of vibration. This function currently
@@ -199,6 +200,7 @@ def energy_calc(params, current_geom, mol):
         grad_method = "%s/%s" %(params.method,params.basis)
         psi4.core.set_output_file("psi4_out.dat", False)
         psi4.set_options(params.keywords)
+        psi4.set_num_threads(params.nthreads)
         energy = psi4.energy(grad_method) 
     return energy
 
@@ -255,7 +257,9 @@ def grad_calc(params,current_geom, mol):
         grad_method = "%s/%s" %(params.method,params.basis)
         psi4.core.set_output_file("psi4_out.dat", False)
         psi4.set_options(params.keywords)
+        psi4.set_num_threads(params.nthreads)
         E, wfn = psi4.energy(grad_method,return_wfn=True)
+        psi4.set_num_threads(params.nthreads)
         grad = np.asarray(psi4.gradient(grad_method,ref_wfn=wfn))
         #print(grad)
         grad_mw = mass_weight(params.natoms, grad, mol)
@@ -279,7 +283,6 @@ def ishida_morokuma(output_file):
     line_step_size = 0.3333*params.step_size
     current_geom = params.geometry
     mol = psi4.geometry(params.geometry)
-    print(mol)
     starting_vec = np.asarray(params.ts_vec)
     grad_method = "%s/%s" %(params.method,params.basis)
     steps = 0

@@ -1,0 +1,214 @@
+
+    -----------------------------------------------------------------------
+          Psi4: An Open-Source Ab Initio Electronic Structure Package
+                               Psi4 1.2.1 release
+
+                         Git: Rev {HEAD} 406f4de 
+
+
+    R. M. Parrish, L. A. Burns, D. G. A. Smith, A. C. Simmonett,
+    A. E. DePrince III, E. G. Hohenstein, U. Bozkaya, A. Yu. Sokolov,
+    R. Di Remigio, R. M. Richard, J. F. Gonthier, A. M. James,
+    H. R. McAlexander, A. Kumar, M. Saitow, X. Wang, B. P. Pritchard,
+    P. Verma, H. F. Schaefer III, K. Patkowski, R. A. King, E. F. Valeev,
+    F. A. Evangelista, J. M. Turney, T. D. Crawford, and C. D. Sherrill,
+    J. Chem. Theory Comput. 13(7) pp 3185--3197 (2017).
+    (doi: 10.1021/acs.jctc.7b00174)
+
+
+                         Additional Contributions by
+    P. Kraus, H. Kruse, M. H. Lechner, M. C. Schieber, and R. A. Shaw
+
+    -----------------------------------------------------------------------
+
+
+    Psi4 started on: Thursday, 17 January 2019 10:25AM
+
+    Process ID: 8210
+    Host:       localhost.localdomain
+    PSIDATADIR: /root/psi4conda/share/psi4
+    Memory:     500.0 MiB
+    Threads:    1
+    
+  ==> Input File <==
+
+--------------------------------------------------------------------------
+molecule{
+0 2
+   C               -2.156302        0.820095       0.146524
+   O               -1.790024     -0.409681    -0.480712
+   C               -0.929054     -1.183433       0.219824
+   H               -2.593682        0.631528       1.135214
+   H               -2.898280        1.290567    -0.499267
+   H               -1.279651        1.467643       0.245514
+   H                  0.441246     -0.560737       0.098703
+   H               -1.053332     -1.182755       1.308873
+   H               -0.797050     -2.158246    -0.247812
+   O                  2.501528     -0.576845    -0.031587
+   N                  1.469640        0.059508       0.007854
+   O                  1.339172       1.270960    -0.024487 
+}
+
+set{
+   basis 6-31+G(d)
+   freeze_core True
+   opt_type ts
+}
+
+
+set_num_threads(32)
+optimize('m06-2x')
+--------------------------------------------------------------------------
+  Threads set to 32 by Python driver.
+gradient() will perform analytic gradient computation.
+
+*** tstart() called on localhost.localdomain
+*** at Thu Jan 17 10:25:23 2019
+
+   => Loading Basis Set <=
+
+    Name: 6-31+G(D)
+    Role: ORBITAL
+    Keyword: BASIS
+    atoms 1, 3      entry C          line   119 file /root/psi4conda/share/psi4/basis/6-31pg_d_.gbs 
+    atoms 2, 10, 12 entry O          line   157 file /root/psi4conda/share/psi4/basis/6-31pg_d_.gbs 
+    atoms 4-9       entry H          line    46 file /root/psi4conda/share/psi4/basis/6-31pg_d_.gbs 
+    atoms 11        entry N          line   138 file /root/psi4conda/share/psi4/basis/6-31pg_d_.gbs 
+
+
+         ---------------------------------------------------------
+                                   SCF
+            by Justin Turney, Rob Parrish, Andy Simmonett
+                             and Daniel Smith
+                              RKS Reference
+                       32 Threads,    500 MiB Core
+         ---------------------------------------------------------
+
+  ==> Geometry <==
+
+    Molecular point group: c1
+    Full point group: C1
+
+    Geometry (in Angstrom), charge = 0, multiplicity = 2:
+
+       Center              X                  Y                   Z               Mass       
+    ------------   -----------------  -----------------  -----------------  -----------------
+         C           -2.244429886459     0.814589145342     0.168499308760    12.000000000000
+         O           -1.878151886459    -0.415186854658    -0.458736691240    15.994914619560
+         C           -1.017181886459    -1.188938854658     0.241799308760    12.000000000000
+         H           -2.681809886459     0.626022145342     1.157189308760     1.007825032070
+         H           -2.986407886459     1.285061145342    -0.477291691240     1.007825032070
+         H           -1.367778886459     1.462137145342     0.267489308760     1.007825032070
+         H            0.353118113541    -0.566242854658     0.120678308760     1.007825032070
+         H           -1.141459886459    -1.188260854658     1.330848308760     1.007825032070
+         H           -0.885177886459    -2.163751854658    -0.225836691240     1.007825032070
+         O            2.413400113541    -0.582350854658    -0.009611691240    15.994914619560
+         N            1.381512113541     0.054002145342     0.029829308760    14.003074004780
+         O            1.251044113541     1.265454145342    -0.002511691240    15.994914619560
+
+  Running in c1 symmetry.
+
+  Rotational constants: A =      0.21824  B =      0.05572  C =      0.04631 [cm^-1]
+  Rotational constants: A =   6542.70333  B =   1670.30481  C =   1388.25418 [MHz]
+  Nuclear repulsion =  238.146124704186889
+
+  Charge       = 0
+  Multiplicity = 2
+  Electrons    = 49
+  Nalpha       = 25
+  Nbeta        = 24
+
+  ==> Algorithm <==
+
+  SCF Algorithm Type is DF.
+  DIIS enabled.
+  MOM disabled.
+  Fractional occupation disabled.
+  Guess Type is SAD.
+  Energy threshold   = 1.00e-08
+  Density threshold  = 1.00e-08
+  Integral threshold = 0.00e+00
+
+  ==> Primary Basis <==
+
+  Basis Set: 6-31+G(D)
+    Blend: 6-31+G(D)
+    Number of shells: 60
+    Number of basis function: 126
+    Number of Cartesian functions: 126
+    Spherical Harmonics?: false
+    Max angular momentum: 2
+
+  ==> DFT Potential <==
+
+   => Composite Functional: M06-2X <= 
+
+    Hybrid M06-2X Meta-GGA XC Functional
+
+    Y. Zhao and D. G. Truhlar,  Theor. Chem. Acc., 120, 215, 2008
+
+
+    Deriv               =              1
+    GGA                 =           TRUE
+    Meta                =           TRUE
+
+    Exchange Hybrid     =           TRUE
+    MP2 Hybrid          =          FALSE
+
+   => Exchange Functionals <=
+
+    1.0000   XC_HYB_MGGA_X_M06_2X
+
+   => Exact (HF) Exchange <=
+
+    0.5400               HF 
+
+   => Correlation Functionals <=
+
+    1.0000   XC_MGGA_C_M06_2X
+
+   => Molecular Quadrature <=
+
+    Radial Scheme       =       TREUTLER
+    Pruning Scheme      =           FLAT
+    Nuclear Scheme      =       TREUTLER
+
+    BS radius alpha     =              1
+    Pruning alpha       =              1
+    Radial Points       =             75
+    Spherical Points    =            302
+    Total Points        =         271800
+    Total Blocks        =           2094
+    Max Points          =            256
+    Max Functions       =            123
+
+
+Traceback (most recent call last):
+  File "/root/psi4conda/bin/psi4", line 269, in <module>
+    exec(content)
+  File "<string>", line 40, in <module>
+  File "/root/psi4conda/lib//python3.6/site-packages/psi4/driver/driver.py", line 1111, in optimize
+    G, wfn = gradient(lowername, return_wfn=True, molecule=moleculeclone, **kwargs)
+  File "/root/psi4conda/lib//python3.6/site-packages/psi4/driver/driver.py", line 638, in gradient
+    wfn = procedures['gradient'][lowername](lowername, molecule=molecule, **kwargs)
+  File "/root/psi4conda/lib//python3.6/site-packages/psi4/driver/procrouting/proc.py", line 2071, in run_scf_gradient
+    ref_wfn = run_scf(name, **kwargs)
+  File "/root/psi4conda/lib//python3.6/site-packages/psi4/driver/procrouting/proc.py", line 2009, in run_scf
+    scf_wfn = scf_helper(name, post_scf=False, **kwargs)
+  File "/root/psi4conda/lib//python3.6/site-packages/psi4/driver/procrouting/proc.py", line 1283, in scf_helper
+    scf_wfn = scf_wavefunction_factory(name, base_wfn, core.get_option('SCF', 'REFERENCE'))
+  File "/root/psi4conda/lib//python3.6/site-packages/psi4/driver/procrouting/proc.py", line 1005, in scf_wavefunction_factory
+    wfn = core.RHF(ref_wfn, superfunc)
+
+RuntimeError: 
+Fatal Error: RHF: RHF reference is only for singlets.
+Error occurred in file: /scratch/psilocaluser/conda-builds/psi4-multiout_1532493090788/work/psi4/src/psi4/libscf_solver/rhf.cc on line: 78
+The most recent 5 function calls were:
+
+
+
+    Psi4 stopped on: Thursday, 17 January 2019 10:25AM
+    Psi4 wall time for execution: 0:00:00.82
+
+*** Psi4 encountered an error. Buy a developer more coffee!
+*** Resources and help at github.com/psi4/psi4.

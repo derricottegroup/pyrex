@@ -15,8 +15,9 @@ class scf_class(object):
         self.level_of_theory = "%s/%s" %(data.method,data.basis)
         self.charge = data.molecular_charge
         self.mult = data.molecular_multiplicity
-        self.do_solvent = data.do_solvent
-        self.eps = data.eps
+        self.nthreads = data.nthreads
+        #self.do_solvent = data.do_solvent
+        #self.eps = data.eps
         self.basis = str(data.basis)
         self.outfile = outfile
         self.keywords = data.keywords
@@ -47,6 +48,7 @@ class scf_class(object):
             mol = psi4.geometry(geom)
             psi4.set_options(self.keywords)
             #print("pyREX:Single Point Calculation on IRC Point %d" %(count))
+            psi4.set_num_threads(self.nthreads)
             energy, wfn = psi4.energy(self.level_of_theory, return_wfn=True)
             #wfn = psi4.core.Wavefunction.build(mol, self.basis)
             ndocc = wfn.doccpi()[0]
@@ -194,6 +196,7 @@ class scf_class(object):
         psi4.geometry(frag)
         psidump = "psi4_output/fragment_%s_opt.out" %label
         psi4.core.set_output_file(psidump, False)
+        psi4.set_num_threads(self.nthreads)
         e = psi4.optimize(self.level_of_theory)
         #psi4.core.clean()
         return e

@@ -49,6 +49,7 @@ class Params():
         self.do_fragility_spec = False
         self.do_rexplot = False
         self.energy_file = None
+        self.sapt_file = None
         self.qm_program = "psi4"
         json_input = sys.argv[1]
         self.read_input(json_input)
@@ -95,6 +96,8 @@ class Params():
                 self.do_energy = bool(input_params['pyrex']['do_energy'])
             if 'xc_functional' in input_params['pyrex']:
                 self.xc_functional = input_params['pyrex']['xc_functional']
+            if 'nthreads' in input_params['pyrex']:
+                self.nthreads = input_params['pyrex']['nthreads']
             if 'do_solvent' in input_params['pyrex']:
                 self.do_solvent = input_params['pyrex']['do_solvent']
             if 'eps' in input_params['pyrex']:
@@ -105,6 +108,8 @@ class Params():
                 self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
             if 'energy_read' in input_params['pyrex']:
                 self.energy_file = input_params['pyrex']['energy_read']
+            if 'sapt_read' in input_params['pyrex']:
+                self.sapt_file = input_params['pyrex']['sapt_read']
             if 'force_max' in input_params['pyrex']:
                 self.force_max = input_params['pyrex']['force_max']
             if 'force_min' in input_params['pyrex']:
@@ -243,7 +248,7 @@ if(params.energy_file!=None):
 ###########################
 # Reaction Force Analysis #
 ###########################
-if(params.do_energy):
+if(params.do_energy or params.energy_file!=None):
     coordinates = params.coordinates
     reaction_force_values = -1.0*np.gradient(energies,params.irc_stepsize)
     output = open(output_filename, "a")
@@ -301,7 +306,7 @@ if(params.do_conceptualdft):
 ###########################
 # Reaction Work Integrals #
 ###########################
-if(params.do_energy):
+if(params.do_energy or params.energy_file!=None):
     W_1 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, 0, index_min)
     W_2 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_min, index_ts)
     W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
@@ -351,7 +356,7 @@ if(params.do_sapt==True):
 # Symmetry-Adapted Perturbation Theory Decomposition #
 ######################################################
 
-if(params.energy_file!=None):
+if(params.energy_file!=None and params.do_sapt==True):
     #print(params.coordinates)
     index_min = params.coordinates.index(params.force_min)
     index_max = params.coordinates.index(params.force_max)
@@ -367,8 +372,16 @@ if(params.do_sapt==True):
     output = open(output_filename, "a")
     output.write('\n\n--Symmetry-Adapted Perturbation Theory Energy Decomposition--\n')
     output.close()
-    sapt_ = sapt(sapt_geometries, sapt_method, basis, output_filename)
-    int_, elst_, exch_, ind_, disp_  = sapt_.psi4_sapt()
+    if(params.sapt_file!=None):
+        sapt_data = pd.read_csv(params.sapt_file)
+        int_ = sapt_data['E_int'].values
+        elst_ = sapt_data['E_elst'].values
+        exch_ = sapt_data['E_exch'].values
+        ind_ = sapt_data['E_ind'].values
+        disp_ = sapt_data['E_disp'].values
+    else:
+        sapt_ = sapt(sapt_geometries, sapt_method, basis, output_filename)
+        int_, elst_, exch_, ind_, disp_  = sapt_.psi4_sapt()
     strain_e = []
     for i in range(len(energies)):
         strain_e.append(del_E[i] - int_[i])
