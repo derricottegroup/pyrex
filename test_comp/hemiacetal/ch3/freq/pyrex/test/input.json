@@ -1,0 +1,27 @@
+{
+  "molecule": { 
+    "symbols" : ["C", "O", "H", "H", "H", "C", "H", "H", "O", "H", "C", "H", "H"],
+    "molecular_charge" : "0",
+    "molecular_multiplicity" : 1
+  },
+
+  "model": {
+    "method": "mp2",
+    "basis": "3-21G"
+  },
+
+  "keywords": {
+    "scf_type": "df",
+    "freeze_core" : "True",
+    "reference" : "rhf",
+    "basis": "3-21G"
+  },
+
+  "pyrex" : {
+    "nthreads" : 40,
+    "irc_filename" : "full_irc.xyz",
+    "do_energy" : true,
+    "do_conceptualdft" : true,
+    "irc_stepsize" : 0.05
+  }
+}

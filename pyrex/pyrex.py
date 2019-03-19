@@ -275,6 +275,15 @@ if(params.do_energy or params.energy_file!=None):
     index_ts  = coordinates.index(0.0000)
     index_max = np.argmax(np.asarray(reaction_force_values))
     
+    r_struct = geoms[0]
+    force_min_struct = geoms[index_min]
+    ts_struct = geoms[index_ts]
+    force_max_struct = geoms[index_max]
+    p_struct = geoms[-1]
+    
+    key_structs = [r_struct, force_min_struct, ts_struct, force_max_struct, p_struct]
+    
+    scf_instance.psi4_molden(key_structs) 
     output = open(output_filename, "a")
     output.write('\n\n--Reaction Partitioning--\n')
     output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], coordinates[index_min]))
