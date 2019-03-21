@@ -281,9 +281,9 @@ if(params.do_energy or params.energy_file!=None):
     force_max_struct = geoms[index_max]
     p_struct = geoms[-1]
     
-    key_structs = [r_struct, force_min_struct, ts_struct, force_max_struct, p_struct]
+    #key_structs = [r_struct, force_min_struct, ts_struct, force_max_struct, p_struct]
     
-    scf_instance.psi4_molden(key_structs) 
+    #scf_instance.psi4_molden(key_structs) 
     output = open(output_filename, "a")
     output.write('\n\n--Reaction Partitioning--\n')
     output.write("\nReactant Region:          %.3f ------> %.3f\n" %(coordinates[0], coordinates[index_min]))
@@ -297,7 +297,10 @@ if(params.do_energy or params.energy_file!=None):
 # Grabbing chemical potential and calculating REF using re_flux class
 if(params.do_conceptualdft):
     c_dft = concept_dft()
-    potentials = np.array(c_dft.potential(wavefunctions))
+    if(params.molecular_multiplicity==1):
+        potentials = np.array(c_dft.potential(wavefunctions))
+    else:
+        potentials = np.array(c_dft.potential_open_shell(wavefunctions))
     hardness = np.array(c_dft.hardness(wavefunctions))
     reaction_electronic_flux = np.array(c_dft.electronic_flux(params.irc_stepsize))
     electrophilicity = []

@@ -23,37 +23,37 @@ class scf_class(object):
         self.outfile = outfile
         self.keywords = data.keywords
 
-    def psi4_molden(self, geometries):
-        """
-        Function to produce Molden files for key structures along reaction coordinate
-        """
-        struct_titles = ["r", "f_min", "ts", "f_max", "p"]
-        i = 0
-        for geometry in geometries:
-            psi4.core.set_output_file("%s.out" %struct_titles[i], False)
-            geom = geometry
-            # Code Related to JSON testing #
-            #geom_parse = geom.split()
-            #del geom_parse[0:2] #Remove Charge and Multiplicity 
-            #print(geom_parse)
-            geom += "symmetry c1"
-            mol = psi4.geometry(geom)
-            psi4.set_options(self.keywords)
-            #print("pyREX:Single Point Calculation on IRC Point %d" %(count))
-            psi4.set_num_threads(self.nthreads)
-            energy, wfn = psi4.energy(self.level_of_theory, return_wfn=True)
-            d = wfn.Da().to_array()
-            s = wfn.S().to_array()
-            c = wfn.Ca().to_array()
-            occs = c.T.dot(s.dot(d).dot(s).dot(c))
-            psi4.driver.molden(wfn, "%s.molden" %struct_titles[i], density_a = psi4.core.Matrix.from_array(occs))
-            #TODO:This now prints molden files for each key structure, now how can we
-            #     add JANPA functionality to this?
-            subprocess.call(['java', '-jar', '/root/wderricotte/src/janpa/molden2molden.jar', '-NormalizeBF', '-cart2pure', '-i', '%s.molden' %struct_titles[i], '-o', '%s_conv.molden' %struct_titles[i]])
-            log_file = open('%s_janpa.log' %struct_titles[i], 'w+')
-            subprocess.call(['java', '-jar', '/root/wderricotte/src/janpa/janpa.jar', '-i', '%s_conv.molden' %struct_titles[i], '-CLPO_Molden_File', '%s_CLPO.molden' %struct_titles[i]], stdout=log_file)
-            log_file.close()
-            i = i+1
+   # def psi4_molden(self, geometries):
+   #     """
+   #     Function to produce Molden files for key structures along reaction coordinate
+   #     """
+   #     struct_titles = ["r", "f_min", "ts", "f_max", "p"]
+   #     i = 0
+   #     for geometry in geometries:
+   #         psi4.core.set_output_file("%s.out" %struct_titles[i], False)
+   #         geom = geometry
+   #         # Code Related to JSON testing #
+   #         #geom_parse = geom.split()
+   #         #del geom_parse[0:2] #Remove Charge and Multiplicity 
+   #         #print(geom_parse)
+   #         geom += "symmetry c1"
+   #         mol = psi4.geometry(geom)
+   #         psi4.set_options(self.keywords)
+   #         #print("pyREX:Single Point Calculation on IRC Point %d" %(count))
+   #         psi4.set_num_threads(self.nthreads)
+   #         energy, wfn = psi4.energy(self.level_of_theory, return_wfn=True)
+   #         d = wfn.Da().to_array()
+   #         s = wfn.S().to_array()
+   #         c = wfn.Ca().to_array()
+   #         occs = c.T.dot(s.dot(d).dot(s).dot(c))
+   #         psi4.driver.molden(wfn, "%s.molden" %struct_titles[i], density_a = psi4.core.Matrix.from_array(occs))
+   #         #TODO:This now prints molden files for each key structure, now how can we
+   #         #     add JANPA functionality to this?
+   #         #subprocess.call(['java', '-jar', '/root/wderricotte/src/janpa/molden2molden.jar', '-NormalizeBF', '-cart2pure', '-i', '%s.molden' %struct_titles[i], '-o', '%s_conv.molden' %struct_titles[i]])
+   #         #log_file = open('%s_janpa.log' %struct_titles[i], 'w+')
+   #         #subprocess.call(['java', '-jar', '/root/wderricotte/src/janpa/janpa.jar', '-i', '%s_conv.molden' %struct_titles[i], '-CLPO_Molden_File', '%s_CLPO.molden' %struct_titles[i]], stdout=log_file)
+   #         #log_file.close()
+   #         #i = i+1
 
     def psi4_scf(self, geometries):
         """

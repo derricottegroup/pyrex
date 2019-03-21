@@ -18,7 +18,29 @@ class concept_dft(object):
             potential = 0.5*(homo_energy + lumo_energy)
             self.potentials.append(potential)
         return self.potentials
-    
+
+    def potential_open_shell(self, wavefunctions):
+        """	
+        Function for handling open-shell cases for chemical potential
+        """
+        self.potentials = []
+        wfns = wavefunctions
+        for wfn in wfns:
+            nalpha = wfn.nalpha()
+            nbeta = wfn.nbeta()   # Get the number of alpha and beta electrons
+            nelec = nalpha + nbeta
+            C_a = np.array(wfn.Ca())
+            C_b = np.array(wfn.Cb()) # Grab both coefficient matrices
+            eps_a = wfn.epsilon_a()
+            eps_a = np.array([eps_a.get(x) for x in range(C_a.shape[0])])
+            eps_b = wfn.epsilon_b() # Store all orbital energies in vectors
+            eps_b = np.array([eps_b.get(x) for x in range(C_b.shape[0])])
+            homo_energy = 0.5*(eps_a[nalpha - 1] + eps_b[nbeta - 1])
+            lumo_energy = 0.5*(eps_a[nalpha] + eps_b[nbeta]) 
+            potential = 0.5*(homo_energy + lumo_energy)
+            self.potentials.append(potential)
+        return self.potentials
+ 
     def hardness(self, wavefunctions):
         self.hardness = []
         wfns = wavefunctions
