@@ -281,6 +281,7 @@ def ishida_morokuma(output_file):
     max_steps = 1000
     params = Params()
     line_step_size = 0.3333*params.step_size
+    #line_step_size = 0.025*params.step_size
     current_geom = params.geometry
     mol = psi4.geometry(params.geometry)
     starting_vec = np.asarray(params.ts_vec)
@@ -334,7 +335,7 @@ def ishida_morokuma(output_file):
         line_energies = [E_1,]
 
         line_step_size_thresh = 1.5*line_step_size
-        #line_step_size_thresh = 0.5*line_step_size
+        #line_step_size_thresh = 2.0*line_step_size
         
         # Find useful point by projecting grad_1 on D
         grad_1_normed = grad_1/grad_1_norm
@@ -545,5 +546,5 @@ def irc(output_file):
 def print_step(output_file, coord, energy, del_E, grad):
     output = open(output_file, "a")
     grad_norm = np.linalg.norm(grad)
-    output.write('\n{:>20.2f} {:>20.7f} {:>20.7f} {:>20.7f}\n'.format(coord, energy, del_E, grad_norm)) 
+    output.write('\n{:>20.4f} {:>20.7f} {:>20.10f} {:>20.10f}\n'.format(coord, energy, del_E, grad_norm)) 
     output.close()  
