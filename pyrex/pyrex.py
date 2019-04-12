@@ -127,6 +127,11 @@ class Params():
             if 'irc_filename' in input_params['pyrex']:
                 self.irc_filename = input_params['pyrex']['irc_filename']
                 self.irc_grab()
+        if 'fsapt' in input_params:
+            self.monomer_A_frags = input_params['fsapt']['monomer_A_frags']
+            self.monomer_B_frags = input_params['fsapt']['monomer_B_frags']
+            self.monomer_A_labels = input_params['fsapt']['monomer_A_labels']
+            self.monomer_B_labels = input_params['fsapt']['monomer_B_labels']
         if 'rexplot' in input_params:
             self.do_rexplot = True
 
@@ -392,7 +397,7 @@ if(params.do_sapt==True):
         ind_ = sapt_data['E_ind'].values
         disp_ = sapt_data['E_disp'].values
     else:
-        sapt_ = sapt(sapt_geometries, sapt_method, basis, output_filename)
+        sapt_ = sapt(sapt_geometries, params, sapt_method, basis, output_filename)
         int_, elst_, exch_, ind_, disp_  = sapt_.psi4_sapt()
     strain_e = []
     for i in range(len(energies)):

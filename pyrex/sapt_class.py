@@ -5,11 +5,26 @@ import numpy as np
 
 class sapt(object):
 
-    def __init__(self, geometries, method, basis, outfile):
+    def __init__(self, data, geometries, method, basis, outfile):
         self.geometries = geometries
         self.method = method
         self.basis = basis
         self.outfile = outfile
+        self.monomer_A_frags = data.monomer_A_frags
+        self.monomer_B_frags = data.monomer_B_frags
+        self.monomer_A_labels = data.monomer_A_labels
+        self.monomer_B_labels = data.monomer_B_labels
+        json_input = sys.argv[1]
+        self.read_input(json_input)
+
+    def read_input(self,json_input):
+        json_data=open(json_input).read()
+        input_params = json.loads(json_data)
+        if 'fsapt' in input_params:
+            self.monomer_A_frags = input_params['fsapt']['monomer_A_frags']
+            self.monomer_B_frags = input_params['fsapt']['monomer_B_frags']
+            self.monomer_A_labels = input_params['fsapt']['monomer_A_labels']
+            self.monomer_B_labels = input_params['fsapt']['monomer_B_labels']
 
     def psi4_sapt(self):
         self.int_  = []
@@ -41,7 +56,21 @@ class sapt(object):
             #TODO: Actually have this create the SAPT files necessary for FSAPT partitioning. Make user options as well
             #      for fragment definitions. Something in the sapt block. 
             fsaptA_outfile = open('fsapt_output/fsapt%d/fA.dat' %count, 'w+')
+            for i in range(len(self.monomer_A_labels)):
+                fsaptA_outfile.write("%s" %self.monomer_A_labels[i])
+                for j in range(len(self.monomer_A_frags[i])):
+                    if(j==len(self.monomer_A_frags[i])-1):
+                        fsaptA_outfile.write(" %d \n" %self.monomer_A_frags[i][j])
+                    else:
+                        fsaptA_outfile.write(" %d " %self.monomer_A_frags[i][j])
             fsaptB_outfile = open('fsapt_output/fsapt%d/fB.dat' %count, 'w+')
+            for i in range(len(self.monomer_B_labels)):
+                fsaptB_outfile.write("%s" %self.monomer_B_labels[i])
+                for j in range(len(self.monomer_B_frags[i])):
+                    if(j==len(self.monomer_B_frags[i])-1):
+                        fsaptB_outfile.write(" %d \n" %self.monomer_B_frags[i][j])
+                    else:
+                        fsaptB_outfile.write(" %d " %self.monomer_B_frags[i][j])
             e_elst = psi4.core.get_variable("SAPT ELST ENERGY")
             e_exch = psi4.core.get_variable("SAPT EXCH ENERGY")
             e_ind  = psi4.core.get_variable("SAPT IND ENERGY")
