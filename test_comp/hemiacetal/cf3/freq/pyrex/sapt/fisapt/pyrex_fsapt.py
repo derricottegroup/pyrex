@@ -6,8 +6,8 @@ import json
 import numpy as np
 
 # What type of Linking Do you Want? #
-#link_type = "By Charge"
-link_type = "50-50"
+link_type = "By Charge"
+#link_type = "50-50"
 
 
 # Get Fragments #
@@ -50,7 +50,8 @@ for pair in unique_pairs:
 
 os.chdir("fsapt_output")
 num_geoms = len(os.listdir())
-num_geoms = 100 #Hard coded number for transition state of this system, delete line to make general
+num_ts = 100 #Hard coded number for transition state of this system, delete line to make general
+num_geoms = 101 # NOTE: Use a few geometries past the transition state to get better agreement with pyrex data
 for i in range(num_geoms):
     fsapt_dir = "fsapt%d" %i
     os.chdir(fsapt_dir)
@@ -93,6 +94,7 @@ f_dicts = [f_elst, f_exch, f_indab, f_indba, f_disp, f_total]
 w_dicts = [w_elst, w_exch, w_indab, w_indba, w_disp, w_total]
 for dict_ in pair_dicts:
     index = pair_dicts.index(dict_)
+    print(index)
     for pair in unique_pairs:
           f_dicts[index][pair] = -1.0*np.gradient(dict_[pair],step_size)
 
@@ -157,7 +159,7 @@ f_elst_csv.close(), f_exch_csv.close(), f_indab_csv.close(), f_indba_csv.close()
 f_dict_count = 0
 for dict_ in f_dicts:
     for pair in unique_pairs:
-          w_dicts[f_dict_count][pair] = -1.0*np.trapz(dict_[pair],dx=step_size)
+          w_dicts[f_dict_count][pair] = -1.0*np.trapz(dict_[pair][:num_ts],dx=step_size)
     f_dict_count = f_dict_count + 1
 
 work_values = open("work_values.dat", "w+")
@@ -165,7 +167,7 @@ work_values.write('\n\n--Reaction Work Decomposition (FSAPT Fragments)--\n')
 work_values.write('\n-----------------------------------------------------------------------------------------------------------------')
 work_values.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('Pair(A-B)','W_elst','W_exch', 'W_indAB', 'W_indBA', 'W_disp', 'W_total'))
 work_values.write('-----------------------------------------------------------------------------------------------------------------\n')
-print(w_dicts[0])
+#print(w_dicts[0])
 for pair in unique_pairs:
     work_values.write('\n{:>15s} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(pair,w_dicts[0][pair],w_dicts[1][pair], w_dicts[2][pair], w_dicts[3][pair], w_dicts[4][pair], w_dicts[5][pair]))
 work_values.write('------------------------------------------------------------------------------------------------------------------\n')
