@@ -11,12 +11,12 @@ axiswidth = 1.0
 ########################
 
 N = 4
-elst = (-5.21, -8.91, -9.78, -9.46)
-exch = (13.14, 13.41, 14.01, 14.39)
-indAB = (-1.20, -1.02, -1.19, -1.44)
-indBA = (-6.36, -13.40, -12.93, -12.07)
-disp = (-2.03, -2.05, -2.77, -3.07)
-total = (-1.65, -11.97, -12.66, -11.65)
+elst = (-105.25, -111.94, -118.26, -117.39)
+exch = (208.88, 230.19, 239.70, 236.83)
+indAB = (-44.63, -46.65, -46.74, -46.19)
+indBA = (-55.35, -66.45, -68.76, -68.06)
+disp = (-18.88, -19.89, -20.74, -20.63)
+total = (-15.24, -14.74, -14.79, -15.44)
 men_means = (20, 35, 30, 35, 27)
 women_means = (25, 32, 34, 20, 25)
 
@@ -38,7 +38,7 @@ plt.bar(ind + 5.0*width, total, width,
 plt.axhline(y=0,color='black',linestyle="--",linewidth=1.5)
 
 plt.ylabel('$w_1 + w_2$ (kcal mol$^{-1}$)', fontsize=14)
-plt.title('CX$_3$ --- OH', fontsize=14)
+plt.title('COH --- OH', fontsize=14)
 
 plt.xticks(ind + 5.0*width / 2, ('X=H', 'X=F', 'X=Cl', 'X=Br'))
 plt.legend(loc='best')
