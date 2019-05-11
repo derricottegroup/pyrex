@@ -324,10 +324,10 @@ if(params.do_conceptualdft):
 # Reaction Work Integrals #
 ###########################
 if(params.do_energy or params.energy_file!=None):
-    W_1 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, 0, index_min)
-    W_2 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_min, index_ts)
-    W_3 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_ts, index_max)
-    W_4 = -1.0*calctools.num_integrate(coordinates, reaction_force_values, index_max, len(reaction_force_values)-1)
+    W_1 = -1.0*np.trapz(reaction_force_values[:index_min], dx=params.irc_stepsize)
+    W_2 = -1.0*np.trapz(reaction_force_values[index_min-1:index_ts], dx=params.irc_stepsize)
+    W_3 = -1.0*np.trapz(reaction_force_values[index_ts-1:index_max], dx=params.irc_stepsize)
+    W_4 = -1.0*np.trapz(reaction_force_values[index_max-1:], dx=params.irc_stepsize)
 
     output.write('\n\n--Reaction Works--\n')
     output.write('\n-------------------------------------------------------------------------------------')
@@ -437,12 +437,12 @@ if(params.do_sapt==True):
     sapt_e_csv.close()
 
     # Reaction Works for Region 1
-    W_1_strain = -1.0*np.trapz(reaction_force_strain_[:index_ts+1], dx=irc_step_size)
-    W_1_int = -1.0*np.trapz(reaction_force_int_[:index_ts+1], dx=irc_step_size)
-    W_1_elst = -1.0*np.trapz(reaction_force_elst_[:index_ts+1], dx=irc_step_size)
-    W_1_exch = -1.0*np.trapz(reaction_force_exch_[:index_ts+1], dx=irc_step_size)
-    W_1_ind = -1.0*np.trapz(reaction_force_ind_[:index_ts+1], dx=irc_step_size)
-    W_1_disp = -1.0*np.trapz(reaction_force_disp_[:index_ts+1], dx=irc_step_size)
+    W_1_strain = -1.0*np.trapz(reaction_force_strain_[:index_ts], dx=irc_step_size)
+    W_1_int = -1.0*np.trapz(reaction_force_int_[:index_ts], dx=irc_step_size)
+    W_1_elst = -1.0*np.trapz(reaction_force_elst_[:index_ts], dx=irc_step_size)
+    W_1_exch = -1.0*np.trapz(reaction_force_exch_[:index_ts], dx=irc_step_size)
+    W_1_ind = -1.0*np.trapz(reaction_force_ind_[:index_ts], dx=irc_step_size)
+    W_1_disp = -1.0*np.trapz(reaction_force_disp_[:index_ts], dx=irc_step_size)
     output = open(output_filename, "a")
     output.write('\n\n--Reaction Work Decomposition (Region 1)--\n')
     output.write('\n-------------------------------------------------------------------------------------------------')
