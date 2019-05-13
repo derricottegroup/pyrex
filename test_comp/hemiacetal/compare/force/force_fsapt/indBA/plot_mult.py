@@ -26,7 +26,7 @@ csv_files = ['force_indba_ch3.csv', 'force_indba_cf3.csv', 'force_indba_ccl3.csv
 legend_labels = ['X=H', 'X=F', 'X=Cl', 'X=Br']
 
 x_label = "$\\xi$ (au amu$^{1/2}$)"
-y_label = "$F$ (kcal mol$^{-1}$ $\\xi^{-1}$)"
+y_label = "$F_{\\rm indBA}$ (kcal mol$^{-1}$ $\\xi^{-1}$)"
 
 figure_output_filename = "force.svg"
 
