@@ -7,6 +7,7 @@ import os
 import subprocess
 import numpy as np
 import psi4
+from pyscf import lib
 from pyscf import scf, dft ,gto, solvent
 from pyscf.solvent import ddcosmo
 
@@ -17,8 +18,8 @@ class scf_class(object):
         self.charge = data.molecular_charge
         self.mult = data.molecular_multiplicity
         self.nthreads = data.nthreads
-        #self.do_solvent = data.do_solvent
-        #self.eps = data.eps
+        self.do_solvent = data.do_solvent
+        self.eps = data.eps
         self.basis = str(data.basis)
         self.outfile = outfile
         self.keywords = data.keywords
@@ -117,9 +118,10 @@ class scf_class(object):
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()
         energies = []
-        wavefunctions = []
+        frontier_orb_energies = []
         count = 0
         start = time.time()
+        lib.num_threads(self.nthreads)
         for geometry in geometries:
             output = open(self.outfile, "a")
             mol = gto.Mole()
@@ -141,12 +143,15 @@ class scf_class(object):
                 nocc = np.count_nonzero(solv_cosmo.mo_occ)
                 homo_energy = mo_e[nocc - 1]
                 lumo_energy = mo_e[nocc]
+                homo_lumo = (homo_energy,lumo_energy)
             else:
                 energy = scf_obj.scf()
                 mo_e = scf_obj.mo_energy
                 nocc = np.count_nonzero(scf_obj.mo_occ)
                 homo_energy = mo_e[nocc - 1]
                 lumo_energy = mo_e[nocc]
+                homo_lumo = (homo_energy,lumo_energy)
+            frontier_orb_energies.append(homo_lumo)
             energies.append(energy)
             output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
             count = count+1
@@ -156,7 +161,7 @@ class scf_class(object):
         output.close()
         end = time.time()
         print("pySCF Time = %f" %(end - start)) 
-        return energies
+        return energies,frontier_orb_energies
 
     def pyscf_dft(self, geometries, xc_functional):
         """
@@ -173,9 +178,10 @@ class scf_class(object):
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()
         energies = []
-        wavefunctions = []
+        frontier_orb_energies = []
         count = 0
         start = time.time()
+        lib.num_threads(self.nthreads)
         for geometry in geometries:
             output = open(self.outfile, "a")
             mol = gto.Mole()
@@ -198,12 +204,15 @@ class scf_class(object):
                 nocc = np.count_nonzero(solv_cosmo.mo_occ)
                 homo_energy = mo_e[nocc - 1]
                 lumo_energy = mo_e[nocc]
+                homo_lumo = (homo_energy,lumo_energy)
             else:
                 energy = dft_obj.scf()
                 mo_e = dft_obj.mo_energy
                 nocc = np.count_nonzero(dft_obj.mo_occ)
                 homo_energy = mo_e[nocc - 1]
                 lumo_energy = mo_e[nocc]
+                homo_lumo = (homo_energy,lumo_energy)
+            frontier_orb_energies.append(homo_lumo)
             energies.append(energy)
             output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
             count = count+1
@@ -213,7 +222,8 @@ class scf_class(object):
         output.close()
         end = time.time()
         print("pySCF Time = %f" %(end - start))
-        return energies
+        return energies,frontier_orb_energies
+
     def opt(self, label, natoms, geom):
         """
         Optimizes individual fragments for strain energy calculations.

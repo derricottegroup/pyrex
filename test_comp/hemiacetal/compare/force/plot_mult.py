@@ -11,24 +11,30 @@ def simpleaxis(ax):
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
 
-matplotlib.rcParams['mathtext.fontset'] = 'stix'
-matplotlib.rcParams['font.family'] = 'STIXGeneral'
-
-fontsize = 8
-ticklabel_size = 7 
+fontsize = 5.0
+ticklabel_size = 8.0 
 linewidth = 1.0
 axiswidth = 1.0
-fig_dims = [3.5, 2.2]
+fig_dims = [3.25, 1.75]
 
 hartree2kcal = 627.509 
 
 csv_files = ['force_ch3.csv', 'force_cf3.csv', 'force_ccl3.csv', 'force_cbr3.csv']
-legend_labels = ['X=H', 'X=F', 'X=Cl', 'X=Br']
+legend_labels = ['R1', 'R2', 'R3', 'R4']
 
 x_label = "$\\xi$ (au amu$^{1/2}$)"
 y_label = "$F$ (kcal mol$^{-1}$ $\\xi^{-1}$)"
 
-figure_output_filename = "force.svg"
+figure_output_filename = "force.pdf"
+
+gold = '#ffbd39'
+turquoise = '#08d9d6'
+black = '#252a34'
+red = '#ff2e63'
+
+legend_properties = {'weight':'bold'}
+colors = [gold,turquoise,red,black]
+
 
 x = []
 y_kcal = []
@@ -40,7 +46,7 @@ for filename in csv_files:
     y_kcal.append((y - y[0])*hartree2kcal)
 
 for i in range(len(legend_labels)):
-    plt.plot(x[i],y_kcal[i],linewidth=linewidth,label=legend_labels[i])
+    plt.plot(x[i],y_kcal[i],linewidth=linewidth,label=legend_labels[i], color=colors[i])
 
 rc('axes', linewidth=axiswidth)
 ax = gca()
@@ -56,12 +62,12 @@ for axis in ['bottom','left']:
 ax.xaxis.set_tick_params(width=1)
 ax.yaxis.set_tick_params(width=1)
 plt.legend()
-plt.legend(frameon=False, fontsize=fontsize)
+plt.legend(frameon=False, fontsize=fontsize, prop=legend_properties)
 fig = matplotlib.pyplot.gcf()
 fig.set_size_inches(fig_dims[0], fig_dims[1])
 
-plt.ylabel(y_label, fontsize=fontsize)
-plt.xlabel(x_label, fontsize=fontsize)
+plt.ylabel(y_label, fontsize=14)
+plt.xlabel(x_label, fontsize=14)
 
 
 plt.savefig(figure_output_filename)
