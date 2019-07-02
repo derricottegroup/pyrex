@@ -43,6 +43,7 @@ class Params():
         self.do_energy = False
         self.do_frag = False
         self.do_sapt = False
+        self.eps = 80.4 # Water by default
         self.do_polarization = False
         self.do_eda = False
         self.do_conceptualdft = False
@@ -232,10 +233,10 @@ if(params.do_energy):
         nelec = wavefunctions[0].nalpha()
 
     if(params.qm_program == 'pyscf' and params.method == 'scf'):
-        energies = scf_instance.pyscf_scf(pyscf_geoms)
+        energies,frontier_orb_energies = scf_instance.pyscf_scf(pyscf_geoms)
      
     if(params.qm_program == 'pyscf' and params.method == 'dft'):
-        energies = scf_instance.pyscf_dft(pyscf_geoms, params.xc_functional)
+        energies,frontier_orb_energies = scf_instance.pyscf_dft(pyscf_geoms, params.xc_functional)
 
 # Store energies in .csv file
     energy_csv = open("energy.csv", "w+")
@@ -303,10 +304,16 @@ if(params.do_energy or params.energy_file!=None):
 if(params.do_conceptualdft):
     c_dft = concept_dft()
     if(params.molecular_multiplicity==1):
-        potentials = np.array(c_dft.potential(wavefunctions))
+        if(params.qm_program == 'psi4'):
+            potentials = np.array(c_dft.potential(wavefunctions))
+        if(params.qm_program == 'pyscf'):
+            potentials = np.array(c_dft.potential_pyscf(frontier_orb_energies))
     else:
         potentials = np.array(c_dft.potential_open_shell(wavefunctions))
-    hardness = np.array(c_dft.hardness(wavefunctions))
+    if(params.qm_program == 'psi4'):
+        hardness = np.array(c_dft.hardness(wavefunctions))
+    if(params.qm_program == 'pyscf'):
+        hardness = np.array(c_dft.hardness_pyscf(frontier_orb_energies))
     reaction_electronic_flux = np.array(c_dft.electronic_flux(params.irc_stepsize))
     electrophilicity = []
     for i in range(len(hardness)):
@@ -353,10 +360,6 @@ if(params.do_energy or params.energy_file!=None):
 #induction = []
 #dispersion = []
 
-
-e_A = 0.0
-e_B = 0.0
-
 if(params.do_sapt==True):
     sapt_geometries = geomparser.sapt_geombuilder(params.charge_A, params.mult_A, params.charge_B, params.mult_B, params.frag_A, params.frag_B)
     #p_sapt_geometries = geomparser.sapt_geombuilder(p_charge_A, p_mult_A, p_charge_B, p_mult_B, product_frag_A, product_frag_B)
@@ -386,6 +389,8 @@ if(params.do_sapt==True):
     sapt_method = params.sapt_method
     basis = params.basis
     del_E = [(energy - (e_A + e_B)) for energy in energies]
+    print(del_E)
+    print(energies)
     output = open(output_filename, "a")
     output.write('\n\n--Symmetry-Adapted Perturbation Theory Energy Decomposition--\n')
     output.close()

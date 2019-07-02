@@ -18,6 +18,15 @@ class concept_dft(object):
             potential = 0.5*(homo_energy + lumo_energy)
             self.potentials.append(potential)
         return self.potentials
+    
+    def potential_pyscf(self,frontier_orb_energies):
+        self.potentials = []
+        for foe in frontier_orb_energies:
+            homo_energy = foe[0]
+            lumo_energy = foe[1]
+            potential = 0.5*(homo_energy + lumo_energy)
+            self.potentials.append(potential)
+        return self.potentials
 
     def potential_open_shell(self, wavefunctions):
         """	
@@ -55,7 +64,18 @@ class concept_dft(object):
             hardness = lumo_energy - homo_energy
             self.hardness.append(hardness)
         return self.hardness
-        
+       
+#TODO: Just randomly thought of a better way to do this, just have the SCF class detect the QM Program then let each
+#      function calculate the potential, hardness, etc. differently based on that. Rather than having different 
+#      functions for every QM program, this is fine for now with just two, but more would be a nightmare. 
+    def hardness_pyscf(self, frontier_orb_energies):
+        self.hardness = []
+        for foe in frontier_orb_energies:
+            homo_energy = foe[0]
+            lumo_energy = foe[1] 
+            hardness = lumo_energy - homo_energy
+            self.hardness.append(hardness)
+        return self.hardness 
 
     def electronic_flux(self, step):
         re_flux = -1.0*np.gradient(self.potentials,step)

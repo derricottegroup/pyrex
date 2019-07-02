@@ -1,4 +1,5 @@
 import matplotlib
+matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 from pylab import *
