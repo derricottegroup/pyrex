@@ -9,10 +9,14 @@ import numpy as np
 class Params():
     def __init__(self):
         self.do_saveplot = False
+        self.rel_energy = False
         self.force_min = 0.0
         self.force_max = 0.0
+        self.scale = 1.0
         self.x_min = None
         self.x_max = None
+        self.y_min = None
+        self.y_max = None
         self.fontsize = 16
         self.ticklabel_size = 10
         self.linewidth = 5.0
@@ -35,10 +39,18 @@ class Params():
                 self.force_min = input_params['rexplot']['force_min']
             if 'force_max' in input_params['rexplot']:
                 self.force_max = input_params['rexplot']['force_max']
+            if 'rel_energy' in input_params['rexplot']:
+                self.rel_energy = bool(input_params['rexplot']['rel_energy'])
+            if 'scale' in input_params['rexplot']:
+                self.scale = input_params['rexplot']['scale'] 
             if 'x_min' in input_params['rexplot']:
                 self.x_min = input_params['rexplot']['x_min']
             if 'x_max' in input_params['rexplot']:
                 self.x_max = input_params['rexplot']['x_max']
+            if 'y_min' in input_params['rexplot']:
+                self.y_min = input_params['rexplot']['y_min']
+            if 'y_max' in input_params['rexplot']:
+                self.y_max = input_params['rexplot']['y_max']
             if 'x_label' in input_params['rexplot']:    
                 self.x_label = input_params['rexplot']['x_label']
             if 'y_label' in input_params['rexplot']:
@@ -70,24 +82,23 @@ def plot():
     df = pd.read_csv(input_file)
 
     x = df[params.coordinate]
-    if(params.x_min!=None):
-        x_min = params.x_min
-    else:
-        x_min = x[0]
-    if(params.x_max!=None):
-        x_max = params.x_max
-    else:
-        x_max = x[len(x)-1]
     y = []
     for i in range(len(params.properties)):
-        y.append(df[params.properties[i]])
+        array_temp = []
+        current_array = df[params.properties[i]]
+        if(params.rel_energy):
+            for j in range(len(current_array)):
+                array_temp.append((current_array[j] - current_array[0])*params.scale)
+            y.append(array_temp)
+        else:
+            y.append(df[params.properties[i]]*params.scale)
     
     y_spline = []
     for i in range(len(params.properties)):
         y_fit = UnivariateSpline(x, y[i], s=0)
         y_spline.append(y_fit)
 
-    xs = np.linspace(x_min, x_max, 1000)
+    xs = np.linspace(x[0], x[len(x)-1], 1000)
     
     y_spline_fit = []
     for i in range(len(params.properties)):
@@ -121,6 +132,14 @@ def plot():
     ax.yaxis.set_tick_params(width=3)
     plt.legend(prop={'size': 60})
     plt.legend(frameon=False)
+    if(params.y_max and params.y_min):
+        plt.ylim(params.y_min, params.y_max)
+    else:
+        pass
+    if(params.x_max!=None and params.x_min!=None):
+        plt.xlim(params.x_min, params.x_max)
+    else:
+        pass
     fig_dims = params.fig_dims
     fig = matplotlib.pyplot.gcf()
     fig.set_size_inches(fig_dims[0], fig_dims[1])
