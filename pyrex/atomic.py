@@ -49,10 +49,14 @@ def grad_calc(params,current_geom, mol):
         pymol.atom = geom_vec
         pymol.unit = 'Bohr'
         pymol.basis = params.basis
-        pymol.charge = params.charge
-        pymol.spin = params.mult - 1
+        pymol.charge = params.molecular_charge
+        pymol.spin = params.molecular_multiplicity - 1
         pymol.build()
-        scf_obj = scf.RHF(pymol)
+        if(params.method=="scf"):
+            scf_obj = scf.RHF(pymol)
+        if(params.method=="dft"):
+            scf_obj = dft.RKS(pymol)
+            scf_obj.xc = params.xc_functional
         if(params.do_solvent):
             solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
             solv_obj.with_solvent.eps = params.eps
@@ -62,8 +66,6 @@ def grad_calc(params,current_geom, mol):
         else:
             E = scf_obj.kernel()
             grad = scf_obj.nuc_grad_method().kernel()
-        #print(grad)
-        grad_mw = mass_weight(params.natoms, grad, mol)
     if(params.qm_program=='psi4'):
         mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
         mol.fix_orientation(True)
@@ -99,18 +101,20 @@ def atomic_decomp(params, output_file, geometries):
     atom_forces = []
     syms = params.symbols
     count = 0
+    output = open(output_file,"a")
+    output.write('\n\n--Atomic Contributions to Reaction Work (kcal/mol)--\n')
     for geometry in geometries:
         mol = psi4.geometry(geometry)
         geom_array = np.asarray(mol.geometry())
         grad = grad_calc(params, geom_array, mol)
         force_array = []
         output = open(output_file,"a")
-        output.write('\nAtomic Force Decomposition for Coordinate %.2f\n' %(params.coordinates[count]))
-        output.write('---------------------------------------------------\n')
+        output.write('\n\nCoordinate %.2f\n' %(params.coordinates[count]))
+        output.write('------------------------\n')
         for i in range(params.natoms):
             atom_force = grad[i][0]*disp[count][i][0] + grad[i][1]*disp[count][i][1] + grad[i][2]*disp[count][i][2]
             #print(atom_force)
-            output.write('Force for atom %s%d is %.5f kcal/mol\n' %(params.symbols[i], i+1, atom_force*627.509))
+            output.write('|%s%d|%.5f|   ' %(params.symbols[i], i+1, atom_force*627.509))
             force_array.append(atom_force)
         output.close()
         atom_forces.append(force_array)

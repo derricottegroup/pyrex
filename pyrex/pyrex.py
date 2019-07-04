@@ -28,6 +28,7 @@ from decimal import Decimal
 from concept_dft import *
 from scf_class import *
 from geomparser import *
+from atomic import atomic_decomp
 from sapt_class import *
 from prettytable import PrettyTable
 
@@ -43,6 +44,7 @@ class Params():
         self.do_energy = False
         self.do_frag = False
         self.do_sapt = False
+        self.do_atomic = False
         self.eps = 80.4 # Water by default
         self.do_polarization = False
         self.do_eda = False
@@ -119,6 +121,8 @@ class Params():
                 self.restart = bool(input_params['pyrex']['restart']) #TODO Implement this functionality
             if 'do_sapt' in input_params['pyrex']:
                 self.do_sapt = bool(input_params['pyrex']['do_sapt'])
+            if 'do_atomic' in input_params['pyrex']:
+                self.do_atomic = bool(input_params['pyrex']['do_atomic'])
             if 'do_polarization' in input_params['pyrex']:
                 self.do_polarization = bool(input_params['pyrex']['do_polarization'])
             if 'sapt_method' in input_params["pyrex"]:
@@ -227,7 +231,7 @@ if(params.do_frag==True):
 # Run Energy Calculations #
 ###########################
 
-if(params.do_energy):
+if(params.do_energy and params.energy_file==None):
     if(params.qm_program == 'psi4'):
         energies, wavefunctions = scf_instance.psi4_scf(geoms)
         nelec = wavefunctions[0].nalpha()
@@ -371,6 +375,36 @@ if(params.do_sapt==True):
 #    energies_B, wavefunctions_B = scf_instance.psi4_scf(frag_B_geoms)
 #    nelec_A = wavefunctions_A[0].nalpha()
 #    nelec_B = wavefunctions_B[0].nalpha()
+
+#######################################
+# Atomic Force And Work Decomposition #
+#######################################
+
+if(params.do_atomic==True):
+    atomic_forces = atomic_decomp(params, output_filename, geoms)
+
+    W_1_conts = [] # Array to store the contributions to Work in Region 1
+    for i in range(params.natoms):
+        W_1_conts.append(np.sum(atomic_forces[i][:index_min]))
+    W_2_conts = [] # Array to store the contributions to Work in Region 2
+    for i in range(params.natoms):
+        W_2_conts.append(np.sum(atomic_forces[i][index_min:index_ts]))
+    W_3_conts = [] # Array to store the contributions to Work in Region 3
+    for i in range(params.natoms):
+        W_3_conts.append(np.sum(atomic_forces[i][index_ts:index_max]))
+    W_4_conts = [] # Array to store the contributions to Work in Region 4
+    for i in range(params.natoms):
+        W_4_conts.append(np.sum(atomic_forces[i][index_max:]))
+    output = open(output_filename, "a")
+    output.write('\n\n--Atomic Decomposition of Reaction Works (kcal/mol)--\n')
+    output.write('\n-------------------------------------------------------------------------------------')
+    output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('Atom', 'W_1', 'W_2', 'W_3', 'W_4'))
+    output.write('\n-------------------------------------------------------------------------------------')
+    for i in range(params.natoms): 
+        output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('%s%d' %(params.symbols[i],i+1), W_1_conts[i]*627.51, W_2_conts[i]*627.51, W_3_conts[i]*627.51, W_4_conts[i]*627.51))
+    output.write('\n-------------------------------------------------------------------------------------')
+    output.close()
+
 
 ######################################################
 # Symmetry-Adapted Perturbation Theory Decomposition #

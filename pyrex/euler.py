@@ -254,6 +254,9 @@ def grad_calc(params,current_geom, mol):
         grad_mw = mass_weight(params.natoms, grad, mol)        
     if(params.qm_program=='psi4'):
         mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
+        mol.fix_orientation(True)
+        mol.fix_com(True)
+        mol.reset_point_group('c1')
         grad_method = "%s/%s" %(params.method,params.basis)
         psi4.core.set_output_file("psi4_out.dat", False)
         psi4.set_options(params.keywords)
