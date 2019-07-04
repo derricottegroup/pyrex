@@ -37,10 +37,13 @@ for line in irc_backward:
         geom = []
         irc_num_line = line.split()
         irc_num = int(irc_num_line[2])
-        for i in range(natoms):
-            line = next(irc_backward)
-            geom.append(line)
-        full_irc.append((irc_num,geom))
+        if (irc_num==0):
+            pass
+        else:
+            for i in range(natoms):
+                line = next(irc_backward)
+                geom.append(line)
+            full_irc.append((irc_num,geom))
 
 # Sort the IRC
 sorted_full_irc = sorted(full_irc)

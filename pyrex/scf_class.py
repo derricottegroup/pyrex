@@ -16,6 +16,7 @@ class scf_class(object):
     def __init__(self,data,outfile):
         self.level_of_theory = "%s/%s" %(data.method,data.basis)
         self.charge = data.molecular_charge
+        self.coordinates = data.coordinates
         self.mult = data.molecular_multiplicity
         self.nthreads = data.nthreads
         self.do_solvent = data.do_solvent
@@ -93,7 +94,7 @@ class scf_class(object):
             lumo_energy = eps[ndocc]
             energies.append(energy)
             wavefunctions.append(wfn)
-            output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
+            output.write('{:>20.2f} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(self.coordinates[count], energy, homo_energy, lumo_energy))
             count = count+1
             output.close()
         output = open(self.outfile, "a")
@@ -153,7 +154,7 @@ class scf_class(object):
                 homo_lumo = (homo_energy,lumo_energy)
             frontier_orb_energies.append(homo_lumo)
             energies.append(energy)
-            output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
+            output.write('{:>20.2f} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(self.coordinates[count], energy, homo_energy, lumo_energy))
             count = count+1
             output.close()
         output = open(self.outfile, "a")
@@ -214,7 +215,7 @@ class scf_class(object):
                 homo_lumo = (homo_energy,lumo_energy)
             frontier_orb_energies.append(homo_lumo)
             energies.append(energy)
-            output.write('{:>20} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(count, energy, homo_energy, lumo_energy))
+            output.write('{:>20.2f} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(self.coordinates[count], energy, homo_energy, lumo_energy))
             count = count+1
             output.close()
         output = open(self.outfile, "a")

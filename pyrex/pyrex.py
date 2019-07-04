@@ -269,7 +269,7 @@ if(params.do_energy or params.energy_file!=None):
     
     force_count = 0
     for reaction_force in reaction_force_values:
-        output.write('\n{:>20} {:>20.7f} {:>20.7f}\n'.format(force_count, reaction_force, reaction_force*627.51))
+        output.write('\n{:>20} {:>20.7f} {:>20.7f}\n'.format(params.coordinates[force_count], reaction_force, reaction_force*627.51))
         force_count = force_count+1
     output.write('-------------------------------------------------------------------------------------\n')
     output.close()

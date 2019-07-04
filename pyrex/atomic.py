@@ -83,16 +83,20 @@ def grad_calc(params,current_geom, mol):
 
 def displacement(geometries):
     displacements = []
-    for i in range(len(geometries)):
-        if(i<=len(geometries)-2):
-            current_mol = psi4.geometry(geometries[i])
-            next_mol = psi4.geometry(geometries[i+1])
-            current_geom = np.asarray(current_mol.geometry())
-            next_geom = np.asarray(next_mol.geometry())
-            current_disp = np.subtract(next_geom,current_geom)
-            displacements.append(current_disp)
-        else:
-            pass
+    output = open("pyrex_output.dat","a")
+    geometries[0] += "no_reorient"
+    for i in range(len(geometries)-1):
+        geometries[i+1] += "no_reorient" 
+        current_mol = psi4.geometry(geometries[i])
+        next_mol = psi4.geometry(geometries[i+1])
+        current_geom = np.asarray(current_mol.geometry())
+        next_geom = np.asarray(next_mol.geometry())
+        np.savetxt(output, current_geom, delimiter=',')
+        output.write("\n\n")
+        np.savetxt(output, next_geom, delimiter=',')
+        current_disp = np.subtract(next_geom,current_geom)
+        displacements.append(current_disp)
+    output.close()
     return displacements
 
 def atomic_decomp(params, output_file, geometries):
@@ -111,6 +115,10 @@ def atomic_decomp(params, output_file, geometries):
         output = open(output_file,"a")
         output.write('\n\nCoordinate %.2f\n' %(params.coordinates[count]))
         output.write('------------------------\n')
+        #output.write("%f\n" %grad)
+        #np.savetxt(output, grad, delimiter=',')
+        #np.savetxt(output, disp[count], delimiter=',')
+        #output.write("%f\n" %disp[count])
         for i in range(params.natoms):
             atom_force = grad[i][0]*disp[count][i][0] + grad[i][1]*disp[count][i][1] + grad[i][2]*disp[count][i][2]
             #print(atom_force)
