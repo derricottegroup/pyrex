@@ -15,7 +15,6 @@ import os
 import sys
 import json
 from pyscf import gto, scf, dft, grad, solvent, mp
-from pyscf.solvent import ddcosmo, ddcosmo_grad
 
 def grad_calc(params,current_geom, mol):
     """
@@ -52,19 +51,20 @@ def grad_calc(params,current_geom, mol):
         pymol.charge = params.molecular_charge
         pymol.spin = params.molecular_multiplicity - 1
         pymol.build()
+        #TODO: PySCF 1.6.2 changes the way solvent is called for gradients, change this here
+        #      they also added support for ddPCM, YAY! Let's add it in!
         if(params.method=="scf"):
             scf_obj = scf.RHF(pymol)
         if(params.method=="dft"):
             scf_obj = dft.RKS(pymol)
             scf_obj.xc = params.xc_functional
         if(params.do_solvent):
-            solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
+            solv_obj = scf_obj.DDCOSMO()
             solv_obj.with_solvent.eps = params.eps
-            solv_cosmo = solvent.ddCOSMO(solv_obj).run()
-            E = solv_cosmo.scf()
+            E = solv_obj.scf()
             grad = solv_obj.nuc_grad_method().kernel()
         else:
-            E = scf_obj.kernel()
+            E = scf_obj.scf()
             grad = scf_obj.nuc_grad_method().kernel()
     if(params.qm_program=='psi4'):
         mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
@@ -83,7 +83,7 @@ def grad_calc(params,current_geom, mol):
 
 def displacement(geometries):
     displacements = []
-    output = open("pyrex_output.dat","a")
+    #output = open("pyrex_output.dat","a")
     geometries[0] += "no_reorient"
     for i in range(len(geometries)-1):
         geometries[i+1] += "no_reorient" 
@@ -91,12 +91,12 @@ def displacement(geometries):
         next_mol = psi4.geometry(geometries[i+1])
         current_geom = np.asarray(current_mol.geometry())
         next_geom = np.asarray(next_mol.geometry())
-        np.savetxt(output, current_geom, delimiter=',')
-        output.write("\n\n")
-        np.savetxt(output, next_geom, delimiter=',')
+        #np.savetxt(output, current_geom, delimiter=',')
+        #output.write("\n\n")
+        #np.savetxt(output, next_geom, delimiter=',')
         current_disp = np.subtract(next_geom,current_geom)
         displacements.append(current_disp)
-    output.close()
+    #output.close()
     return displacements
 
 def atomic_decomp(params, output_file, geometries):

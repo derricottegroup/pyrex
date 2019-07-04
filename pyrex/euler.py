@@ -18,7 +18,6 @@ import os
 import sys
 import json
 from pyscf import gto, scf, dft, grad, solvent, mp 
-from pyscf.solvent import ddcosmo, ddcosmo_grad
 
 #####################
 # Read in Parameters#
@@ -188,12 +187,11 @@ def energy_calc(params, current_geom, mol):
         #    scf_obj = dft.RKS(mol)
         #    scf_obj.xc = params.xc_functional
         if(params.do_solvent):
-            solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
+            solv_obj = scf_obj.DDCOSMO()
             solv_obj.with_solvent.eps = params.eps
-            solv_cosmo = solvent.ddCOSMO(solv_obj)
-            energy = solv_cosmo.kernel()
+            energy = solv_obj.scf()
         else:
-            energy = scf_obj.kernel()
+            energy = scf_obj.scf()
 
     if(params.qm_program=='psi4'):
         mol.set_geometry(psi4.core.Matrix.from_array(current_geom))
@@ -242,10 +240,9 @@ def grad_calc(params,current_geom, mol):
         pymol.build()
         scf_obj = scf.RHF(pymol)
         if(params.do_solvent):
-            solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
+            solv_obj = scf_obj.DDCOSMO()
             solv_obj.with_solvent.eps = params.eps
-            solv_cosmo = solvent.ddCOSMO(solv_obj).run()
-            E = solv_cosmo.scf()
+            E = solv_obj.scf()
             grad = solv_obj.nuc_grad_method().kernel()
         else:
             E = scf_obj.kernel()

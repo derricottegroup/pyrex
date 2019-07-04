@@ -9,7 +9,6 @@ import numpy as np
 import psi4
 from pyscf import lib
 from pyscf import scf, dft ,gto, solvent
-from pyscf.solvent import ddcosmo
 
 class scf_class(object):
 
@@ -135,13 +134,12 @@ class scf_class(object):
             mol.build() 
             scf_obj = scf.RHF(mol)
             if(self.do_solvent):
-                solv_obj = ddcosmo.ddcosmo_for_scf(scf_obj)
+                solv_obj = scf_obj.DDCOSMO()
                 solv_obj.with_solvent.eps = self.eps
-                solv_cosmo = solvent.ddCOSMO(solv_obj)
-                energy = solv_cosmo.scf()
-                mo_e = solv_cosmo.mo_energy
-                nocc = np.count_nonzero(solv_cosmo.mo_occ)
-                nocc = np.count_nonzero(solv_cosmo.mo_occ)
+                energy = solv_obj.scf()
+                mo_e = solv_obj.mo_energy
+                nocc = np.count_nonzero(solv_obj.mo_occ)
+                nocc = np.count_nonzero(solv_obj.mo_occ)
                 homo_energy = mo_e[nocc - 1]
                 lumo_energy = mo_e[nocc]
                 homo_lumo = (homo_energy,lumo_energy)
@@ -196,13 +194,12 @@ class scf_class(object):
             dft_obj = dft.RKS(mol)
             dft_obj.xc = xc_functional
             if(self.do_solvent):
-                solv_obj = ddcosmo.ddcosmo_for_scf(dft_obj)
+                solv_obj = dft_obj.DDCOSMO()
                 solv_obj.with_solvent.eps = self.eps
-                solv_cosmo = solvent.ddCOSMO(solv_obj)
-                energy = solv_cosmo.scf()
-                mo_e = solv_cosmo.mo_energy
-                nocc = np.count_nonzero(solv_cosmo.mo_occ)
-                nocc = np.count_nonzero(solv_cosmo.mo_occ)
+                energy = solv_obj.scf()
+                mo_e = solv_obj.mo_energy
+                nocc = np.count_nonzero(solv_obj.mo_occ)
+                nocc = np.count_nonzero(solv_obj.mo_occ)
                 homo_energy = mo_e[nocc - 1]
                 lumo_energy = mo_e[nocc]
                 homo_lumo = (homo_energy,lumo_energy)
