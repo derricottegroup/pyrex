@@ -325,7 +325,7 @@ if(params.do_conceptualdft):
         electrophilicity.append(electrophil)
 
     flux_csv = open("conceptual_dft.csv", "w+")
-    flux_csv.write("Coordinate,Chemical Potential, Hardness, Electrophilicity, Reaction Electronic Flux\n")
+    flux_csv.write("Coordinate,Chemical Potential,Hardness,Electrophilicity,Reaction Electronic Flux\n")
     for i in range(len(coordinates)):
         flux_csv.write("%f,%f,%f,%f,%f\n" %(coordinates[i], potentials[i], hardness[i], electrophilicity[i], reaction_electronic_flux[i]))
     flux_csv.close()

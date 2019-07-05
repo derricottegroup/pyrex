@@ -18,6 +18,8 @@ class Params():
         self.x_max = None
         self.y_min = None
         self.y_max = None
+        self.user_color = False
+        self.color = []
         self.fontsize = 16
         self.ticklabel_size = 10
         self.linewidth = 5.0
@@ -34,6 +36,9 @@ class Params():
                 self.filename = input_params['rexplot']['file']
             if 'properties' in input_params['rexplot']:
                 self.properties = input_params['rexplot']['properties']
+            if 'color' in input_params['rexplot']:
+                self.user_color = True
+                self.color = input_params['rexplot']['color']
             if 'coordinate' in input_params['rexplot']:
                 self.coordinate = input_params['rexplot']['coordinate']
             if 'force_min' in input_params['rexplot']:
@@ -116,8 +121,10 @@ def plot():
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
     for i in range(len(params.properties)):
-        plt.plot(xs, y_spline_fit[i], linewidth=params.linewidth, label=params.properties[i])
-
+        if(params.user_color==True):
+            plt.plot(xs, y_spline_fit[i], linewidth=params.linewidth, label=params.properties[i], color=params.color[i])
+        else:
+            plt.plot(xs, y_spline_fit[i], linewidth=params.linewidth, label=params.properties[i])
     rc('axes', linewidth=params.axiswidth)
     ax = gca()
     simpleaxis(ax) 
