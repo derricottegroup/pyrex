@@ -14,6 +14,7 @@ import psi4
 import os
 import sys
 import json
+from pyscf import lib
 from pyscf import gto, scf, dft, grad, solvent, mp
 
 def grad_calc(params,current_geom, mol):
@@ -61,9 +62,11 @@ def grad_calc(params,current_geom, mol):
         if(params.do_solvent):
             solv_obj = scf_obj.DDCOSMO()
             solv_obj.with_solvent.eps = params.eps
+            lib.num_threads(params.nthreads)
             E = solv_obj.scf()
             grad = solv_obj.nuc_grad_method().kernel()
         else:
+            lib.num_threads(params.nthreads)
             E = scf_obj.scf()
             grad = scf_obj.nuc_grad_method().kernel()
     if(params.qm_program=='psi4'):
@@ -115,6 +118,8 @@ def atomic_decomp(params, output_file, geometries):
         output = open(output_file,"a")
         output.write('\n\nCoordinate %.2f\n' %(params.coordinates[count]))
         output.write('------------------------\n')
+        output.write('\n{:>20} {:>20}\n'.format('Atom', 'W_i'))
+        output.write('-----------------------------------------\n')
         #output.write("%f\n" %grad)
         #np.savetxt(output, grad, delimiter=',')
         #np.savetxt(output, disp[count], delimiter=',')
@@ -122,7 +127,9 @@ def atomic_decomp(params, output_file, geometries):
         for i in range(params.natoms):
             atom_force = grad[i][0]*disp[count][i][0] + grad[i][1]*disp[count][i][1] + grad[i][2]*disp[count][i][2]
             #print(atom_force)
-            output.write('|%s%d|%.5f|   ' %(params.symbols[i], i+1, atom_force*627.509))
+            #output.write('|%s%d|%.5f|   ' %(params.symbols[i], i+1, atom_force*627.509))
+            atom_label = '%s%d' %(params.symbols[i], i+1)
+            output.write('{:>20} {:>20.4f}\n'.format(atom_label, atom_force*627.509))
             force_array.append(atom_force)
         output.close()
         atom_forces.append(force_array)
