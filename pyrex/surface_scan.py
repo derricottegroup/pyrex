@@ -39,6 +39,7 @@ def surf_psi4(params,output_file):
     surf_out = open("surface_scan.xyz", "w+")
     surf_out.close()
     for constrained_value in params.constrained_values:
+        #print(params.constrained_values)
         fixed_coord = params.constrained_atoms + str(constrained_value)
         #print(fixed_coord)
         psi4.set_options(params.keywords)

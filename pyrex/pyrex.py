@@ -154,7 +154,12 @@ class Params():
                 self.constrained_atoms = atoms_string
             if 'constrained_values' in input_params['surf_scan']:
                 const_inp = input_params['surf_scan']['constrained_values']
-                self.constrained_values = np.arange(const_inp[0],const_inp[1],const_inp[2])     
+                if(const_inp[0]>const_inp[1]):
+                    tmp_array = np.arange(const_inp[1],const_inp[0],const_inp[2])
+                    tmp_array = np.flip(tmp_array,0)
+                else:
+                    tmp_array = np.arange(const_inp[0],const_inp[1],const_inp[2])
+                self.constrained_values = tmp_array     
         if 'fsapt' in input_params:
             self.monomer_A_frags = input_params['fsapt']['monomer_A_frags']
             self.monomer_B_frags = input_params['fsapt']['monomer_B_frags']
@@ -190,7 +195,7 @@ class Params():
         full_irc = open(self.irc_filename, "r")
         # Grab and store geometries from the IRC
         for line in full_irc:
-            if "Full IRC Point" in line:
+            if("Full IRC Point" in line): #TODO Make this compatible with surface scan xyz files
                 geom = []
                 irc_num_line = line.split()
                 irc_num = int(irc_num_line[3])
