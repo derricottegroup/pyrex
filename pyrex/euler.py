@@ -180,16 +180,18 @@ def energy_calc(params, current_geom, mol):
         pymol.build()
         if(params.method == "scf"):
             scf_obj = scf.RHF(pymol)
-        if(params.method == "mp2"): #TODO Doesn't work yet. Few things left to figure out. 
-            mf = scf.RHF(pymol).kernel()
-            scf_obj = mp.MP2(mf)
+        #if(params.method == "mp2"): #TODO Doesn't work yet. Few things left to figure out. 
+        #    scf_obj = scf.RHF(pymol).run()
+        #    scf_obj = mp.MP2(scf_obj).run()
         #if(params.method == "dft"):
         #    scf_obj = dft.RKS(mol)
         #    scf_obj.xc = params.xc_functional
         if(params.do_solvent):
-            solv_obj = scf_obj.DDCOSMO()
+            solv_obj = solvent.ddCOSMO(scf_obj)
             solv_obj.with_solvent.eps = params.eps
-            energy = solv_obj.scf()
+            solv_obj.run()
+            energy = solv_obj.kernel()
+            print(energy)
         else:
             energy = scf_obj.scf()
 
@@ -238,11 +240,16 @@ def grad_calc(params,current_geom, mol):
         pymol.charge = params.charge
         pymol.spin = params.mult - 1
         pymol.build()
-        scf_obj = scf.RHF(pymol)
+        if(params.method == "scf"):
+            scf_obj = scf.RHF(pymol)
+        #if(params.method == "mp2"): #TODO Doesn't work yet. Few things left to figure out.
+        #    mf = scf.RHF(pymol).run()
+        #    scf_obj = mp.MP2(mf).run()
         if(params.do_solvent):
-            solv_obj = scf_obj.DDCOSMO()
+            solv_obj = solvent.ddCOSMO(scf_obj)
             solv_obj.with_solvent.eps = params.eps
-            E = solv_obj.scf()
+            solv_obj.run()
+            E = solv_obj.kernel()
             grad = solv_obj.nuc_grad_method().kernel()
         else:
             E = scf_obj.kernel()

@@ -27,6 +27,7 @@ import pandas as pd
 from decimal import Decimal
 from concept_dft import *
 from scf_class import *
+import surface_scan
 from geomparser import *
 from atomic import atomic_decomp
 from sapt_class import *
@@ -50,6 +51,11 @@ class Params():
         self.do_eda = False
         self.do_conceptualdft = False
         self.do_fragility_spec = False
+        self.do_surf_scan = False
+        self.scan_type = 'relaxed'
+        self.constraint_type = None
+        self.constrained_atoms = None
+        self.constrained_values = None
         self.do_rexplot = False
         self.energy_file = None
         self.sapt_file = None
@@ -83,6 +89,8 @@ class Params():
             if 'fragment_multiplicities' in input_params["molecule"]:
                 self.mult_A = input_params["molecule"]["fragment_multiplicities"][0]
                 self.mult_B = input_params["molecule"]["fragment_multiplicities"][1]
+            if 'geometry' in input_params['molecule']:
+                self.geometry = self.json2xyz(input_params)
         if 'model' in input_params:
             if 'basis' in input_params['model']:
                 self.basis = input_params['model']['basis']
@@ -132,6 +140,21 @@ class Params():
             if 'irc_filename' in input_params['pyrex']:
                 self.irc_filename = input_params['pyrex']['irc_filename']
                 self.irc_grab()
+        if 'surf_scan' in input_params:
+            self.do_surf_scan = True
+            if 'scan_type' in input_params['surf_scan']:
+                self.scan_type = input_params['surf_scan']['scan_type']
+            if 'constraint_type' in input_params['surf_scan']:
+                self.constraint_type = input_params['surf_scan']['constraint_type']
+            if 'constrained_atoms' in input_params['surf_scan']:
+                atoms_array = input_params['surf_scan']['constrained_atoms']
+                atoms_string = ""
+                for atom in atoms_array:
+                    atoms_string = atoms_string + "%s " %atom
+                self.constrained_atoms = atoms_string
+            if 'constrained_values' in input_params['surf_scan']:
+                const_inp = input_params['surf_scan']['constrained_values']
+                self.constrained_values = np.arange(const_inp[0],const_inp[1],const_inp[2])     
         if 'fsapt' in input_params:
             self.monomer_A_frags = input_params['fsapt']['monomer_A_frags']
             self.monomer_B_frags = input_params['fsapt']['monomer_B_frags']
@@ -139,6 +162,26 @@ class Params():
             self.monomer_B_labels = input_params['fsapt']['monomer_B_labels']
         if 'rexplot' in input_params:
             self.do_rexplot = True
+
+    def json2xyz(self, input_params):
+        """
+            Geometries in the .json format (MOLSSI standard) are given as an array. This functions
+            takes the given geometry and converts it to a string with a format similar to xyz files.
+        """
+        charge = int(input_params['molecule']['molecular_charge'])
+        mult = int(input_params['molecule']['molecular_multiplicity'])
+        geom = ''
+        geom += '\n%d %d\n' %(charge, mult)
+        symbols = input_params['molecule']['symbols']
+        geometry = input_params['molecule']['geometry']
+        for i in range(len(symbols)):
+            geom += "%s  " %symbols[i]
+            for j in range(3):
+                if(j==2):
+                    geom += "   %f   \n" %geometry[(i + 2*i) + j]
+                else:
+                    geom += "   %f   " %geometry[(i + 2*i) + j]
+        return geom
 
     def irc_grab(self):
         irc = []
@@ -198,6 +241,13 @@ params = Params()
 
 if(params.do_irc):
     euler.ishida_morokuma(output_filename)
+
+##################
+## Surface Scan ##
+##################
+
+if(params.do_surf_scan):
+    surface_scan.surf_psi4(params, output_filename)
 
 #############################
 # Initialize Common Classes #
