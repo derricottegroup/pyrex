@@ -70,6 +70,21 @@ class scf_class(object):
         wavefunctions = []
         count = 0
         start = time.time()
+        if(self.do_solvent):
+            psi4.pcm_helper("""
+               Units = Angstrom
+               Medium {
+               SolverType = IEFPCM
+               Solvent = Water
+               }
+               Cavity {
+               RadiiSet = UFF
+               Type = GePol
+               Scaling = False
+               Area = 0.3
+               Mode = Implicit
+               }
+            """)
         for geometry in geometries:
             output = open(self.outfile, "a")
             psi4.core.set_output_file("psi4_output/irc_%d.out" %count, False)

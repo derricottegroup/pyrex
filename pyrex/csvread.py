@@ -87,7 +87,9 @@ def plot():
     input_file = params.filename
     df = pd.read_csv(input_file)
 
-    x = df[params.coordinate]
+    x = np.asarray(df[params.coordinate])
+    if(x[0] > x[-1]):
+        x = np.flip(x,0)    
     y = []
     for i in range(len(params.properties)):
         array_temp = []
@@ -98,7 +100,8 @@ def plot():
             y.append(array_temp)
         else:
             y.append(df[params.properties[i]]*params.scale)
-    
+        if(x[0] > x[1]):
+            y = np.flip(np.assaray(y),0)
     y_spline = []
     for i in range(len(params.properties)):
         y_fit = UnivariateSpline(x, y[i], s=0)

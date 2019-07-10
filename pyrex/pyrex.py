@@ -53,6 +53,7 @@ class Params():
         self.do_fragility_spec = False
         self.do_surf_scan = False
         self.scan_type = 'relaxed'
+        self.surf_scan_mode = False
         self.constraint_type = None
         self.constrained_atoms = None
         self.constrained_values = None
@@ -193,6 +194,7 @@ class Params():
         geometries = []
         coordinates = []
         full_irc = open(self.irc_filename, "r")
+        self.surf_scan_mode = False
         # Grab and store geometries from the IRC
         for line in full_irc:
             if("Full IRC Point" in line): #TODO Make this compatible with surface scan xyz files
@@ -205,6 +207,18 @@ class Params():
                 irc.append((irc_num, geom))
                 geometries.append(geom)
                 coordinate = irc_num*self.irc_stepsize
+                coordinates.append(round(coordinate,3))
+            if("surface scan with" in line):
+                self.surf_scan_mode = True
+                geom = []
+                irc_num_line = line.split()
+                irc_num = float(irc_num_line[7])
+                for i in range(self.natoms):
+                    line = next(full_irc)
+                    geom.append(line.lstrip())
+                irc.append((irc_num, geom))
+                geometries.append(geom)
+                coordinate = irc_num
                 coordinates.append(round(coordinate,3))
         self.irc = irc
         self.geometries = geometries
@@ -336,8 +350,11 @@ if(params.do_energy or params.energy_file!=None):
     force_csv.close()
     
     index_min = np.argmin(np.asarray(reaction_force_values))
-    print(reaction_force_values[index_min])
-    index_ts  = coordinates.index(0.0000)
+    #print(reaction_force_values[index_min])
+    if(params.surf_scan_mode):
+        index_ts = np.argmax(np.asarray(energies))
+    else:
+        index_ts  = coordinates.index(0.0000)
     index_max = np.argmax(np.asarray(reaction_force_values))
     
     r_struct = geoms[0]
