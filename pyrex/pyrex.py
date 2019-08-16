@@ -51,6 +51,7 @@ class Params():
         self.do_eda = False
         self.do_conceptualdft = False
         self.do_fragility_spec = False
+        self.do_supermolecular = False
         self.do_surf_scan = False
         self.scan_type = 'relaxed'
         self.surf_scan_mode = False
@@ -118,6 +119,8 @@ class Params():
                 self.do_conceptualdft = bool(input_params['pyrex']['do_conceptualdft'])
             if 'do_fragility_spec' in input_params['pyrex']:
                 self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
+            if 'do_supermolecular' in input_params['pyrex']:
+                self.do_supermolecular = bool(input_params['pyrex']['do_supermolecular'])
             if 'energy_read' in input_params['pyrex']:
                 self.energy_file = input_params['pyrex']['energy_read']
             if 'sapt_read' in input_params['pyrex']:
@@ -407,10 +410,10 @@ if(params.do_conceptualdft):
 # Reaction Work Integrals #
 ###########################
 if(params.do_energy or params.energy_file!=None):
-    W_1 = -1.0*np.trapz(reaction_force_values[:index_min], dx=params.irc_stepsize)
-    W_2 = -1.0*np.trapz(reaction_force_values[index_min-1:index_ts], dx=params.irc_stepsize)
-    W_3 = -1.0*np.trapz(reaction_force_values[index_ts-1:index_max], dx=params.irc_stepsize)
-    W_4 = -1.0*np.trapz(reaction_force_values[index_max-1:], dx=params.irc_stepsize)
+    W_1 = -1.0*np.trapz(reaction_force_values[:index_min+1], dx=params.irc_stepsize)
+    W_2 = -1.0*np.trapz(reaction_force_values[index_min:index_ts+1], dx=params.irc_stepsize)
+    W_3 = -1.0*np.trapz(reaction_force_values[index_ts:index_max+1], dx=params.irc_stepsize)
+    W_4 = -1.0*np.trapz(reaction_force_values[index_max:], dx=params.irc_stepsize)
 
     output.write('\n\n--Reaction Works--\n')
     output.write('\n-------------------------------------------------------------------------------------')
@@ -436,17 +439,17 @@ if(params.do_energy or params.energy_file!=None):
 #induction = []
 #dispersion = []
 
-if(params.do_sapt==True):
+if(params.do_sapt==True or params.do_supermolecular==True):
     sapt_geometries = geomparser.sapt_geombuilder(params.charge_A, params.mult_A, params.charge_B, params.mult_B, params.frag_A, params.frag_B)
     #p_sapt_geometries = geomparser.sapt_geombuilder(p_charge_A, p_mult_A, p_charge_B, p_mult_B, product_frag_A, product_frag_B)
 
 #if(params.do_polarization==True):
-#    frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
-#    frag_B_geoms = geomparser.frag_ghost(charge_B, mult_B, frag_B_atom_list)
-#    energies_A, wavefunctions_A = scf_instance.psi4_scf(frag_A_geoms)
-#    energies_B, wavefunctions_B = scf_instance.psi4_scf(frag_B_geoms)
-#    nelec_A = wavefunctions_A[0].nalpha()
-#    nelec_B = wavefunctions_B[0].nalpha()
+    #frag_A_geoms = geomparser.frag_ghost(charge_A, mult_A, frag_A_atom_list)
+    #frag_B_geoms = geomparser.frag_ghost(charge_B, mult_B, frag_B_atom_list)
+    #energies_A, wavefunctions_A = scf_instance.psi4_scf(frag_A_geoms)
+    #energies_B, wavefunctions_B = scf_instance.psi4_scf(frag_B_geoms)
+    #nelec_A = wavefunctions_A[0].nalpha()
+    #nelec_B = wavefunctions_B[0].nalpha()
 
 #######################################
 # Atomic Force And Work Decomposition #
@@ -482,11 +485,63 @@ if(params.do_atomic==True):
 # Symmetry-Adapted Perturbation Theory Decomposition #
 ######################################################
 
-if(params.energy_file!=None and params.do_sapt==True):
+if(params.energy_file!=None and (params.do_sapt==True or params.do_supermolecular==True)):
     #print(params.coordinates)
     index_min = params.coordinates.index(params.force_min)
     index_max = params.coordinates.index(params.force_max)
     index_ts = params.coordinates.index(0.0000)
+
+if(params.do_supermolecular==True):
+    irc_step_size = params.irc_stepsize
+    coordinates = params.coordinates
+    #sapt_method = params.sapt_method
+    basis = params.basis
+    del_E = [(energy - (e_A + e_B)) for energy in energies]
+    sapt_ = sapt(sapt_geometries[:index_ts+1], params, params.method, basis, output_filename)
+    int_  = sapt_.psi4_super()
+    strain_e = []
+    for i in range(len(energies[:index_ts+1])):
+        strain_e.append((del_E[i] - int_[i]))
+    reaction_force_strain_ = -1.0*np.gradient(strain_e,irc_step_size)
+    reaction_force_int_ = -1.0*np.gradient(int_,irc_step_size)
+    sapt_f_csv = open("super_force.csv", "w+")
+    sapt_f_csv.write("Coordinate,F_strain,F_int\n")
+    for i in range(len(coordinates[:index_ts+1])):
+        sapt_f_csv.write("%f,%f,%f\n" %(coordinates[i], reaction_force_strain_[i], reaction_force_int_[i]))
+    sapt_f_csv.close()
+    sapt_e_csv = open("super_energy.csv", "w+")
+    sapt_e_csv.write("Coordinate,E_strain,E_int\n")
+    for i in range(len(coordinates[:index_ts+1])):
+        sapt_e_csv.write("%f,%f,%f\n" %(coordinates[i], strain_e[i], int_[i]))
+    sapt_e_csv.close()
+
+    # Reaction Works for Region 1
+    W_1_strain = -1.0*np.trapz(reaction_force_strain_[:index_min+1], dx=irc_step_size)
+    W_1_int = -1.0*np.trapz(reaction_force_int_[:index_min+1], dx=irc_step_size)
+
+    output = open(output_filename, "a")
+    output.write('\n\n--Reaction Work Decomposition (Region 1)--\n')
+    output.write('\n-------------------------------------------------------------------------------------------------')
+    output.write('\n{:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)'))
+    output.write('-------------------------------------------------------------------------------------------------\n')
+    output.write('\n{:>15.5f} {:>15.5f}\n'.format(W_1_strain*627.509, W_1_int*627.509))
+    output.write('--------------------------------------------------------------------------------------------------\n')
+    output.close()
+
+    # Reaction Works for Region 2
+    W_2_strain = -1.0*np.trapz(reaction_force_strain_[index_min:index_ts+1], dx=irc_step_size)
+    W_2_int = -1.0*np.trapz(reaction_force_int_[index_min:index_ts+1], dx=irc_step_size)
+
+    output = open(output_filename, "a")
+    output.write('\n\n--Reaction Work Decomposition (Region 2)--\n')
+    output.write('\n-------------------------------------------------------------------------------------------------')
+    output.write('\n{:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)'))
+    output.write('-------------------------------------------------------------------------------------------------\n')
+    output.write('\n{:>15.5f} {:>15.5f}\n'.format(W_2_strain*627.509, W_2_int*627.509))
+    output.write('--------------------------------------------------------------------------------------------------\n')
+    output.close()
+
+
 
 
 if(params.do_sapt==True):
@@ -508,10 +563,10 @@ if(params.do_sapt==True):
         ind_ = sapt_data['E_ind'].values
         disp_ = sapt_data['E_disp'].values
     else:
-        sapt_ = sapt(sapt_geometries, params, sapt_method, basis, output_filename)
+        sapt_ = sapt(sapt_geometries[:index_ts+1], params, sapt_method, basis, output_filename)
         int_, elst_, exch_, ind_, disp_  = sapt_.psi4_sapt()
     strain_e = []
-    for i in range(len(energies)):
+    for i in range(len(energies[:index_ts+1])):
         strain_e.append((del_E[i] - int_[i]))
     reaction_force_strain_ = -1.0*np.gradient(strain_e,irc_step_size)
     reaction_force_int_ = -1.0*np.gradient(int_,irc_step_size)
@@ -538,22 +593,22 @@ if(params.do_sapt==True):
    # reaction_force_disp_1 = -1.0*np.gradient(disp_1,irc_step_size)
     sapt_f_csv = open("sapt_force.csv", "w+")
     sapt_f_csv.write("Coordinate,F_strain,F_int,F_elst,F_exch,F_ind,F_disp\n")
-    for i in range(len(coordinates)):
+    for i in range(len(coordinates[:index_ts+1])):
         sapt_f_csv.write("%f,%f,%f,%f,%f,%f,%f\n" %(coordinates[i], reaction_force_strain_[i], reaction_force_int_[i], reaction_force_elst_[i], reaction_force_exch_[i], reaction_force_ind_[i], reaction_force_disp_[i]))
     sapt_f_csv.close()
     sapt_e_csv = open("sapt_energy.csv", "w+")
     sapt_e_csv.write("Coordinate,E_strain,E_int,E_elst,E_exch,E_ind,E_disp\n")
-    for i in range(len(coordinates)):
+    for i in range(len(coordinates[:index_ts+1])):
         sapt_e_csv.write("%f,%f,%f,%f,%f,%f,%f\n" %(coordinates[i], strain_e[i], int_[i], elst_[i], exch_[i], ind_[i], disp_[i]))
     sapt_e_csv.close()
 
     # Reaction Works for Region 1
-    W_1_strain = -1.0*np.trapz(reaction_force_strain_[:index_ts], dx=irc_step_size)
-    W_1_int = -1.0*np.trapz(reaction_force_int_[:index_ts], dx=irc_step_size)
-    W_1_elst = -1.0*np.trapz(reaction_force_elst_[:index_ts], dx=irc_step_size)
-    W_1_exch = -1.0*np.trapz(reaction_force_exch_[:index_ts], dx=irc_step_size)
-    W_1_ind = -1.0*np.trapz(reaction_force_ind_[:index_ts], dx=irc_step_size)
-    W_1_disp = -1.0*np.trapz(reaction_force_disp_[:index_ts], dx=irc_step_size)
+    W_1_strain = -1.0*np.trapz(reaction_force_strain_[:index_min+1], dx=irc_step_size)
+    W_1_int = -1.0*np.trapz(reaction_force_int_[:index_min+1], dx=irc_step_size)
+    W_1_elst = -1.0*np.trapz(reaction_force_elst_[:index_min+1], dx=irc_step_size)
+    W_1_exch = -1.0*np.trapz(reaction_force_exch_[:index_min+1], dx=irc_step_size)
+    W_1_ind = -1.0*np.trapz(reaction_force_ind_[:index_min+1], dx=irc_step_size)
+    W_1_disp = -1.0*np.trapz(reaction_force_disp_[:index_min+1], dx=irc_step_size)
     output = open(output_filename, "a")
     output.write('\n\n--Reaction Work Decomposition (Region 1)--\n')
     output.write('\n-------------------------------------------------------------------------------------------------')
@@ -584,12 +639,12 @@ if(params.do_sapt==True):
    # sapt_f_csv_2.close()
 
     # Reaction Works for Region 2
-    W_2_strain = -1.0*np.trapz(reaction_force_strain_[index_min:index_ts], dx=irc_step_size)
-    W_2_int = -1.0*np.trapz(reaction_force_int_[index_min:index_ts], dx=irc_step_size)
-    W_2_elst = -1.0*np.trapz(reaction_force_elst_[index_min:index_ts], dx=irc_step_size)
-    W_2_exch = -1.0*np.trapz(reaction_force_exch_[index_min:index_ts], dx=irc_step_size)
-    W_2_ind = -1.0*np.trapz(reaction_force_ind_[index_min:index_ts], dx=irc_step_size)
-    W_2_disp = -1.0*np.trapz(reaction_force_disp_[index_min:index_ts], dx=irc_step_size)
+    W_2_strain = -1.0*np.trapz(reaction_force_strain_[index_min:index_ts+1], dx=irc_step_size)
+    W_2_int = -1.0*np.trapz(reaction_force_int_[index_min:index_ts+1], dx=irc_step_size)
+    W_2_elst = -1.0*np.trapz(reaction_force_elst_[index_min:index_ts+1], dx=irc_step_size)
+    W_2_exch = -1.0*np.trapz(reaction_force_exch_[index_min:index_ts+1], dx=irc_step_size)
+    W_2_ind = -1.0*np.trapz(reaction_force_ind_[index_min:index_ts+1], dx=irc_step_size)
+    W_2_disp = -1.0*np.trapz(reaction_force_disp_[index_min:index_ts+1], dx=irc_step_size)
     output = open(output_filename, "a")
     output.write('\n\n--Reaction Work Decomposition (Region 2)--\n')
     output.write('\n-------------------------------------------------------------------------------------------------')
@@ -601,38 +656,38 @@ if(params.do_sapt==True):
     output.close()
 
 
-    # Reaction Works for Region 3
-    W_3_strain = -1.0*np.trapz(reaction_force_strain_[index_ts:index_max], dx=irc_step_size)
-    W_3_int = -1.0*np.trapz(reaction_force_int_[index_ts:index_max], dx=irc_step_size)
-    W_3_elst = -1.0*np.trapz(reaction_force_elst_[index_ts:index_max], dx=irc_step_size)
-    W_3_exch = -1.0*np.trapz(reaction_force_exch_[index_ts:index_max], dx=irc_step_size)
-    W_3_ind = -1.0*np.trapz(reaction_force_ind_[index_ts:index_max], dx=irc_step_size)
-    W_3_disp = -1.0*np.trapz(reaction_force_disp_[index_ts:index_max], dx=irc_step_size)
-    output = open(output_filename, "a")
-    output.write('\n\n--Reaction Work Decomposition (Region 3)--\n')
-    output.write('\n---------------------------------------------------------------------------------------------------')
-    output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)',
-'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
-    output.write('---------------------------------------------------------------------------------------------------\n')
-    output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_3_strain*627.51, W_3_int*627.51, W_3_elst*627.51, W_3_exch*627.51, W_3_ind*627.51, W_3_disp*627.51))
-    output.write('---------------------------------------------------------------------------------------------------\n')
-    output.close()
+   # # Reaction Works for Region 3
+   # W_3_strain = -1.0*np.trapz(reaction_force_strain_[index_ts:index_max+1], dx=irc_step_size)
+   # W_3_int = -1.0*np.trapz(reaction_force_int_[index_ts:index_max+1], dx=irc_step_size)
+   # W_3_elst = -1.0*np.trapz(reaction_force_elst_[index_ts:index_max+1], dx=irc_step_size)
+   # W_3_exch = -1.0*np.trapz(reaction_force_exch_[index_ts:index_max+1], dx=irc_step_size)
+   # W_3_ind = -1.0*np.trapz(reaction_force_ind_[index_ts:index_max+1], dx=irc_step_size)
+   # W_3_disp = -1.0*np.trapz(reaction_force_disp_[index_ts:index_max+1], dx=irc_step_size)
+   # output = open(output_filename, "a")
+   # output.write('\n\n--Reaction Work Decomposition (Region 3)--\n')
+   # output.write('\n---------------------------------------------------------------------------------------------------')
+   # output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)',
+#'W_#elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
+   # output.write('---------------------------------------------------------------------------------------------------\n')
+   # output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_3_strain*627.51, W_3_int*627.51, W_3_elst*627.51, W_3_exch*627.51, W_3_ind*627.51, W_3_disp*627.51))
+   # output.write('---------------------------------------------------------------------------------------------------\n')
+   # output.close()
 
-    # Reaction Works for Region 4
-    W_4_strain = -1.0*np.trapz(reaction_force_strain_[index_max:], dx=irc_step_size)
-    W_4_int = -1.0*np.trapz(reaction_force_int_[index_max:], dx=irc_step_size)
-    W_4_elst = -1.0*np.trapz(reaction_force_elst_[index_max:], dx=irc_step_size)
-    W_4_exch = -1.0*np.trapz(reaction_force_exch_[index_max:], dx=irc_step_size)
-    W_4_ind = -1.0*np.trapz(reaction_force_ind_[index_max:], dx=irc_step_size)
-    W_4_disp = -1.0*np.trapz(reaction_force_disp_[index_max:], dx=irc_step_size)
-    output = open(output_filename, "a")
-    output.write('\n\n--Reaction Work Decomposition (Region 4)--\n')
-    output.write('\n-----------------------------------------------------------------------------------------------------')
-    output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)', 'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
-    output.write('---------------------------------------------------------------------------------------------------\n')
-    output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_4_strain*627.51, W_4_int*627.51, W_4_elst*627.51, W_4_exch*627.51, W_4_ind*627.51, W_4_disp*627.51))
-    output.write('---------------------------------------------------------------------------------------------------\n')
-    output.close()
+   # # Reaction Works for Region 4
+   # W_4_strain = -1.0*np.trapz(reaction_force_strain_[index_max:], dx=irc_step_size)
+   # W_4_int = -1.0*np.trapz(reaction_force_int_[index_max:], dx=irc_step_size)
+   # W_4_elst = -1.0*np.trapz(reaction_force_elst_[index_max:], dx=irc_step_size)
+   # W_4_exch = -1.0*np.trapz(reaction_force_exch_[index_max:], dx=irc_step_size)
+   # W_4_ind = -1.0*np.trapz(reaction_force_ind_[index_max:], dx=irc_step_size)
+   # W_4_disp = -1.0*np.trapz(reaction_force_disp_[index_max:], dx=irc_step_size)
+   # output = open(output_filename, "a")
+   # output.write('\n\n--Reaction Work Decomposition (Region 4)--\n')
+   # output.write('\n-----------------------------------------------------------------------------------------------------')
+   # output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('W_strain(kcal)', 'W_int(kcal)', 'W_elst(kcal)','W_exch(kcal)', 'W_ind(kcal)', 'W_disp(kcal)'))
+   # output.write('---------------------------------------------------------------------------------------------------\n')
+   # output.write('\n{:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f} {:>15.5f}\n'.format(W_4_strain*627.51, W_4_int*627.51, W_4_elst*627.51, W_4_exch*627.51, W_4_ind*627.51, W_4_disp*627.51))
+   # output.write('---------------------------------------------------------------------------------------------------\n')
+   # output.close()
 
    # output = open(output_filename, "a")
    # output.write('\n\n--SAPT Energy Decomposition (Region 3)--\n')

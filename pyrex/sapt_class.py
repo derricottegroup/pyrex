@@ -12,10 +12,11 @@ class sapt(object):
         self.outfile = outfile
         self.frag_A = data.frag_A
         self.frag_B = data.frag_B
-        self.monomer_A_frags = data.monomer_A_frags
-        self.monomer_B_frags = data.monomer_B_frags
-        self.monomer_A_labels = data.monomer_A_labels
-        self.monomer_B_labels = data.monomer_B_labels
+        #TODO: Make general, this stuff is essential for F-SAPT calculations
+        #self.monomer_A_frags = data.monomer_A_frags
+        #self.monomer_B_frags = data.monomer_B_frags
+        #self.monomer_A_labels = data.monomer_A_labels
+        #self.monomer_B_labels = data.monomer_B_labels
 
     def psi4_sapt(self):
         self.int_  = []
@@ -47,28 +48,29 @@ class sapt(object):
             e_int = psi4.energy(self.method)
             #TODO: Actually have this create the SAPT files necessary for FSAPT partitioning. Make user options as well
             #      for fragment definitions. Something in the sapt block. 
-            fsaptA_outfile = open('fsapt_output/fsapt%d/fA.dat' %count, 'w+')
-            for i in range(len(self.monomer_A_labels)):
-                fsaptA_outfile.write("%s" %self.monomer_A_labels[i])
-                for j in range(len(self.monomer_A_frags[i])):
-                    if(j==len(self.monomer_A_frags[i])-1):
-                        fsaptA_outfile.write(" %d \n" %(all_atoms.index(self.monomer_A_frags[i][j])+1))
-                    else:
-                        fsaptA_outfile.write(" %d " %(all_atoms.index(self.monomer_A_frags[i][j])+1))
-            fsaptA_outfile.close()
-            fsaptB_outfile = open('fsapt_output/fsapt%d/fB.dat' %count, 'w+')
-            for i in range(len(self.monomer_B_labels)):
-                fsaptB_outfile.write("%s" %self.monomer_B_labels[i])
-                for j in range(len(self.monomer_B_frags[i])):
-                    if(j==len(self.monomer_B_frags[i])-1):
-                        fsaptB_outfile.write(" %d \n" %(all_atoms.index(self.monomer_B_frags[i][j])+1))
-                    else:
-                        fsaptB_outfile.write(" %d " %(all_atoms.index(self.monomer_B_frags[i][j])+1))
-            fsaptB_outfile.close()
-            e_elst = psi4.core.get_variable("SAPT ELST ENERGY")
-            e_exch = psi4.core.get_variable("SAPT EXCH ENERGY")
-            e_ind  = psi4.core.get_variable("SAPT IND ENERGY")
-            e_disp = psi4.core.get_variable("SAPT DISP ENERGY")
+            #fsaptA_outfile = open('fsapt_output/fsapt%d/fA.dat' %count, 'w+')
+            #for i in range(len(self.monomer_A_labels)):
+            #    fsaptA_outfile.write("%s" %self.monomer_A_labels[i])
+            #    for j in range(len(self.monomer_A_frags[i])):
+            #        if(j==len(self.monomer_A_frags[i])-1):
+            #            fsaptA_outfile.write(" %d \n" %(all_atoms.index(self.monomer_A_frags[i][j])+1))
+            #        else:
+            #            fsaptA_outfile.write(" %d " %(all_atoms.index(self.monomer_A_frags[i][j])+1))
+            #fsaptA_outfile.close()
+            #fsaptB_outfile = open('fsapt_output/fsapt%d/fB.dat' %count, 'w+')
+            #for i in range(len(self.monomer_B_labels)):
+            #    fsaptB_outfile.write("%s" %self.monomer_B_labels[i])
+            #    for j in range(len(self.monomer_B_frags[i])):
+            #        if(j==len(self.monomer_B_frags[i])-1):
+            #            fsaptB_outfile.write(" %d \n" %(all_atoms.index(self.monomer_B_frags[i][j])+1))
+            #        else:
+            #            fsaptB_outfile.write(" %d " %(all_atoms.index(self.monomer_B_frags[i][j])+1))
+            #fsaptB_outfile.close()
+            e_int =  psi4.core.get_variable("SSAPT0 TOTAL ENERGY") 
+            e_elst = psi4.core.get_variable("SSAPT0 ELST ENERGY")
+            e_exch = psi4.core.get_variable("SSAPT0 EXCH ENERGY")
+            e_ind  = psi4.core.get_variable("SSAPT0 IND ENERGY")
+            e_disp = psi4.core.get_variable("SSAPT0 DISP ENERGY")
 
             self.int_.append(e_int)
             self.elst_.append(e_elst)
@@ -80,3 +82,28 @@ class sapt(object):
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()
         return self.int_, self.elst_, self.exch_, self.ind_, self.disp_
+
+    def psi4_super(self):
+        self.int_  = []
+        all_atoms = self.frag_A + self.frag_B
+        au_to_kcal = 627.51
+        count = 0
+        output = open(self.outfile, "a")
+        output.write('\n\n--Supermolecular Interaction Energy--\n')
+        output.write('\n-------------------------------------------------------------------------------------------------')
+        output.write('\n{:>15} {:>15}\n'.format('IRC Point', 'E_int(kcal)'))
+        output.write('-------------------------------------------------------------------------------------------------\n')
+        output.close()
+        for geometry in self.geometries:
+            output = open(self.outfile, "a")
+            psi4.core.set_output_file("psi4_output/irc_%d_sapt.out" %count, False)
+            geometry += "symmetry c1"
+            psi4.geometry(geometry)
+            psi4.set_options({'reference': 'rhf', 'basis' : self.basis})
+            #print("pyREX:SAPT Calculation on IRC Point %d" %(count))
+            e_int = psi4.energy("%s/%s" %(self.method,self.basis), bsse_type='cp')
+            output.write('\n{:>15} {:>15.4f}\n'.format(count, e_int*au_to_kcal))
+            output.close()
+            self.int_.append(e_int)
+            count = count + 1
+        return self.int_
