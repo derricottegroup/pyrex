@@ -45,7 +45,7 @@ output_filename = "pyrex_output.dat"
 #header(output_filename, json_data)
 
 # Load User Parameters
-params = Params()
+params = input_reader.Params()
 #level_of_theory = "%s/%s" %(params.method,params.basis) # Level of Theory for Total Energies
 
 #########
@@ -53,7 +53,7 @@ params = Params()
 #########
 
 if(params.do_irc):
-    euler.ishida_morokuma(output_filename)
+    euler.ishida_morokuma(params,output_filename)
 
 ##################
 ## Surface Scan ##
@@ -557,7 +557,7 @@ if(params.do_sapt==True):
 ###############################
 
 if(params.do_fragility_spec):
-    fragility_spectrum.fragility_spec(output_filename)
+    fragility_spectrum.fragility_spec(params,geoms,output_filename)
 
 ############################
 # Rexplot Plotting Utility #

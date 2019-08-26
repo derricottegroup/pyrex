@@ -17,60 +17,59 @@ import json
 from geomparser import *
 
 
-class Params():
-    def __init__(self):
-        """
-            Initialize .json file provided by user in command line, read input and store variables.
-        """
-        json_input = sys.argv[1]
-        self.read_input(json_input)
-        self.geometry_builder()
-        self.oldgrad = 0.0
-        self.oldcoord = 0.0
-    def read_input(self, json_input):
-        json_data=open(json_input).read()
-        input_params = json.loads(json_data)
-        #print(input_params['molecule']['molecular_charge'])
-        #TODO Add explanation of read in variables similar to euler.py
-        if 'symbols' in input_params['molecule']:
-            self.symbols = input_params['molecule']['symbols']
-            self.natoms = len(input_params['molecule']['symbols'])
-        if 'molecular_charge' in input_params['molecule']:
-            self.molecular_charge = int(input_params['molecule']['molecular_charge'])
-        if 'molecular_multiplicity' in input_params['molecule']:
-            self.molecular_multiplicity = input_params['molecule']['molecular_multiplicity']
-        if 'basis' in input_params['model']:
-            self.basis = input_params['model']['basis']
-        if 'method' in input_params['model']:
-            self.method = input_params['model']['method']
-        if 'keywords' in input_params:
-            self.keywords = input_params['keywords']
-        if 'irc_filename' in input_params['pyrex']:
-            self.irc_filename = input_params['pyrex']['irc_filename']
-        if 'irc_stepsize' in input_params['pyrex']:
-            self.irc_stepsize = input_params['pyrex']['irc_stepsize']
-
-    def geometry_builder(self):
-        full_irc = open(self.irc_filename, "r")
-        natoms = self.natoms
-        irc = []
-        geometries = []
-        coordinates = []
-        for line in full_irc:
-            if "Full IRC Point" in line:
-                geom = []
-                irc_num_line = line.split()
-                irc_num = int(irc_num_line[3])
-                for i in range(natoms):
-                    line = next(full_irc)
-                    geom.append(line.lstrip())
-                irc.append((irc_num, geom))
-                geometries.append(geom)
-                coordinates.append(irc_num*self.irc_stepsize)
-        geomparser = Geomparser(natoms, self.molecular_charge, self.molecular_multiplicity, geometries, coordinates)
-        self.geoms = geomparser.geombuilder()   
-        self.irc = irc
-        self.coordinates = coordinates
+#class Params():
+#    def __init__(self):
+#        """
+#            Initialize .json file provided by user in command line, read input and store variables.
+#        """
+#        json_input = sys.argv[1]
+#        self.read_input(json_input)
+#        self.geometry_builder()
+#        self.oldgrad = 0.0
+#        self.oldcoord = 0.0
+#    def read_input(self, json_input):
+#        json_data=open(json_input).read()
+#        input_params = json.loads(json_data)
+#        #print(input_params['molecule']['molecular_charge'])
+#        #TODO Add explanation of read in variables similar to euler.py
+#        if 'symbols' in input_params['molecule']:
+#            self.symbols = input_params['molecule']['symbols']
+#            self.natoms = len(input_params['molecule']['symbols'])
+#        if 'molecular_charge' in input_params['molecule']:
+#            self.molecular_charge = int(input_params['molecule']['molecular_charge'])
+#        if 'molecular_multiplicity' in input_params['molecule']:
+#            self.molecular_multiplicity = input_params['molecule']['molecular_multiplicity']
+#        if 'basis' in input_params['model']:
+#            self.basis = input_params['model']['basis']
+#        if 'method' in input_params['model']:
+#            self.method = input_params['model']['method']
+#        if 'keywords' in input_params:
+#            self.keywords = input_params['keywords']
+#        if 'irc_filename' in input_params['pyrex']:
+#            self.irc_filename = input_params['pyrex']['irc_filename']
+#        if 'irc_stepsize' in input_params['pyrex']:
+#            self.irc_stepsize = input_params['pyrex']['irc_stepsize']
+#
+#    def geometry_builder(self):
+#        full_irc = open(self.irc_filename, "r")
+#        natoms = self.natoms
+#        irc = []
+#        geometries = []
+#        coordinates = []
+#        for line in full_irc:
+#            if "Full IRC Point" in line:
+#                geom = []
+#                irc_num_line = line.split()
+#                irc_num = int(irc_num_line[3])
+#                for i in range(natoms):
+#                    line = next(full_irc)
+#                    geom.append(line.lstrip())
+#                irc.append((irc_num, geom))
+#                geometries.append(geom)
+#                coordinates.append(irc_num*self.irc_stepsize)
+#        geomparser = Geomparser(natoms, self.molecular_charge, self.molecular_multiplicity, geometries, coordinates)
+#        self.geoms = geomparser.geombuilder()   
+#        #self.irc = irc_filename
 
 def compute_hessian(params, geom):
     # Use PSI4 to calculate Hessian matrix
@@ -113,9 +112,9 @@ def bofill_hess_update(hess, del_g, del_x):
     hess_disp = coeff*h_ms + (1.0 - coeff)*h_psb
     return hess_disp
 
-def fragility_spec(output_file):
-    params = Params()
-    geoms = params.geoms
+def fragility_spec(params,geoms,output_file):
+    #geoms = params.geometries
+    #print(geoms) 
     output = open(output_file, "a")
     output.write("\nReaction Fragility Spectrum")
     output.write("\n-----------------------------------")

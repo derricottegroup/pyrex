@@ -1,5 +1,12 @@
 # -*- coding: utf-8 -*-
 
+"""
+This file contains the end quotes that appear as success statements in PYREX. Feel free to add any quotes you think would be good. I only have a few requirements for these quotes to be included:
+    1) They must be from a rap/hip-hop song.
+    2) They must be inspirational, positive, funny, or some combination of the three.
+    3) They must NOT contain any profanity, vulgar drug references, or sexually explicit 
+       language or innuendo. (I know....this eliminates a lot of rap lyrics) 
+"""
 quotes =  [
     "The ink of a scholar is worth a thousand times more than the blood of a martyr -- Lupe Fiasco",
     "Everyday women and men become legends -- Common",

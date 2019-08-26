@@ -66,11 +66,11 @@ class sapt(object):
             #        else:
             #            fsaptB_outfile.write(" %d " %(all_atoms.index(self.monomer_B_frags[i][j])+1))
             #fsaptB_outfile.close()
-            e_int =  psi4.core.get_variable("SSAPT0 TOTAL ENERGY") 
-            e_elst = psi4.core.get_variable("SSAPT0 ELST ENERGY")
-            e_exch = psi4.core.get_variable("SSAPT0 EXCH ENERGY")
-            e_ind  = psi4.core.get_variable("SSAPT0 IND ENERGY")
-            e_disp = psi4.core.get_variable("SSAPT0 DISP ENERGY")
+            e_int =  psi4.core.get_variable("SAPT TOTAL ENERGY") 
+            e_elst = psi4.core.get_variable("SAPT ELST ENERGY")
+            e_exch = psi4.core.get_variable("SAPT EXCH ENERGY")
+            e_ind  = psi4.core.get_variable("SAPT IND ENERGY")
+            e_disp = psi4.core.get_variable("SAPT DISP ENERGY")
 
             self.int_.append(e_int)
             self.elst_.append(e_elst)

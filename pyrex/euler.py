@@ -19,139 +19,6 @@ import sys
 import json
 from pyscf import gto, scf, dft, grad, solvent, mp 
 
-#####################
-# Read in Parameters#
-#####################
-
-class Params():
-    def __init__(self):
-        """
-            Initialize .json file provided by user in command line, read input and store variables.
-        """
-        self.grace_period = 50
-        self.e_conv = 1e-5
-        self.qm_program = 'psi4'
-        self.nthreads = 1
-        self.do_solvent = False
-        #self.damp = -0.1
-        json_input = sys.argv[1]
-        self.read_input(json_input)            
-        
-    def json2xyz(self, input_params):
-        """
-            Geometries in the .json format (MOLSSI standard) are given as an array. This functions
-            takes the given geometry and converts it to a string with a format similar to xyz files.
-        """
-        charge = int(input_params['molecule']['molecular_charge'])
-        mult = int(input_params['molecule']['molecular_multiplicity'])
-        geom = ''
-        geom += '\n%d %d\n' %(charge, mult)
-        symbols = input_params['molecule']['symbols']
-        geometry = input_params['molecule']['geometry']
-        for i in range(len(symbols)):
-            geom += "%s  " %symbols[i]
-            for j in range(3):
-                if(j==2):
-                    geom += "   %f   \n" %geometry[(i + 2*i) + j]
-                else:
-                    geom += "   %f   " %geometry[(i + 2*i) + j]
-        return geom
-
-    def read_input(self,json_input):
-        """ 
-            Reads Input from .json input file. (date: 01/02/19 - WDD)
-
-            General Parameters Read in from Input:
-            -------------------------------------
-                geometry(array) -- Geometry array is read in and converted from json->xyz format
-                basis(string) -- Specifies orbital basis set for QM calculations
-                method(string) -- Specifies type of QM calculations
-                symbols(array) -- Array of symbols specifying each atom, should correspond with rows
-                in the geometry specification.
-                natoms(int) -- Takes the length of the symbols array to get number of atoms.
-                keywords(map) -- Any valid psi4 keywords can be placed here for QM calculations.
-
-            IRC Specific Parameters Read in from Input:
-            ------------------------------------------
-                direction(string) -- specify IRC to perform a "forward" or "backward" descent.
-                step_size(float) -- step size to be taken by IRC algorithm in units amu^(1/2)*bohr.
-                mode(int) -- integer corresponding to normal mode you want to follow.
-                normal_mode_file(string) -- file that contains normal mode output (currently only
-                compatible with psi4 normal mode writer files)
-        """
-        json_data=open(json_input).read()
-        input_params = json.loads(json_data)
-        if 'molecule' in input_params:
-            if 'geometry' in input_params['molecule']:
-                self.geometry = self.json2xyz(input_params)
-            if 'symbols' in input_params['molecule']:
-                self.symbols = input_params['molecule']['symbols']
-                self.natoms = len(input_params['molecule']['symbols'])
-            if 'molecular_charge' in input_params['molecule']:
-                self.charge = int(input_params['molecule']['molecular_charge'])
-            if 'molecular_multiplicity' in input_params['molecule']:
-                self.mult = int(input_params['molecule']['molecular_multiplicity'])
-        if 'model' in input_params:
-            if 'basis' in input_params['model']:
-                self.basis = input_params['model']['basis']
-            if 'method' in input_params['model']:
-                self.method = input_params['model']['method']
-        if 'keywords' in input_params:
-            self.keywords = input_params['keywords']
-        if 'irc' in input_params:    
-            if 'direction' in input_params['irc']:
-                self.direction = input_params['irc']['direction']
-            if 'step_size' in input_params['irc']:
-                self.step_size = input_params['irc']['step_size']
-            if 'mode' in input_params['irc']:
-                self.mode = input_params['irc']['mode']
-            if 'normal_mode_file' in input_params['irc']:
-                self.normal_mode_file = input_params['irc']['normal_mode_file']
-                self.ts_vec = self.normal_mode_reader()
-            if 'grace_period' in input_params['irc']:
-                self.grade_period = input_params['irc']['grace_period']
-            if 'e_conv' in input_params['irc']:
-                self.e_conv = input_params['irc']['e_conv']
-        if 'pyrex' in input_params:
-            if 'qm_program' in input_params['pyrex']:
-                self.qm_program = input_params['pyrex']['qm_program']
-            if 'xc_functional' in input_params['pyrex']:
-                self.xc_functional = input_params['pyrex']['xc_functional']
-            if 'eps' in input_params['pyrex']:
-                self.eps = input_params['pyrex']['eps']
-            if 'do_solvent' in input_params['pyrex']:
-                self.do_solvent = input_params['pyrex']['do_solvent']
-            if 'nthreads' in input_params['pyrex']:
-                self.nthreads = input_params['pyrex']['nthreads'] 
-    def normal_mode_reader(self):
-        """
-            Reads the file containing the normal modes of vibration. This function currently
-            only works with the Psi4 normal mode output. In order to produce a compatible file
-            run a frequency calculation in Psi4 with the option "normal_mode_writer" set True.
-            
-            Parameters:
-            ----------
-                self(self) -- contains all shared parameters.
-            Returns:
-                ts_vec(array) -- Array containing the normal mode vector.
-        """
-        natoms = self.natoms
-        direction = self.direction
-        normal_mode_file = open(self.normal_mode_file, 'r')
-        ts_vec = []
-        for line in normal_mode_file:
-            if("vibration %d" %self.mode in line):
-                line = next(normal_mode_file)
-                for i in range(natoms):
-                    trj = line.split()
-                    trj = list(map(float, trj))
-                    np_trj = np.array(trj)
-                    if(direction=='backward'):
-                        ts_vec.append(-1.0*np_trj)
-                    else:
-                        ts_vec.append(np_trj)
-                    line = next(normal_mode_file)
-        return ts_vec
 
 ########################
 ## Gradient Functions ##
@@ -281,12 +148,12 @@ def parabolic_fit(xs, ys):
     return real_minima
 
 
-def ishida_morokuma(output_file):
+def ishida_morokuma(params,output_file):
     """
         This function runs the Ishida-Morokuma irc procedure
     """
     max_steps = 1000
-    params = Params()
+    #params = Params()
     line_step_size = 0.3333*params.step_size
     #line_step_size = 0.025*params.step_size
     current_geom = params.geometry

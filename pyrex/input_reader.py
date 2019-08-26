@@ -1,9 +1,8 @@
 import sys
 import os
 import json
-
-
-
+import numpy as np
+from header import *
 
 class Params(object):
     def __init__(self):
@@ -32,6 +31,9 @@ class Params(object):
         self.energy_file = None
         self.sapt_file = None
         self.qm_program = "psi4"
+        self.grace_period = 50
+        self.e_conv = 1e-5
+        self.nthreads = 1
         json_input = sys.argv[1]
         self.read_input(json_input)
         # Load Output file
@@ -41,6 +43,20 @@ class Params(object):
     def read_input(self, json_input):
         json_data=open(json_input).read()
         input_params = json.loads(json_data)
+        """
+            Molecule Block: Defines the properties of the molecular system.
+           
+            Paramters:
+            ---------
+                symbols(list) -- list containing the symbol for each atom in order.
+                molecular_charge(str) -- charge of the total molecular system
+                molecular_multiplicity(int) -- multiplicity of the total molecular system
+                fragments(list of lists) -- list of lists containing the integers defining fragments
+                                            of the system. Currently only accepts two fragments.
+                fragment_charges(list) -- defining the charge on each fragment. 
+                fragment_multiplicities -- defining the multiplicity of each fragment.
+                geometry(list) -- defines the xyz coordinates for the molecule (numbers only!) 
+        """
         if 'molecule' in input_params:
             if 'molecular_charge' in input_params['molecule']:
                 self.symbols = input_params['molecule']['symbols']
@@ -63,15 +79,94 @@ class Params(object):
                 self.mult_B = input_params["molecule"]["fragment_multiplicities"][1]
             if 'geometry' in input_params['molecule']:
                 self.geometry = self.json2xyz(input_params)
+        """
+            Model Block: Defines the level of theory for the calculations. 
+
+            Paramters:
+            ---------
+                basis(str) -- sets the basis set for the calculation
+                method(str) -- specify the method you want to use (scf, mp2, dft, etc.). 
+                               CAUTION: If using DFT with PySCF, you must say "dft" here
+                               and specify the xc functional in the Pyrex block. 
+        """
         if 'model' in input_params:
             if 'basis' in input_params['model']:
                 self.basis = input_params['model']['basis']
             if 'method' in input_params['model']:
                 self.method = input_params['model']['method']
+        """
+            Keywords Block: Only used for PSI4, any valid PSI4 keyword for global options can 
+                            be placed here and used for all modules.  
+        """
         if 'keywords' in input_params:
             self.keywords = input_params['keywords']
+        """
+            IRC Block: Options for intrinsic reaction coordinate calculations. 
+
+            Paramters:
+            ---------
+                direction(str) -- specify if the irc will go in the forward(positive gradient) or 
+                                  backward(negative gradient) direction. 
+                step_size(float) -- specify the irc step size in units au amu^(1/2). CAUTION: the 
+                                    IRC algorithm currently implemented is very unstable at any 
+                                    step size higher than 0.01 au amu^(1/2). 
+                mode(int) -- specify which vibrational mode in your normal mode file you will be following. 
+                normal_mode_file(str) -- the name of the file containing the normal mode you want to follow. 
+                grace_period(int) -- specify how many iterations may pass before the energy check 
+                                     ends the IRC due to small energy change or energy increase. This
+                                     can be helpful for really flat PESes. 
+                e_conv(float) -- specify the energy convergence threshold. 
+        """
         if 'irc' in input_params:
+            if 'direction' in input_params['irc']:
+                self.direction = input_params['irc']['direction']
+            if 'step_size' in input_params['irc']:
+                self.step_size = input_params['irc']['step_size']
+            if 'mode' in input_params['irc']:
+                self.mode = input_params['irc']['mode']
+            if 'normal_mode_file' in input_params['irc']:
+                self.normal_mode_file = input_params['irc']['normal_mode_file']
+                self.ts_vec = self.normal_mode_reader()
+            if 'grace_period' in input_params['irc']:
+                self.grade_period = input_params['irc']['grace_period']
+            if 'e_conv' in input_params['irc']:
+                self.e_conv = input_params['irc']['e_conv']
             self.do_irc = True
+        """
+            Pyrex Block: Options relevant for Pyrex related tasks.
+
+            Paramters:
+            ---------
+                qm_program(str) -- name of the quantum chemistry program you want to use (PSI4 or PYSCF)
+                do_energy(bool) -- do you want to calculate the energy?
+                xc_functional(str) -- specify an exchange-correlation functional for DFT calculations. 
+                nthreads(int) -- specify the number of threads to use for your calculation. 
+                do_solvent(bool) -- do you want to use an implicit solvent model?
+                eps(float) -- sets the vacuum permitivitty constant for implicit solvation. 
+                do_conceptualdft(bool) -- do you want to calculate properties from conceptual DFT?
+                                          this includes chemical potential, reaction electronic flux,
+                                          chemical hardness/softness, etc. 
+                do_fragility_spec(bool) -- do you want to calculate atomic fragility spectrum. 
+                                           CAUTION: this requires calculation of Hessian at 
+                                           every point and can be expensive even for relatively 
+                                           small systems.  
+                do_supermolecular(bool) -- do you want to calculate the interaction energy using 
+                                           a supermolecular approach?
+                energy_read(str) -- name of file that contains pre-computed reaction energies 
+                force_max(float) -- value of the coordinate (in units au amu^(1/2)) that 
+                                    corresponds to the force maximum structure. 
+                force_min(float) -- value of the coordinate (in units au amu^(1/2)) that
+                                    corresponds to the force minimum structure. 
+                do_sapt(bool) -- do you want to calculate interaction energies using
+                                 symmetry-adapted perturbation theory?
+                sapt_read(str) -- name of file that contains pre-computed SAPT interaction energies
+                sapt_method(str) -- specify the level of SAPT you would like to use. 
+                do_atomic(bool) -- do you want to calculate atomic force contributions?
+                do_polarization(bool) -- do you want to decompose reaction electronic flux
+                                         into its polarization and transfer components? 
+                irc_stepsize(float) -- specify the stepsize that the IRC has. 
+                irc_filename(str) -- name of the file that contains the IRC geometries. 
+        """
         if 'pyrex' in input_params:
             if 'qm_program' in input_params['pyrex']:
                 self.qm_program = input_params['pyrex']['qm_program']
@@ -93,8 +188,6 @@ class Params(object):
                 self.do_supermolecular = bool(input_params['pyrex']['do_supermolecular'])
             if 'energy_read' in input_params['pyrex']:
                 self.energy_file = input_params['pyrex']['energy_read']
-            if 'sapt_read' in input_params['pyrex']:
-                self.sapt_file = input_params['pyrex']['sapt_read']
             if 'force_max' in input_params['pyrex']:
                 self.force_max = input_params['pyrex']['force_max']
             if 'force_min' in input_params['pyrex']:
@@ -103,17 +196,30 @@ class Params(object):
                 self.restart = bool(input_params['pyrex']['restart']) #TODO Implement this functionality
             if 'do_sapt' in input_params['pyrex']:
                 self.do_sapt = bool(input_params['pyrex']['do_sapt'])
+            if 'sapt_read' in input_params['pyrex']:
+                self.sapt_file = input_params['pyrex']['sapt_read']
+            if 'sapt_method' in input_params["pyrex"]:
+                self.sapt_method = input_params["pyrex"]["sapt_method"]
             if 'do_atomic' in input_params['pyrex']:
                 self.do_atomic = bool(input_params['pyrex']['do_atomic'])
             if 'do_polarization' in input_params['pyrex']:
                 self.do_polarization = bool(input_params['pyrex']['do_polarization'])
-            if 'sapt_method' in input_params["pyrex"]:
-                self.sapt_method = input_params["pyrex"]["sapt_method"]
             if 'irc_stepsize' in input_params['pyrex']:
                 self.irc_stepsize = input_params['pyrex']['irc_stepsize']
             if 'irc_filename' in input_params['pyrex']:
                 self.irc_filename = input_params['pyrex']['irc_filename']
                 self.irc_grab()
+        """
+            Surf Scan Block: Options relevant for surface scans in Pyrex.
+                             (Currently only compatible with PSI4)
+
+            Paramters:
+            ---------
+                scan_type(str) -- relaxed or unrelaxed surface scan?
+                constraint_type(str) -- bond, angle, or dihedral constraints? 
+                constrained_atoms(list) -- atoms involved in defining constrained bond, angle, etc. 
+                constrained_values(list) -- range of values you wish to scan from. 
+        """
         if 'surf_scan' in input_params:
             self.do_surf_scan = True
             if 'scan_type' in input_params['surf_scan']:
@@ -134,6 +240,7 @@ class Params(object):
                 else:
                     tmp_array = np.arange(const_inp[0],const_inp[1],const_inp[2])
                 self.constrained_values = tmp_array
+        #TODO Finish adding documentation. Start adding tests/samples/examples
         if 'fsapt' in input_params:
             self.monomer_A_frags = input_params['fsapt']['monomer_A_frags']
             self.monomer_B_frags = input_params['fsapt']['monomer_B_frags']
@@ -195,3 +302,32 @@ class Params(object):
         self.irc = irc
         self.geometries = geometries
         self.coordinates = coordinates
+    def normal_mode_reader(self):
+        """
+            Reads the file containing the normal modes of vibration. This function currently
+            only works with the Psi4 normal mode output. In order to produce a compatible file
+            run a frequency calculation in Psi4 with the option "normal_mode_writer" set True.
+
+            Parameters:
+            ----------
+                self(self) -- contains all shared parameters.
+            Returns:
+                ts_vec(array) -- Array containing the normal mode vector.import
+        """
+        natoms = self.natoms
+        direction = self.direction
+        normal_mode_file = open(self.normal_mode_file, 'r')
+        ts_vec = []
+        for line in normal_mode_file:
+            if("vibration %d" %self.mode in line):
+                line = next(normal_mode_file)
+                for i in range(natoms):
+                    trj = line.split()
+                    trj = list(map(float, trj))
+                    np_trj = np.array(trj)
+                    if(direction=='backward'):
+                        ts_vec.append(-1.0*np_trj)
+                    else:
+                        ts_vec.append(np_trj)
+                    line = next(normal_mode_file)
+        return ts_vec 
