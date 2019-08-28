@@ -312,7 +312,7 @@ class Params(object):
             ----------
                 self(self) -- contains all shared parameters.
             Returns:
-                ts_vec(array) -- Array containing the normal mode vector.import
+                ts_vec(array) -- Array containing the normal mode vector
         """
         natoms = self.natoms
         direction = self.direction
