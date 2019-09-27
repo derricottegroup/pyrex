@@ -9,6 +9,7 @@ import numpy as np
 import psi4
 from pyscf import lib
 from pyscf import scf, dft ,gto, solvent
+import orca_interface
 
 class scf_class(object):
 
@@ -20,6 +21,7 @@ class scf_class(object):
         self.nthreads = data.nthreads
         self.do_solvent = data.do_solvent
         self.eps = data.eps
+        self.method = str(data.method)
         self.basis = str(data.basis)
         self.outfile = outfile
         self.keywords = data.keywords
@@ -117,6 +119,53 @@ class scf_class(object):
         end = time.time()
         print("psi4 Time = %f" %(end - start))
         return energies, wavefunctions
+
+    def orca_scf(self, geometries):
+        """
+        Function to run SCF along IRC using ORCA, returns array of energies at each geometry.
+        """
+        output = open(self.outfile, "a")
+        output.write('\n\n--Reaction Energy--\n')
+        output.write('\n-------------------------------------------------------------------------------------')
+        output.write('\n{:>20} {:>20} {:>20} {:>20}\n'.format('IRC Point', 'E (Hartree)', 'HOMO (a.u.)','LUMO (a.u.)'))
+        output.write('-------------------------------------------------------------------------------------\n')
+        output.close()
+        input_header = "!%s %s" %(self.method,self.basis)
+        frontier_orb_energies = []
+        energies = []
+        count = 0
+        for geometry in geometries:
+            energy = 0.0
+            homo_energy = 0.0
+            lumo_energy = 0.0
+            orca_input = input_header
+            orca_input += geometry 
+            orca_output = orca_interface.run_orca(orca_input=orca_input)
+            orca_out = iter(orca_output.output_lines())
+            for line in orca_out:
+                if("FINAL SINGLE POINT ENERGY" in line):
+                    energy = float(line.split()[4])
+                if("Number of Electrons" in line):
+                    nelec = int(line.split()[5])
+                    homo_num = int(nelec/2)
+                    lumo_num = int(homo_num + 1)
+                if("OCC" in line):
+                    for i in range(homo_num):
+                        line = next(orca_out)
+                    homo_energy = float(line.split()[2])
+                    line = next(orca_out)
+                    lumo_energy = float(line.split()[2])
+            homo_lumo = (homo_energy,lumo_energy)
+            frontier_orb_energies.append(homo_lumo)
+            energies.append(energy)
+            output = open(self.outfile, "a")
+            output.write('{:>20.2f} {:>20.4f} {:>20.4f} {:>20.4f}\n'.format(self.coordinates[count], energy, homo_energy, lumo_energy))
+            count = count+1
+            output.close()
+        output = open(self.outfile, "a")
+        output.write('-------------------------------------------------------------------------------------\n')
+        output.close()
+        return energies,frontier_orb_energies 
 
     def pyscf_scf(self, geometries):
         """

@@ -97,7 +97,10 @@ def geometry_builder(params):
     if(params.do_energy and params.qm_program == 'pyscf'):
         pyscf_geoms = geomparser.pyscf_geombuilder()
         params.geoms = pyscf_geoms  
-        #print(pyscf_geoms)
+
+    if(params.do_energy and params.qm_program == 'orca'):
+        orca_geoms = geomparser.orca_geombuilder()
+        params.geoms = orca_geoms
 
 ##########################
 # Fragment Optimizations #
@@ -124,6 +127,9 @@ def energy_calculations(params):
    
         if(params.qm_program == 'pyscf' and params.method == 'dft'):
             params.energies,params.frontier_orb_energies = scf_instance.pyscf_dft(params.geoms, params.xc_functional)
+
+        if(params.qm_program == 'orca'):
+            params.energies,params.frontier_orb_energies = scf_instance.orca_scf(params.geoms)
 
 # Store energies in .csv file
         energy_csv = open("energy.csv", "w+")
@@ -200,13 +206,13 @@ def conceptual_dft_analysis(params):
         if(params.molecular_multiplicity==1):
             if(params.qm_program == 'psi4'):
                 potentials = np.array(c_dft.potential(params.wavefunctions))
-            if(params.qm_program == 'pyscf'):
+            if(params.qm_program == 'pyscf' or params.qm_program == 'orca'):
                 potentials = np.array(c_dft.potential_pyscf(params.frontier_orb_energies))
         else:
             potentials = np.array(c_dft.potential_open_shell(params.wavefunctions))
         if(params.qm_program == 'psi4'):
             hardness = np.array(c_dft.hardness(params.wavefunctions))
-        if(params.qm_program == 'pyscf'):
+        if(params.qm_program == 'pyscf' or params.qm_program == 'orca'):
             hardness = np.array(c_dft.hardness_pyscf(params.frontier_orb_energies))
         reaction_electronic_flux = np.array(c_dft.electronic_flux(params.irc_stepsize))
         electrophilicity = []
@@ -216,8 +222,8 @@ def conceptual_dft_analysis(params):
     
         flux_csv = open("conceptual_dft.csv", "w+")
         flux_csv.write("Coordinate,Chemical Potential,Hardness,Electrophilicity,Reaction Electronic Flux\n")
-        for i in range(len(coordinates)):
-            flux_csv.write("%f,%f,%f,%f,%f\n" %(coordinates[i], potentials[i], hardness[i], electrophilicity[i], reaction_electronic_flux[i]))
+        for i in range(len(params.coordinates)):
+            flux_csv.write("%f,%f,%f,%f,%f\n" %(params.coordinates[i], potentials[i], hardness[i], electrophilicity[i], reaction_electronic_flux[i]))
         flux_csv.close()
 
 

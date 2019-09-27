@@ -20,6 +20,18 @@ class Geomparser(object):
             self.mol_inputs.append(mol_input)
         return self.mol_inputs
 
+    def orca_geombuilder(self):
+        self.mol_inputs = []
+        for geometry in self.geometries:
+            mol_input = "\n*xyz %d %d\n" %(self.charge, self.mult)
+            for j in range(self.natoms):
+                line = geometry[j]
+                mol_input += line
+            mol_input += "\n*"
+            self.mol_inputs.append(mol_input)
+        return self.mol_inputs
+
+
     def pyscf_geombuilder(self):
         self.mol_objs = []
         for geometry in self.geometries:
