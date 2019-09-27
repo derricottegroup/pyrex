@@ -120,7 +120,7 @@ def energy_calculations(params):
         scf_instance = scf_class(params, output_filename)
         if(params.qm_program == 'psi4'):
             params.energies, params.wavefunctions = scf_instance.psi4_scf(params.geoms)
-            nelec = wavefunctions[0].nalpha()
+            nelec = params.wavefunctions[0].nalpha()
 
         if(params.qm_program == 'pyscf' and params.method == 'scf'):
             params.energies,params.frontier_orb_energies = scf_instance.pyscf_scf(params.geoms)

@@ -27,7 +27,7 @@ class Geomparser(object):
             for j in range(self.natoms):
                 line = geometry[j]
                 mol_input += line
-            mol_input += "\n*"
+            mol_input += "*\n"
             self.mol_inputs.append(mol_input)
         return self.mol_inputs
 

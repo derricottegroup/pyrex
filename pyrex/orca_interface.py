@@ -64,6 +64,7 @@ def run_orca(xyzfile=None, xyzstring=None, jobname=None, orca_input=None,
     log("running job (this could take a while)")
     previous_wd = os.getcwd()
     os.chdir(output_dir)
+    #print(joboutputfile)
     os.system("{} {} > {}".format(orca_path, jobinputfile, joboutputfile))
     log("running of job finished")
     log("changing back current working directory")

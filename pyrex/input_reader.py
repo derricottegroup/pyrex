@@ -30,6 +30,8 @@ class Params(object):
         self.do_rexplot = False
         self.energy_file = None
         self.sapt_file = None
+        self.orca_header = ""
+        self.orca_block = ""
         self.qm_program = "psi4"
         self.grace_period = 50
         self.e_conv = 1e-5
@@ -209,6 +211,10 @@ class Params(object):
             if 'irc_filename' in input_params['pyrex']:
                 self.irc_filename = input_params['pyrex']['irc_filename']
                 self.irc_grab()
+            if 'orca_header' in input_params['pyrex']:
+                self.orca_header = input_params['pyrex']['orca_header']
+            if 'orca_block' in input_params['pyrex']:
+                self.orca_block = input_params['pyrex']['orca_block']
         """
             Surf Scan Block: Options relevant for surface scans in Pyrex.
                              (Currently only compatible with PSI4)

@@ -15,6 +15,8 @@ class scf_class(object):
 
     def __init__(self,data,outfile):
         self.level_of_theory = "%s/%s" %(data.method,data.basis)
+        self.orca_header = data.orca_header
+        self.orca_block = data.orca_block 
         self.charge = data.molecular_charge
         self.coordinates = data.coordinates
         self.mult = data.molecular_multiplicity
@@ -130,7 +132,7 @@ class scf_class(object):
         output.write('\n{:>20} {:>20} {:>20} {:>20}\n'.format('IRC Point', 'E (Hartree)', 'HOMO (a.u.)','LUMO (a.u.)'))
         output.write('-------------------------------------------------------------------------------------\n')
         output.close()
-        input_header = "!%s %s" %(self.method,self.basis)
+        input_header = "!%s %s %s" %(self.method,self.basis,self.orca_header)
         frontier_orb_energies = []
         energies = []
         count = 0
@@ -139,8 +141,10 @@ class scf_class(object):
             homo_energy = 0.0
             lumo_energy = 0.0
             orca_input = input_header
-            orca_input += geometry 
-            orca_output = orca_interface.run_orca(orca_input=orca_input)
+            orca_input += "\n%s" %self.orca_block
+            orca_input += "\n%s" %geometry
+            cwd = os.getcwd() 
+            orca_output = orca_interface.run_orca(orca_input=orca_input, jobname="orca_job_%d" %count, output_root_dir="%s/orca_output" %cwd, overwrite=True)
             orca_out = iter(orca_output.output_lines())
             for line in orca_out:
                 if("FINAL SINGLE POINT ENERGY" in line):
