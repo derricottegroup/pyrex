@@ -19,9 +19,11 @@ import json
 def surf_psi4(params,output_file):
     natoms = params.natoms
     geom = params.geometry
+    #print(geom)
     geom += "symmetry c1\n"
     geom += "no_reorient\n"
     geom += "no_com"
+    #print(geom)
     #print(geom)
     mol = psi4.geometry(geom)
     if(params.constraint_type=='angle'):
@@ -52,8 +54,10 @@ def surf_psi4(params,output_file):
         if(params.scan_type=='relaxed'):
             E = psi4.optimize(params.method)
             pre_string = mol.create_psi4_string_from_molecule()
-            struct = pre_string.split("\n",5)[5]
-            surf_out.write(struct)
+            #print(pre_string)
+            struct = pre_string.split("\n",7)[7]
+            #print(struct)
+            surf_out.write(struct[:-1])
         if(params.scan_type=='unrelaxed'):
             E = psi4.energy(params.method)
         output = open(output_file,"a")
