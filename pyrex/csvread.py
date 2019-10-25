@@ -2,6 +2,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
+import scipy.interpolate as inter
 from pylab import *
 import json
 import pandas as pd
@@ -88,6 +89,7 @@ def simpleaxis(ax):
     ax.get_yaxis().tick_left()
 
 def plot():
+    flip_list = False
     params = Params()
     input_file = params.filename
     df = pd.read_csv(input_file)
@@ -95,12 +97,14 @@ def plot():
     for i in range(len(params.coordinates)):
         x_temp = np.asarray(df[params.coordinates[i]])
         if(x_temp[0] > x_temp[-1]):
+            flip_list = True
             x_temp = np.flip(x_temp,0)
         x.append(x_temp[~np.isnan(x_temp)])   
     print(x) 
     y = []
     multi_coord = 0
     for i in range(len(params.properties)):
+        y_temp = []
         array_temp = []
         current_array = df[params.properties[i]]
         if(params.rel_energy):
@@ -111,9 +115,12 @@ def plot():
             #print(np.asarray(y)
             array_temp = df[params.properties[i]]
             array_temp = array_temp[~np.isnan(array_temp)]
-            y.append(array_temp*params.scale)
-        if(x[multi_coord][0] > x[multi_coord][1]):
-            y = np.flip(np.asarray(y),0)
+            y_temp = array_temp*params.scale
+        if(flip_list==True):
+            y.append(np.flip(np.asarray(y_temp),0))
+            print(y)
+        else:
+            y.append(y_temp)
         if(len(x)>1):
             multi_coord = multi_coord + 1
         else:
@@ -121,7 +128,8 @@ def plot():
     y_spline = []
     multi_coord = 0
     for i in range(len(params.properties)):
-        y_fit = UnivariateSpline(x[multi_coord], y[i], s=0)
+        #y_fit = inter.InterpolatedUnivariateSpline(x[multi_coord], y[i])
+        y_fit = UnivariateSpline(x[multi_coord], y[i], s=1e-9)
         y_spline.append(y_fit)
         if(len(x) > 1):
             multi_coord = multi_coord + 1
