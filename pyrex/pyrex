@@ -47,7 +47,12 @@ output_filename = "pyrex_output.dat"
 #header(output_filename, json_data)
 pyrex_help = """PYREX is an open-source python toolkit for intrinsic reactivity analysis"""
 # Read in User Parameters
-params = input_reader.Params()
+if(sys.argv[1]!=None):
+    json_input = sys.argv[1]
+else:
+    json_input = "input.json"
+json_data=open(json_input).read()
+params = input_reader.Params(json_data)
 #TODO: Finish adding this type of structure. Use VMD_Cube from Evangelista Lab as a guide.
 #def read_options(params):
     #parser = argparse.ArgumentParser(description=pyrex_help)

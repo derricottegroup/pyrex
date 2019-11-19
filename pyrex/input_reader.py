@@ -5,7 +5,7 @@ import numpy as np
 from header import *
 
 class Params(object):
-    def __init__(self):
+    def __init__(self,json_data):
         """
             Initialize .json file provided by user in command line, read input and store variables.
         """
@@ -36,14 +36,17 @@ class Params(object):
         self.grace_period = 50
         self.e_conv = 1e-5
         self.nthreads = 1
-        json_input = sys.argv[1]
-        self.read_input(json_input)
+        #if(sys.argv[0]!="pytest"):
+        #    json_input = sys.argv[1]
+        #else:
+        #json_input = "input.json" 
+        self.read_input(json_data)
         # Load Output file
         output_filename = "pyrex_output.dat"
-        json_data=open(json_input).read()
+        #json_data=open(json_input).read()
         header(output_filename, json_data)
-    def read_input(self, json_input):
-        json_data=open(json_input).read()
+    def read_input(self, json_data):
+        #json_data=open(json_input).read()
         input_params = json.loads(json_data)
         """
             Molecule Block: Defines the properties of the molecular system.
