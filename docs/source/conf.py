@@ -17,6 +17,9 @@
 
 # -- Project information -----------------------------------------------------
 
+from better import better_theme_path
+html_theme_path = [better_theme_path]
+
 project = 'pyrex'
 copyright = '2019, Wallace D. Derricotte'
 author = 'Wallace D. Derricotte'
