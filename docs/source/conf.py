@@ -49,7 +49,7 @@ exclude_patterns = []
 #
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {'logo_only': True}
-html_logo = 'pyrex_logo.png'
+html_logo = 'pyrex_logo2.png'
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
