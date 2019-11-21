@@ -310,6 +310,21 @@ class Params(object):
                 geometries.append(geom)
                 coordinate = irc_num
                 coordinates.append(round(coordinate,3))
+        full_irc.close()
+        if(irc==[]):
+            with open(self.irc_filename) as f:
+                irc_num = 0
+                for line in f:
+                    geom = []
+                    line = next(f)
+                    for i in range(self.natoms):
+                        line = next(f)
+                        geom.append(line.lstrip())
+                    irc_num = irc_num + 1
+                    irc.append((irc_num, geom))
+                    geometries.append(geom)
+                    coordinate = irc_num
+                    coordinates.append(round(coordinate,3))
         self.irc = irc
         self.geometries = geometries
         self.coordinates = coordinates
