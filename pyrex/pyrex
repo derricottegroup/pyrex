@@ -48,9 +48,9 @@ output_filename = "pyrex_output.dat"
 #header(output_filename, json_data)
 pyrex_help = """PYREX is an open-source python toolkit for intrinsic reactivity analysis"""
 # Read in User Parameters
-def read_params():
-    if(len(sys.argv) > 1):
-        json_input = sys.argv[1]
+def read_params(args):
+    if(args["input"]):
+        json_input = args["input"]
     else:
         json_input = "input.json"
     json_data=open(json_input).read()
@@ -61,7 +61,7 @@ def read_params():
 #TODO: Finish adding this type of structure. Use VMD_Cube from Evangelista Lab as a guide.
 parser = argparse.ArgumentParser(description=pyrex_help)
 def read_options():
-    #parser.add_argument('--input', type=str, help="Specify input filename",default='input.json')
+    parser.add_argument('--input', type=str, help="Specify input filename",default=None)
     #parser.add_argument('--output', type=str, help="Specify output filename",default='pyrex_output.dat')
 #    parser.add_argument('--rexplot', help="Use PYREX plotting utility")
     parser.add_argument('--input_gen', help="Use Built in PYREX input generator", default=None)
@@ -638,7 +638,7 @@ def main():
     if(args["input_gen"]=="energy"):
         input_gen.build_standard()
     else:
-        params = read_params()
+        params = read_params(args)
         calculate_irc(params)
         calculate_surface_scan(params)
         geometry_builder(params)
