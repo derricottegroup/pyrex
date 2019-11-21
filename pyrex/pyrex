@@ -20,6 +20,7 @@ import datetime
 import json
 import euler
 import input_reader
+import input_gen
 import fragility_spectrum
 import quotes
 import csvread
@@ -47,21 +48,24 @@ output_filename = "pyrex_output.dat"
 #header(output_filename, json_data)
 pyrex_help = """PYREX is an open-source python toolkit for intrinsic reactivity analysis"""
 # Read in User Parameters
-if(sys.argv[1]!=None):
-    json_input = sys.argv[1]
-else:
-    json_input = "input.json"
-json_data=open(json_input).read()
-params = input_reader.Params(json_data)
+def read_params():
+    if(len(sys.argv) > 1):
+        json_input = sys.argv[1]
+    else:
+        json_input = "input.json"
+    json_data=open(json_input).read()
+    params = input_reader.Params(json_data)
+    return params
+
+
 #TODO: Finish adding this type of structure. Use VMD_Cube from Evangelista Lab as a guide.
-#def read_options(params):
-    #parser = argparse.ArgumentParser(description=pyrex_help)
+parser = argparse.ArgumentParser(description=pyrex_help)
+def read_options():
     #parser.add_argument('--input', type=str, help="Specify input filename",default='input.json')
     #parser.add_argument('--output', type=str, help="Specify output filename",default='pyrex_output.dat')
 #    parser.add_argument('--rexplot', help="Use PYREX plotting utility")
-#    parser.add_argument('--input_gen', help="Use Built in PYREX input generator")
+    parser.add_argument('--input_gen', help="Use Built in PYREX input generator", default=None)
 
-    #args = parser.parse_args()
     #output_filename = args.output 
 #def pyrex(output_filename):
 # Load User Parameters
@@ -627,23 +631,28 @@ def success(params):
     output.write(quotes.quotes[rand_int])
 
 def main():
-    #read_options()
-    calculate_irc(params)
-    calculate_surface_scan(params)
-    #initialize_common_classes(params)
-    geometry_builder(params)
-    #optimize_fragments(params)
-    energy_calculations(params)
-    reaction_force_analysis(params)
-    conceptual_dft_analysis(params)
-    total_reaction_work_integrals(params)
-    sapt_geometry_build(params)
-    atomic_force_decomposition(params)
-    sapt_energy_calc(params)
-    reaction_fragility_spectrum(params)
-    rexplot_utility(params)
-    flux_polarization(params)
-    success(params)
+    read_options()
+    args = vars(parser.parse_args())
+    if(args["input_gen"]=="irc"):
+        input_gen.build_irc()
+    if(args["input_gen"]=="energy"):
+        input_gen.build_standard()
+    else:
+        params = read_params()
+        calculate_irc(params)
+        calculate_surface_scan(params)
+        geometry_builder(params)
+        energy_calculations(params)
+        reaction_force_analysis(params)
+        conceptual_dft_analysis(params)
+        total_reaction_work_integrals(params)
+        sapt_geometry_build(params)
+        atomic_force_decomposition(params)
+        sapt_energy_calc(params)
+        reaction_fragility_spectrum(params)
+        rexplot_utility(params)
+        flux_polarization(params)
+        success(params)
 
 if __name__ == '__main__':
     main()

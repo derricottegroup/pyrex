@@ -105,6 +105,8 @@ class Params(object):
         """
         if 'keywords' in input_params:
             self.keywords = input_params['keywords']
+        else:
+            self.keywords = {} 
         """
             IRC Block: Options for intrinsic reaction coordinate calculations. 
 
