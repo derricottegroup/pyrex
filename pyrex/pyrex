@@ -181,18 +181,18 @@ def reaction_force_analysis(params):
         force_csv.close()
         
         params.index_min = np.argmin(np.asarray(reaction_force_values))
-        #print(reaction_force_values[index_min])
-        if(params.surf_scan_mode):
-            params.index_ts = np.argmax(np.asarray(params.energies))
-        else:
-            params.index_ts  = coordinates.index(0.0000)
+        ##print(reaction_force_values[index_min])
+        #if(params.surf_scan_mode):
+        #    params.index_ts = np.argmax(np.asarray(params.energies))
+        #else:
+        #    params.index_ts  = coordinates.index(0.0000)
         params.index_max = np.argmax(np.asarray(reaction_force_values))
         
-        r_struct = params.geoms[0]
-        force_min_struct = params.geoms[params.index_min]
-        ts_struct = params.geoms[params.index_ts]
-        force_max_struct = params.geoms[params.index_max]
-        p_struct = params.geoms[-1]
+        #r_struct = params.geoms[0]
+        #force_min_struct = params.geoms[params.index_min]
+        #ts_struct = params.geoms[params.index_ts]
+        #force_max_struct = params.geoms[params.index_max]
+        #p_struct = params.geoms[-1]
         
         #key_structs = [r_struct, force_min_struct, ts_struct, force_max_struct, p_struct]
         
@@ -241,20 +241,31 @@ def conceptual_dft_analysis(params):
 ###########################
 def total_reaction_work_integrals(params):
     if(params.do_energy or params.energy_file!=None):
-        reaction_force_values = params.reaction_force_values 
-        W_1 = -1.0*np.trapz(reaction_force_values[:params.index_min+1], dx=params.irc_stepsize)
-        W_2 = -1.0*np.trapz(reaction_force_values[params.index_min:params.index_ts+1], dx=params.irc_stepsize)
-        W_3 = -1.0*np.trapz(reaction_force_values[params.index_ts:params.index_max+1], dx=params.irc_stepsize)
-        W_4 = -1.0*np.trapz(reaction_force_values[params.index_max:], dx=params.irc_stepsize)
-        output = open(output_filename, "a") 
-        output.write('\n\n--Reaction Works--\n')
-        output.write('\n-------------------------------------------------------------------------------------')
-        output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('Units', 'W_1', 'W_2', 'W_3', 'W_4'))
-        output.write('\n-------------------------------------------------------------------------------------')
-        output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Hartree', W_1, W_2, W_3, W_4))
-        output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Kcal/mol', W_1*627.51, W_2*627.51, W_3*627.51, W_4*627.51))
-        output.write('\n-------------------------------------------------------------------------------------')
-        output.close()
+        no_ts_skip = False
+        reaction_force_values = params.reaction_force_values
+        #params.index_min = np.argmin(np.asarray(reaction_force_values))
+        #params.index_max = np.argmax(np.asarray(reaction_force_values))
+        if(params.surf_scan_mode):
+            params.index_ts = np.argmax(np.asarray(params.energies))
+        else:
+            try:
+                params.index_ts  = params.coordinates.index(0.0000)
+            except ValueError:
+                no_ts_skip = True
+        if(no_ts_skip==False):
+            W_1 = -1.0*np.trapz(reaction_force_values[:params.index_min+1], dx=params.irc_stepsize)
+            W_2 = -1.0*np.trapz(reaction_force_values[params.index_min:params.index_ts+1], dx=params.irc_stepsize)
+            W_3 = -1.0*np.trapz(reaction_force_values[params.index_ts:params.index_max+1], dx=params.irc_stepsize)
+            W_4 = -1.0*np.trapz(reaction_force_values[params.index_max:], dx=params.irc_stepsize)
+            output = open(output_filename, "a") 
+            output.write('\n\n--Reaction Works--\n')
+            output.write('\n-------------------------------------------------------------------------------------')
+            output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('Units', 'W_1', 'W_2', 'W_3', 'W_4'))
+            output.write('\n-------------------------------------------------------------------------------------')
+            output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Hartree', W_1, W_2, W_3, W_4))
+            output.write('\n{:>15} {:>15.7f} {:>15.7f} {:>15.7f} {:>15.7f}\n'.format('Kcal/mol', W_1*627.51, W_2*627.51, W_3*627.51, W_4*627.51))
+            output.write('\n-------------------------------------------------------------------------------------')
+            output.close()
 
 #strain_energies = []
 #chemical_potentials = []
