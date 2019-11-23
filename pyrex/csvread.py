@@ -9,7 +9,7 @@ import pandas as pd
 import numpy as np
 
 class Params():
-    def __init__(self):
+    def __init__(self,json_input):
         self.do_saveplot = False
         self.rel_energy = False
         self.force_min = 0.0
@@ -29,7 +29,6 @@ class Params():
         self.axiswidth = 2.0
         self.fig_dims = [9.0, 5.0]
         self.coordinates = ['Coordinate']
-        json_input = sys.argv[1]
         self.read_input(json_input)
     def read_input(self, json_input):
         json_data=open(json_input).read()
@@ -88,9 +87,9 @@ def simpleaxis(ax):
     ax.get_xaxis().tick_bottom()
     ax.get_yaxis().tick_left()
 
-def plot():
+def plot(json_input):
     flip_list = False
-    params = Params()
+    params = Params(json_input)
     input_file = params.filename
     df = pd.read_csv(input_file)
     x = []
@@ -100,7 +99,7 @@ def plot():
             flip_list = True
             x_temp = np.flip(x_temp,0)
         x.append(x_temp[~np.isnan(x_temp)])   
-    print(x) 
+    #print(x) 
     y = []
     multi_coord = 0
     for i in range(len(params.properties)):
@@ -118,7 +117,7 @@ def plot():
             y_temp = array_temp*params.scale
         if(flip_list==True):
             y.append(np.flip(np.asarray(y_temp),0))
-            print(y)
+            #print(y)
         else:
             y.append(y_temp)
         if(len(x)>1):

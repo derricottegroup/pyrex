@@ -63,7 +63,8 @@ parser = argparse.ArgumentParser(description=pyrex_help)
 def read_options():
     parser.add_argument('--input', type=str, help="Specify input filename",default=None)
     #parser.add_argument('--output', type=str, help="Specify output filename",default='pyrex_output.dat')
-    #parser.add_argument('--rexplot', help="Use PYREX plotting utility")
+    parser.add_argument('--rexplot', action="store_true", help="Use PYREX plotting utility")
+    parser.add_argument('--join_irc', action="store_true", help='Combine forward and backward IRCs. (string, default = false)')
     parser.add_argument('--input_gen', help="Use Built in PYREX input generator", default=None)
 
     #output_filename = args.output 
@@ -618,9 +619,8 @@ def reaction_fragility_spectrum(params):
 # Rexplot Plotting Utility #
 ############################
 
-def rexplot_utility(params):
-    if(params.do_rexplot):
-        csvread.plot()
+def rexplot_utility(json_input):
+    csvread.plot(json_input)
 
 def flux_polarization(params):
     if(params.do_polarization==True):
@@ -648,8 +648,11 @@ def main():
         input_gen.build_irc()
     if(args["input_gen"]=="energy"):
         input_gen.build_standard()
-    if(args["input_gen"]=="join_irc"):
+    if(args["join_irc"]==True):
         input_gen.join_irc()
+    if(args["rexplot"]==True):
+        json_input = args["input"]
+        rexplot_utility(json_input)
     else:
         params = read_params(args)
         calculate_irc(params)
