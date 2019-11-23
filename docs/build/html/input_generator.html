@@ -34,7 +34,8 @@
   <link rel="stylesheet" href="_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" /> 
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Overview" href="index.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -81,14 +82,15 @@
               
             
             
-              <!-- Local TOC -->
-              <div class="local-toc"><ul>
-<li><a class="reference internal" href="#">Input Generator</a><ul>
-<li><a class="reference internal" href="#joining-irc-files">Joining IRC Files</a></li>
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Input Generator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#joining-irc-files">Joining IRC Files</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#generating-pyrex-input-files">Generating Pyrex Input Files</a></li>
 </ul>
 </li>
 </ul>
-</div>
+
             
           
         </div>
@@ -153,9 +155,42 @@
             
   <div class="section" id="input-generator">
 <h1>Input Generator<a class="headerlink" href="#input-generator" title="Permalink to this headline">¶</a></h1>
-<p>A few useful utilities to help make your life easier.</p>
+<p>In order to get started using pyREX you must have a .xyz coordinate file that contains the geometries for the reaction/process you are investigating and a .json input file that contains the relevant options for the calculation you would like to do in pyREX. There is a built-in input file generator that can help you with all the steps of getting your input file set up.</p>
 <div class="section" id="joining-irc-files">
 <h2>Joining IRC Files<a class="headerlink" href="#joining-irc-files" title="Permalink to this headline">¶</a></h2>
+<p>Often times the coordinate file you would like to run in pyREX is an intrinsic reaction coordinate (IRC) file. Most IRC codes output separate coordinates for the forward and backward trajectories for the reaction. However for calculations in pyrex you will need a continuous trajectory that begins with the last structure of your backward trajectory and ends with the last structure of your forward trajectory. You can do this very simply from the command line using the following command line utility:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyrex</span> <span class="o">--</span><span class="n">join_irc</span>
+</pre></div>
+</div>
+<p>pyrex will then ask you the name of your forward and backward trajectory and produce a single “full_irc.xyz” file.</p>
+</div>
+<div class="section" id="generating-pyrex-input-files">
+<h2>Generating Pyrex Input Files<a class="headerlink" href="#generating-pyrex-input-files" title="Permalink to this headline">¶</a></h2>
+<p>Once you have an IRC or other coordinate file, the standard use of pyrex is to obtain energies and properties along the reaction coordinate. In order to generate a standard input for the reaction energy, you can run the following from the command line:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyrex</span> <span class="o">--</span><span class="n">input_gen</span><span class="o">=</span><span class="n">energy</span>
+</pre></div>
+</div>
+<p>pyrex will then ask you the name of your coordinate file and generate your standard .json input. You can edit the input file from there to run your desired level of theory and other options. For example, the following input was created from an IRC file for a reaction of carbon dioxide and the hydrogen molecule:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;molecular_charge&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;molecular_multiplicity&quot;</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;scf&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;basis&quot;</span><span class="p">:</span> <span class="s2">&quot;sto-3g&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;pyrex&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;nthreads&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;irc_filename&quot;</span><span class="p">:</span> <span class="s2">&quot;full_irc.xyz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;do_energy&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;do_conceptualdft&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;irc_stepsize&quot;</span><span class="p">:</span> <span class="mf">0.2</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
 </div>
 </div>
 
@@ -164,6 +199,13 @@
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+      
+        <a href="index.html" class="btn btn-neutral float-left" title="Overview" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>
