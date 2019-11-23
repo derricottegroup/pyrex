@@ -63,7 +63,7 @@ parser = argparse.ArgumentParser(description=pyrex_help)
 def read_options():
     parser.add_argument('--input', type=str, help="Specify input filename",default=None)
     #parser.add_argument('--output', type=str, help="Specify output filename",default='pyrex_output.dat')
-#    parser.add_argument('--rexplot', help="Use PYREX plotting utility")
+    #parser.add_argument('--rexplot', help="Use PYREX plotting utility")
     parser.add_argument('--input_gen', help="Use Built in PYREX input generator", default=None)
 
     #output_filename = args.output 
@@ -648,6 +648,8 @@ def main():
         input_gen.build_irc()
     if(args["input_gen"]=="energy"):
         input_gen.build_standard()
+    if(args["input_gen"]=="join_irc"):
+        input_gen.join_irc()
     else:
         params = read_params(args)
         calculate_irc(params)
@@ -661,7 +663,7 @@ def main():
         atomic_force_decomposition(params)
         sapt_energy_calc(params)
         reaction_fragility_spectrum(params)
-        rexplot_utility(params)
+        #rexplot_utility(params)
         flux_polarization(params)
         success(params)
 

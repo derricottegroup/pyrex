@@ -41,6 +41,53 @@ def build_standard():
     json_input.close()
     return input_file
 
+def join_irc():
+    irc_forward_file = input("What is the name of your forward irc file?[irc_forward.xyz]") or "irc_forward.xyz"
+    irc_backward_file = input("What is the name of your backward irc file?[irc_backward.xyz]") or "irc_backward.xyz"
+    full_irc_file = open("full_irc.xyz", "w+") #creates new file for full irc   
+ 
+    # Make empty list to store geometries along the IRC
+    full_irc = []
+
+    natoms = 0
+
+    # Grab and store geometries from the forward IRC
+    with open(irc_forward_file) as f:
+        irc_num = 0
+        for line in f:
+            natoms = int(line)
+            geom = []
+            line = next(f)
+            for i in range(natoms):                                                        
+                line = next(f)
+                geom.append(line)
+            full_irc.append((irc_num,geom))
+            irc_num = irc_num + 1
+    
+    with open(irc_backward_file) as f:
+        irc_num = 0
+        for line in f: 
+            natoms = int(line)
+            geom = []
+            line = next(f)
+            for i in range(natoms):
+                line = next(f)
+                geom.append(line)
+            if(irc_num!=0):
+                full_irc.append((irc_num,geom))
+            else:
+                pass
+            irc_num = irc_num - 1
+    
+    # Sort the IRC
+    sorted_full_irc = sorted(full_irc)
+
+    for i in range(len(sorted_full_irc)):
+        full_irc_file.write("%d\n" %natoms)
+        full_irc_file.write("Full IRC Point %d\n" %sorted_full_irc[i][0])
+        for j in range(len(sorted_full_irc[i][1])):
+            full_irc_file.write("%s" %sorted_full_irc[i][1][j])
+
 def build_irc():
     struct_filename = input("What is the name of your xyz coordinate file?[struct.xyz] ") or "struct.xyz"
     input_file = {}
