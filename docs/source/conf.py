@@ -18,7 +18,7 @@
 # -- Project information -----------------------------------------------------
 
 project = 'pyrex'
-copyright = '2019, Wallace D. Derricotte'
+copyright = '2019, Derricotte Research Group'
 author = 'Wallace D. Derricotte'
 
 # The full version, including alpha/beta/rc tags

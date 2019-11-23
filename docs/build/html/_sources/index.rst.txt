@@ -5,6 +5,7 @@ pyREX(Python Reaction Energy eXtension), is a free open-source implementation of
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
+   input_generator
 
 Capabilities
 ------------
