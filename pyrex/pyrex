@@ -36,12 +36,6 @@ import argparse
 from prettytable import PrettyTable
 import sys
 
-if(os.path.isdir('psi4_output')):
-    pass
-else:
-    os.makedirs("psi4_output")
-
-
 
 # Load Output file
 output_filename = "pyrex_output.dat"
@@ -49,6 +43,10 @@ output_filename = "pyrex_output.dat"
 pyrex_help = """PYREX is an open-source python toolkit for intrinsic reactivity analysis"""
 # Read in User Parameters
 def read_params(args):
+    if(os.path.isdir('psi4_output')):
+        pass
+    else:
+        os.makedirs("psi4_output")
     if(args["input"]):
         json_input = args["input"]
     else:

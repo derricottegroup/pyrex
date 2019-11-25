@@ -85,6 +85,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Input Generator</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#creating-an-irc-input">Creating an IRC Input</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#joining-irc-files">Joining IRC Files</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#generating-pyrex-input-files">Generating Pyrex Input Files</a></li>
 </ul>
@@ -156,6 +157,46 @@
   <div class="section" id="input-generator">
 <h1>Input Generator<a class="headerlink" href="#input-generator" title="Permalink to this headline">¶</a></h1>
 <p>In order to get started using pyREX you must have a .xyz coordinate file that contains the geometries for the reaction/process you are investigating and a .json input file that contains the relevant options for the calculation you would like to do in pyREX. There is a built-in input file generator that can help you with all the steps of getting your input file set up.</p>
+<div class="section" id="creating-an-irc-input">
+<h2>Creating an IRC Input<a class="headerlink" href="#creating-an-irc-input" title="Permalink to this headline">¶</a></h2>
+<p>Pyrex contains an IRC algorithm that uses gradients from QM software in order to calculate a minimum energy path for the reaction. If you have an optimized transition state structure you can generate an input file to run an IRC calculation using the following command line utility:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyrex</span> <span class="o">--</span><span class="n">input_gen</span><span class="o">=</span><span class="n">irc</span>
+</pre></div>
+</div>
+<p>pyrex will then ask you the name of your XYZ coordinate file containing your transition state structure. You can edit the input file from there to run the IRC calculation at your preferred level of theory. For example the following input file was created from an xyz file containing the transition state for the reaction of carbon dioxide and water:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;geometry&quot;</span> <span class="p">:</span>  <span class="p">[</span><span class="mf">0.113595072843</span><span class="p">,</span><span class="o">-</span><span class="mf">0.153880407652</span><span class="p">,</span><span class="mf">0.037596022684</span><span class="p">,</span>
+                <span class="o">-</span><span class="mf">1.135961394234</span><span class="p">,</span><span class="o">-</span><span class="mf">0.223379947195</span><span class="p">,</span><span class="o">-</span><span class="mf">0.034588131338</span><span class="p">,</span>
+                <span class="mf">1.064242147389</span><span class="p">,</span><span class="mf">0.524605985828</span><span class="p">,</span><span class="o">-</span><span class="mf">0.028439251841</span><span class="p">,</span>
+                <span class="mf">0.404693854873</span><span class="p">,</span><span class="o">-</span><span class="mf">1.556634791353</span><span class="p">,</span><span class="mf">0.327550495378</span><span class="p">,</span>
+                <span class="o">-</span><span class="mf">0.619014433727</span><span class="p">,</span><span class="o">-</span><span class="mf">1.391813384411</span><span class="p">,</span><span class="mf">0.225090412236</span><span class="p">],</span>
+  <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
+  <span class="s2">&quot;molecular_charge&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;molecular_multiplicity&quot;</span><span class="p">:</span> <span class="mi">1</span>
+<span class="p">},</span>
+  <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;scf&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;basis&quot;</span><span class="p">:</span> <span class="s2">&quot;sto-3g&quot;</span>
+<span class="p">},</span>
+  <span class="s2">&quot;pyrex&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;nthreads&quot;</span><span class="p">:</span> <span class="mi">1</span>
+<span class="p">},</span>
+  <span class="s2">&quot;irc&quot;</span><span class="p">:</span> <span class="p">{</span>
+  <span class="s2">&quot;direction&quot;</span><span class="p">:</span> <span class="s2">&quot;forward&quot;</span><span class="p">,</span>
+  <span class="s2">&quot;step_size&quot;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span>
+  <span class="s2">&quot;mode&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+  <span class="s2">&quot;normal_mode_file&quot;</span><span class="p">:</span> <span class="s2">&quot;normal_modes.dat&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>where the additional options for the irc calculation are added in the IRC block.</p>
+<div class="admonition caution">
+<p class="admonition-title">Caution</p>
+<p>The IRC algorithm implemented is a simple version of the Morokuma-Ishida predictor-corrector IRC. It is suggested that you use a step size of 0.01 au for all IRC calculations or else the algorithm becomes unstable. This fine of a stepsize is also recommended for computing finite-differences along the reaction coordinate. If you wish to use the IRC to simply confirm a transition state and want to converge as quickly as possible we recommend using other algorithms suited for this purpose.</p>
+</div>
+</div>
 <div class="section" id="joining-irc-files">
 <h2>Joining IRC Files<a class="headerlink" href="#joining-irc-files" title="Permalink to this headline">¶</a></h2>
 <p>Often times the coordinate file you would like to run in pyREX is an intrinsic reaction coordinate (IRC) file. Most IRC codes output separate coordinates for the forward and backward trajectories for the reaction. However for calculations in pyrex you will need a continuous trajectory that begins with the last structure of your backward trajectory and ends with the last structure of your forward trajectory. You can do this very simply from the command line using the following command line utility:</p>
