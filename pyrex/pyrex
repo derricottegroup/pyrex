@@ -646,11 +646,11 @@ def main():
     args = vars(parser.parse_args())
     if(args["input_gen"]=="irc"):
         input_gen.build_irc()
-    if(args["input_gen"]=="energy"):
+    elif(args["input_gen"]=="energy"):
         input_gen.build_standard()
-    if(args["join_irc"]==True):
+    elif(args["join_irc"]==True):
         input_gen.join_irc()
-    if(args["rexplot"]==True):
+    elif(args["rexplot"]==True):
         json_input = args["input"]
         rexplot_utility(json_input)
     else:

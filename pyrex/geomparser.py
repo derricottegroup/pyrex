@@ -89,6 +89,28 @@ class Geomparser(object):
                 sapt_geom += line
             self.sapt_geoms.append(sapt_geom)
         return self.sapt_geoms
+
+    def isapt_geombuilder(self, charge_A, mult_A, charge_B, mult_B, charge_link, mult_link, frag_A, frag_B, frag_link):
+        # Function Function for building geometries appropriate for the molecul block
+        # of an intramolecular SAPT calculation in PSI4, specify linker.
+        self.isapt_geoms = []
+        for geometry in self.geometries:
+            sapt_geom = "\n%d %d\n" %(charge_A, mult_A)
+            for j in range(len(frag_A)):
+                line = geometry[frag_A[j]]
+                sapt_geom += line
+            sapt_geom += "--\n"
+            sapt_geom += "%d %d\n" %(charge_B, mult_B)
+            for j in range(len(frag_B)):
+                line = geometry[frag_B[j]]
+                sapt_geom += line
+            sapt_geom += "--\n"
+            sapt_geom += "%d %d\n" %(charge_link, mult_link)
+            for j in range(len(frag_link)):
+                line = geometry[frag_link[j]]
+                sapt_geom += line
+            self.isapt_geoms.append(sapt_geom)
+        return self.isapt_geoms
     
     def atomic_distances(self):
         atomic_distance_csv = open("atomic_distances.csv", "w+")
