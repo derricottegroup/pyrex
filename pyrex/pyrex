@@ -102,6 +102,13 @@ def geometry_builder(params):
         params.geoms = geoms 
         geomparser.atomic_distances()
 
+    if(params.do_polarization):
+        frag_geoms_irc = []
+        for i in range(len(params.fraglist)):
+            frag_geoms = geomparser.frag_ghost(params.frag_charge[i], params.frag_mult[i], params.fraglist[i])
+            frag_geoms_irc.append(frag_geoms) 
+        params.frag_geoms_irc = frag_geoms_irc 
+
     if(params.do_energy and params.qm_program == 'pyscf'):
         pyscf_geoms = geomparser.pyscf_geombuilder()
         params.geoms = pyscf_geoms  
@@ -114,6 +121,7 @@ def geometry_builder(params):
 # Fragment Optimizations #
 ##########################
     if(params.do_frag==True):
+        scf_instance = scf_class(params, output_filename)
         iso_frag_A = geomparser.iso_frag(params.charge_A, params.mult_A, params.frag_A)
         iso_frag_B = geomparser.iso_frag(params.charge_B, params.mult_B, params.frag_B)
         e_A = scf_instance.opt("A", params.natoms_A, iso_frag_A[0])
@@ -129,6 +137,18 @@ def energy_calculations(params):
         if(params.qm_program == 'psi4'):
             params.energies, params.wavefunctions = scf_instance.psi4_scf(params.geoms)
             nelec = params.wavefunctions[0].nalpha()
+        if(params.do_polarization):
+            frag_energies_irc = []
+            frag_wavefunctions_irc = []
+            for i in range(len(params.fraglist)):
+                output = open(output_filename, "a")
+                output.write('\n\n-- Calculating the Energy of Fragment %d--\n' %(i+1))
+                output.close()
+                frag_energies, frag_wavefunctions = scf_instance.psi4_scf(params.frag_geoms_irc[i])
+                frag_energies_irc.append(frag_energies)
+                frag_wavefunctions_irc.append(frag_wavefunctions)
+            params.frag_energies_irc = frag_energies_irc
+            params.frag_wavefunctions_irc = frag_wavefunctions_irc 
 
         if(params.qm_program == 'pyscf' and params.method == 'scf'):
             params.energies,params.frontier_orb_energies = scf_instance.pyscf_scf(params.geoms)
@@ -214,6 +234,11 @@ def conceptual_dft_analysis(params):
         if(params.molecular_multiplicity==1):
             if(params.qm_program == 'psi4'):
                 potentials = np.array(c_dft.potential(params.wavefunctions))
+            if(params.do_polarization):
+                frag_potentials_irc = []
+                for i in range(len(params.fraglist)):
+                    frag_potentials = np.array(c_dft.potential(params.frag_wavefunctions_irc[i]))
+                    frag_potentials_irc.append(frag_potentials)
             if(params.qm_program == 'pyscf' or params.qm_program == 'orca'):
                 potentials = np.array(c_dft.potential_pyscf(params.frontier_orb_energies))
         else:
@@ -222,7 +247,13 @@ def conceptual_dft_analysis(params):
             hardness = np.array(c_dft.hardness(params.wavefunctions))
         if(params.qm_program == 'pyscf' or params.qm_program == 'orca'):
             hardness = np.array(c_dft.hardness_pyscf(params.frontier_orb_energies))
-        reaction_electronic_flux = np.array(c_dft.electronic_flux(params.irc_stepsize))
+
+        reaction_electronic_flux = np.array(c_dft.electronic_flux(potentials, params.irc_stepsize))
+        
+        if(params.do_polarization):
+            potential_diffs = c_dft.potential_diff_frag(len(params.fraglist),potentials,frag_potentials_irc)
+            transfer_flux = np.array(c_dft.electronic_flux(potential_diffs, params.irc_stepsize))
+            polarization_flux = np.array(reaction_electronic_flux - transfer_flux)
         electrophilicity = []
         for i in range(len(hardness)):
             electrophil = (potentials[i]*potentials[i])/(2.0*hardness[i])
@@ -233,6 +264,13 @@ def conceptual_dft_analysis(params):
         for i in range(len(params.coordinates)):
             flux_csv.write("%f,%f,%f,%f,%f\n" %(params.coordinates[i], potentials[i], hardness[i], electrophilicity[i], reaction_electronic_flux[i]))
         flux_csv.close()
+
+        if(params.do_polarization):
+            ref_decomp = open("flux_decomposition.csv", "w+")
+            ref_decomp.write("Coordinate,Reaction Electronic Flux,Polarization Flux,Transfer Flux\n")
+            for i in range(len(params.coordinates)):
+                ref_decomp.write("%f,%f,%f,%f\n" %(params.coordinates[i], reaction_electronic_flux[i], polarization_flux[i], transfer_flux[i]))
+            ref_decomp.close()
 
 
 ###########################
@@ -620,18 +658,18 @@ def reaction_fragility_spectrum(params):
 def rexplot_utility(json_input):
     csvread.plot(json_input)
 
-def flux_polarization(params):
-    if(params.do_polarization==True):
-        potentials_A = np.array(ref.potential(wavefunctions_A))
-        reaction_electronic_flux_A = (nelec_A/nelec)*np.array(ref.electronic_flux(irc_step_size))
-        potential_diff_A = (nelec_A/nelec)*(potentials_A - potentials)
-        transfer_flux_A = np.gradient(potential_diff_A)
-        potentials_B = np.array(ref.potential(wavefunctions_B))
-        reaction_electronic_flux_B = (nelec_B/nelec)*np.array(ref.electronic_flux(irc_step_size))
-        potential_diff_B = (nelec_B/nelec)*(potentials_B - potentials)
-        transfer_flux_B = np.gradient(potential_diff_B)
-        transfer_flux = transfer_flux_A + transfer_flux_B 
-        polarization_flux = reaction_electronic_flux - transfer_flux
+#def flux_polarization(params):
+#    if(params.do_polarization==True):
+#        potentials_A = np.array(ref.potential(wavefunctions_A))
+#        reaction_electronic_flux_A = (nelec_A/nelec)*np.array(ref.electronic_flux(irc_step_size))
+#        potential_diff_A = (nelec_A/nelec)*(potentials_A - potentials)
+#        transfer_flux_A = np.gradient(potential_diff_A)
+#        potentials_B = np.array(ref.potential(wavefunctions_B))
+#        reaction_electronic_flux_B = (nelec_B/nelec)*np.array(ref.electronic_flux(irc_step_size))
+#        potential_diff_B = (nelec_B/nelec)*(potentials_B - potentials)
+#        transfer_flux_B = np.gradient(potential_diff_B)
+#        transfer_flux = transfer_flux_A + transfer_flux_B 
+#        polarization_flux = reaction_electronic_flux - transfer_flux
 
 def success(params):
     output = open(output_filename, "a")
@@ -665,7 +703,7 @@ def main():
         sapt_energy_calc(params)
         reaction_fragility_spectrum(params)
         #rexplot_utility(params)
-        flux_polarization(params)
+        #flux_polarization(params)
         success(params)
 
 if __name__ == '__main__':

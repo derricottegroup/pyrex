@@ -49,6 +49,19 @@ class concept_dft(object):
             potential = 0.5*(homo_energy + lumo_energy)
             self.potentials.append(potential)
         return self.potentials
+
+    def potential_diff_frag(self, nfrags, potentials, frag_potentials):
+        potential_diffs = []
+        for i in range(len(potentials)):
+            frag_potential_sum = 0.0
+            for j in range(nfrags):
+                frag_potentials_for_point = []
+                frag_potentials_for_point.append(frag_potentials[j][i])
+            frag_potential_sum = sum(frag_potentials_for_point)
+            diff = potentials[i] - frag_potential_sum 
+            potential_diffs.append(diff)
+        return potential_diffs 
+
  
     def hardness(self, wavefunctions):
         self.hardness = []
@@ -77,6 +90,6 @@ class concept_dft(object):
             self.hardness.append(hardness)
         return self.hardness 
 
-    def electronic_flux(self, step):
-        re_flux = -1.0*np.gradient(self.potentials,step)
+    def electronic_flux(self, potentials, step):
+        re_flux = -1.0*np.gradient(potentials,step)
         return re_flux

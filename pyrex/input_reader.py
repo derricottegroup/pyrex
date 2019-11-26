@@ -75,13 +75,16 @@ class Params(object):
                 self.natoms_A = len(self.frag_A)
                 self.frag_B = input_params["molecule"]["fragments"][1]
                 self.natoms_B = len(self.frag_B)
+                self.fraglist = input_params["molecule"]["fragments"]
                 self.do_frag = True
             if 'fragment_charges' in input_params["molecule"]:
                 self.charge_A = input_params["molecule"]["fragment_charges"][0]
                 self.charge_B = input_params["molecule"]["fragment_charges"][1]
+                self.frag_charge = input_params["molecule"]["fragment_charges"]
             if 'fragment_multiplicities' in input_params["molecule"]:
                 self.mult_A = input_params["molecule"]["fragment_multiplicities"][0]
                 self.mult_B = input_params["molecule"]["fragment_multiplicities"][1]
+                self.frag_mult = input_params["molecule"]["fragment_multiplicities"]
             if 'geometry' in input_params['molecule']:
                 self.geometry = self.json2xyz(input_params)
         """
