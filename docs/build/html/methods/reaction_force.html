@@ -35,7 +35,9 @@
   <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
   <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="../genindex.html" />
-    <link rel="search" title="Search" href="../search.html" /> 
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Input Generator" href="../input_generator.html" />
+    <link rel="prev" title="Getting Started" href="../getting_started.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -83,8 +85,13 @@
             
             
               <p class="caption"><span class="caption-text">Contents:</span></p>
-<ul>
+<ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Reaction Force Analysis</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#general-theory">General Theory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="../input_generator.html">Input Generator</a></li>
 </ul>
 
@@ -155,9 +162,10 @@
 <div class="section" id="general-theory">
 <h2>General Theory<a class="headerlink" href="#general-theory" title="Permalink to this headline">¶</a></h2>
 <p>Many of the methods implemented in pyrex center around the definition of a quantity known as the reaction force (<span class="math notranslate nohighlight">\(F\)</span>). Analogous to the force defined in classical physics, the force for the reaction is defined as the negative gradient of the energy (<span class="math notranslate nohighlight">\(E\)</span>) with respect to the reaction coordinate (<span class="math notranslate nohighlight">\(\xi\)</span>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">math</span><span class="p">::</span> <span class="n">F</span><span class="p">(</span>\<span class="n">xi</span><span class="p">)</span> <span class="o">=</span> <span class="o">-</span> \<span class="n">frac</span><span class="p">{</span>\<span class="n">partial</span> <span class="n">E</span><span class="p">}{</span>\<span class="n">partial</span> \<span class="n">xi</span><span class="p">},</span>
-</pre></div>
-</div>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[F(\xi) = - \frac{\partial E}{\partial \xi},\]</div>
+</div></blockquote>
 <p>this produces a reaction force profile with a general shape defined by two critical points along the coordinate based on the force maximum and force minimum. This allows for a general partitioning of any reaction into three well-defined regions, a reactant region, transition state region, and a product region. In another analogy to classical physics one can integrate over the force in a particular region and obtain a reaction work (<span class="math notranslate nohighlight">\(w\)</span>). For example, the first region of a reaction which would occur from the reactant structure (<span class="math notranslate nohighlight">\(\xi_{\rm R}\)</span>) to the force minimum (<span class="math notranslate nohighlight">\(\xi_{\rm min}\)</span>) would be defined as:</p>
 <blockquote>
 <div><div class="math notranslate nohighlight">
@@ -176,6 +184,15 @@
            
           </div>
           <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="../input_generator.html" class="btn btn-neutral float-right" title="Input Generator" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
   
 
   <hr/>

@@ -5,7 +5,7 @@ Reaction Force Analysis
 General Theory
 --------------
 
-Many of the methods implemented in pyrex center around the definition of a quantity known as the reaction force (:math:`F`). Analogous to the force defined in classical physics, the force for the reaction is defined as the negative gradient of the energy (:math:`E`) with respect to the reaction coordinate (:math:`\xi`)::
+Many of the methods implemented in pyrex center around the definition of a quantity known as the reaction force (:math:`F`). Analogous to the force defined in classical physics, the force for the reaction is defined as the negative gradient of the energy (:math:`E`) with respect to the reaction coordinate (:math:`\xi`):
  
  .. math:: F(\xi) = - \frac{\partial E}{\partial \xi},
 
