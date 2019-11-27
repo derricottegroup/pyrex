@@ -1,0 +1,214 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Reaction Force Analysis &mdash; pyrex 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/pyrex_logo_2019_new.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_generator.html">Input Generator</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyrex</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Reaction Force Analysis</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/methods/reaction_force.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="reaction-force-analysis">
+<h1>Reaction Force Analysis<a class="headerlink" href="#reaction-force-analysis" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="general-theory">
+<h2>General Theory<a class="headerlink" href="#general-theory" title="Permalink to this headline">¶</a></h2>
+<p>Many of the methods implemented in pyrex center around the definition of a quantity known as the reaction force (<span class="math notranslate nohighlight">\(F\)</span>). Analogous to the force defined in classical physics, the force for the reaction is defined as the negative gradient of the energy (<span class="math notranslate nohighlight">\(E\)</span>) with respect to the reaction coordinate (<span class="math notranslate nohighlight">\(\xi\)</span>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">math</span><span class="p">::</span> <span class="n">F</span><span class="p">(</span>\<span class="n">xi</span><span class="p">)</span> <span class="o">=</span> <span class="o">-</span> \<span class="n">frac</span><span class="p">{</span>\<span class="n">partial</span> <span class="n">E</span><span class="p">}{</span>\<span class="n">partial</span> \<span class="n">xi</span><span class="p">},</span>
+</pre></div>
+</div>
+<p>this produces a reaction force profile with a general shape defined by two critical points along the coordinate based on the force maximum and force minimum. This allows for a general partitioning of any reaction into three well-defined regions, a reactant region, transition state region, and a product region. In another analogy to classical physics one can integrate over the force in a particular region and obtain a reaction work (<span class="math notranslate nohighlight">\(w\)</span>). For example, the first region of a reaction which would occur from the reactant structure (<span class="math notranslate nohighlight">\(\xi_{\rm R}\)</span>) to the force minimum (<span class="math notranslate nohighlight">\(\xi_{\rm min}\)</span>) would be defined as:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[w_1 = - \int_{\xi_{\rm R}}^{\xi_{\rm min}} F(\xi) d\xi,\]</div>
+</div></blockquote>
+<p>this is essentially the area under the curve of the force profile indicating the work done in the that region of the reaction. When interpreting the force profile, one can think of the negative forces as impeding reaction progress, while positive forces are seen as reaction driving.</p>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>PUT EXAMPLE HERE</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Derricotte Research Group
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

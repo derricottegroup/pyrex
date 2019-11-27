@@ -22,6 +22,7 @@ pyREX implements a series of reaction energy methods based on the total reaction
    :caption: Contents:
 
    getting_started
+   methods/reaction_force
    input_generator
 
 Indices and tables
