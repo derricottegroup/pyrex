@@ -2,6 +2,11 @@
 
 [![Documentation Status](https://readthedocs.org/projects/pyrex/badge/?version=latest)](http://pyrex.readthedocs.io/en/latest/?badge=latest)
 
+#### Code Authors: Derricotte Research Group
+
+#### Manual (http://pyrex.readthedocs.io/)
+#### Web: www.derricotteresearchgroup.com
+
 ### Overview
 
 pyREX(Python Reaction Energy eXtension), is a free open-source implementation of reaction coordinate analysis techniques that interfaces with PSI4 ab-initio quantum chemistry software in order to streamline the process of investigating energetic/electronic properties along an intrinsic reaction coordinate. This code is currently under development within the Derricotte Research Group at Morehouse College in Atlanta, GA. Current Key features include:(1) Calculating SCF energies along the reaction coordinate, (2) Reaction Force Analysis, (3) Reaction Electronic Flux (REF) Analysis, (4) Decomposition of REF into Polarization and Transfer Components, (5) Symmetry Adapted Perturbation Theory Decomposition analysis
