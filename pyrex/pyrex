@@ -124,8 +124,8 @@ def geometry_builder(params):
         scf_instance = scf_class(params, output_filename)
         iso_frag_A = geomparser.iso_frag(params.charge_A, params.mult_A, params.frag_A)
         iso_frag_B = geomparser.iso_frag(params.charge_B, params.mult_B, params.frag_B)
-        e_A = scf_instance.opt("A", params.natoms_A, iso_frag_A[0])
-        e_B = scf_instance.opt("B", params.natoms_B, iso_frag_B[0])
+        params.e_A = scf_instance.opt("A", params.natoms_A, iso_frag_A[0])
+        params.e_B = scf_instance.opt("B", params.natoms_B, iso_frag_B[0])
 
 ###########################
 # Run Energy Calculations #
@@ -222,6 +222,34 @@ def reaction_force_analysis(params):
         output.write("\nTransition State Region:  %.3f ------> %.3f\n" %(coordinates[params.index_min], coordinates[params.index_max]))
         output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[params.index_max], coordinates[-1]))
         params.reaction_force_values = reaction_force_values 
+
+##############################
+# Activation Strain Analysis #
+##############################
+
+# Calculating interaction energies for activation strain analysis
+def activation_strain_analysis(params):
+    if(params.do_polarization):
+        e_int = []
+        del_e = []
+        strain_e = []
+        for i in range(len(params.coordinates)):
+            frag_energy_sum = 0.0
+            for j in range(len(params.fraglist)):
+                frag_energy_sum += params.frag_energies_irc[j][i]
+            current_e_int = params.energies[i] - frag_energy_sum
+            current_del_e = params.energies[i] - (params.e_A + params.e_B)
+            current_strain_e = current_del_e - current_e_int 
+            del_e.append(current_del_e)
+            e_int.append(current_e_int)
+            strain_e.append(current_strain_e)
+        act_strain = open("activation_strain.csv", "w+")
+        act_strain.write("Coordinate,Energy,Interaction Energy,Strain Energy\n")
+        for i in range(len(params.coordinates)):
+            act_strain.write("%f,%f,%f,%f\n" %(params.coordinates[i], del_e[i], e_int[i], strain_e[i]))
+        act_strain.close()
+        
+
 
 ############################
 # Conceptual DFT Analysis  #
@@ -696,6 +724,7 @@ def main():
         geometry_builder(params)
         energy_calculations(params)
         reaction_force_analysis(params)
+        activation_strain_analysis(params)
         conceptual_dft_analysis(params)
         total_reaction_work_integrals(params)
         sapt_geometry_build(params)
