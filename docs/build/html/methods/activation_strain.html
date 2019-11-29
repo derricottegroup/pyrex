@@ -1,0 +1,268 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>Activation Strain Model &mdash; pyrex 0.0.1 documentation</title>
+  
+
+  
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../_static/jquery.js"></script>
+        <script type="text/javascript" src="../_static/underscore.js"></script>
+        <script type="text/javascript" src="../_static/doctools.js"></script>
+        <script type="text/javascript" src="../_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    
+    <script type="text/javascript" src="../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../_static/css/theme.css" type="text/css" />
+  <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Reaction Force Analysis" href="reaction_force.html" />
+    <link rel="prev" title="Getting Started" href="../getting_started.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../index.html">
+          
+
+          
+            
+            <img src="../_static/pyrex_logo_2019_new.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Activation Strain Model</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#general-theory">General Theory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="reaction_force.html">Reaction Force Analysis</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../input_generator.html">Input Generator</a></li>
+</ul>
+
+            
+          
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">pyrex</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../index.html">Docs</a> &raquo;</li>
+        
+      <li>Activation Strain Model</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+            
+            <a href="../_sources/methods/activation_strain.rst.txt" rel="nofollow"> View page source</a>
+          
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <div class="section" id="activation-strain-model">
+<h1>Activation Strain Model<a class="headerlink" href="#activation-strain-model" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="general-theory">
+<h2>General Theory<a class="headerlink" href="#general-theory" title="Permalink to this headline">¶</a></h2>
+<p>The activation strain model (ASM), also known as the “distortion interaction model” is a rather simple energy decomposition scheme that lays the foundation for many of the techniques implemented in pyrex. Considering a reaction coordinate <span class="math notranslate nohighlight">\(\xi\)</span>, the potential energy surface <span class="math notranslate nohighlight">\(\Delta E(\xi)\)</span> can be decomposed into two contributions along the coordinate: (1) the strain energy <span class="math notranslate nohighlight">\(\Delta E_{\rm strain}(\xi)\)</span>, which is associated with the structural deformation of the reactants as the reaction proceeds and (2) the interaction energy <span class="math notranslate nohighlight">\(\Delta E_{\rm int}(\xi)\)</span>, which is associated with the electronic interactions between the electrons of the reactants as the reaction proceeds. This yields the following decomposition:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">math</span><span class="p">::</span> \<span class="n">Delta</span> <span class="n">E</span><span class="p">(</span>\<span class="n">xi</span><span class="p">)</span> <span class="o">=</span> \<span class="n">Delta</span> <span class="n">E_</span><span class="p">{</span>\<span class="n">rm</span> <span class="n">strain</span><span class="p">}(</span>\<span class="n">xi</span><span class="p">)</span> <span class="o">+</span> \<span class="n">Delta</span> <span class="n">E_</span><span class="p">{</span>\<span class="n">rm</span> <span class="nb">int</span><span class="p">}(</span>\<span class="n">xi</span><span class="p">),</span>
+</pre></div>
+</div>
+<p>in general the strain energy is a positive quantity, and thus destabilizing with respect to the separated reactants. Analysis of the interplay between these two energy quantities are directly related to the observed barrier height of a given reaction. This type of analysis has been used to effectively analyze barrier heights in numerous reaction mechanisms.</p>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>For an ASM calculation you will have to specify fragments for your system, the following example on the reaction between carbon dioxide and the hydrogen molecule specifies each reactant as a special fragment. The “do_polarization” keyword is added in order to perform the ASM calculations:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;molecular_charge&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;molecular_multiplicity&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;fragments&quot;</span> <span class="p">:</span> <span class="p">[[</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">],[</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">]],</span>
+    <span class="s2">&quot;fragment_charges&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">0</span><span class="p">],</span>
+    <span class="s2">&quot;fragment_multiplicities&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">1</span><span class="p">]</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;mp2&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;basis&quot;</span><span class="p">:</span> <span class="s2">&quot;def2-svp&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;pyrex&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;nthreads&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">&quot;irc_filename&quot;</span><span class="p">:</span> <span class="s2">&quot;full_irc.xyz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;do_energy&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;do_conceptualdft&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;do_polarization&quot;</span> <span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;irc_stepsize&quot;</span><span class="p">:</span> <span class="mf">0.05</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>When running this calculation, the first thing pyrex will do is perform a geometry optimization on each of your specified fragments in isolation. Then is will calculate the energy of the supermolecule along the coordinate, then the energies of each isolated fragment (with ghost functions accounting for the other fragment to account for basis set superposition errors). After the calculation finishes, pyrex will produce a CSV file called “activation_strain.csv” that contains the interaction energy, strain energy, and total relative energy. We can easily plot the results of our calculation by using the following REXplot input:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;rexplot&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;file&quot;</span> <span class="p">:</span> <span class="s2">&quot;activation_strain.csv&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;properties&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Energy&quot;</span><span class="p">,</span> <span class="s2">&quot;Interaction Energy&quot;</span><span class="p">,</span> <span class="s2">&quot;Strain Energy&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;coordinate&quot;</span> <span class="p">:</span> <span class="s2">&quot;Coordinate&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;x_label&quot;</span> <span class="p">:</span> <span class="s2">&quot;Reaction Coordinate ($</span><span class="se">\\</span><span class="s2">xi$)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;y_label&quot;</span> <span class="p">:</span> <span class="s2">&quot;$</span><span class="se">\\</span><span class="s2">Delta E$ (kcal/mol)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;scale&quot;</span> <span class="p">:</span> <span class="mf">627.509</span><span class="p">,</span>
+    <span class="s2">&quot;fig_dims&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+    <span class="s2">&quot;plot_file&quot;</span> <span class="p">:</span> <span class="s2">&quot;activation_strain.png&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>The “scale” option is optional, and has only been added to convert the energies from Hartrees to kcal/mol. This will produce a plot that contains all of the relevant energies for an activation strain analysis. Let’s investigate the plot:</p>
+<a class="reference internal image-reference" href="../_images/activation_strain.png"><img alt="alternate text" class="align-center" src="../_images/activation_strain.png" style="width: 500px;" /></a>
+<p>As you can see from inspecting the plot, the destabalizing interaction energy is the primary contributor to the activation energy barrier with little contribution from the strain energy. It isn’t until you have significant elongation of the bond in hydrogen that you see a significant strain contribution. This simple example highlights the utility of activation strain analysis and how to run these calculations in pyrex.</p>
+</div>
+</div>
+
+
+           </div>
+           
+          </div>
+          <footer>
+  
+    <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
+      
+        <a href="reaction_force.html" class="btn btn-neutral float-right" title="Reaction Force Analysis" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
+      
+      
+        <a href="../getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+    </div>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2019, Derricotte Research Group
+
+    </p>
+  </div>
+  Built with <a href="http://sphinx-doc.org/">Sphinx</a> using a <a href="https://github.com/rtfd/sphinx_rtd_theme">theme</a> provided by <a href="https://readthedocs.org">Read the Docs</a>. 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
