@@ -1,4 +1,4 @@
-<img align="center" src="logos/pyrex_logo_2019_banner.png" alt="Pyrex logo" width=1000>
+![pyrex](logos/pyrex_logo_2019_banner.png)
 
 [![Documentation Status](https://readthedocs.org/projects/pyrex/badge/?version=latest)](http://pyrex.readthedocs.io/en/latest/?badge=latest)
 
