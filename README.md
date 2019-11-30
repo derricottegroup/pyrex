@@ -2,6 +2,9 @@
 
 [![Documentation Status](https://readthedocs.org/projects/pyrex/badge/?version=latest)](http://pyrex.readthedocs.io/en/latest/?badge=latest)
 
+[![License](https://github.com/WDerricotte/pyrex/blob/master/LICENSE)](https://img.shields.io/github/license/WDerricotte/pyrex)
+
+
 #### Code Authors: Derricotte Research Group
 
 #### Manual (http://pyrex.readthedocs.io/)
