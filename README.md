@@ -1,7 +1,6 @@
 ![pyrex](logos/pyrex_logo_2019_banner.png)
 
 [![Documentation Status](https://readthedocs.org/projects/pyrex/badge/?version=latest)](http://pyrex.readthedocs.io/en/latest/?badge=latest)
-
 [![License](https://img.shields.io/github/license/WDerricotte/pyrex)](https://github.com/WDerricotte/pyrex/blob/master/LICENSE)
 
 
