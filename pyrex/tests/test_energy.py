@@ -1,9 +1,14 @@
 import pytest
+import os
 import input_reader
 import json
 import numpy as np
 from scf_class import *
 
+
+irc_file = os.path.abspath("./ref/co2_h2/full_irc.xyz")
+ref_geoms_file = os.path.abspath("./ref/ref_data_geom.json")
+ref_energy_file = os.path.abspath("./ref/ref_data_energy.json")
 
 output_filename = "pyrex_output.dat"
 # Specifying Input Data for Molecule
@@ -24,7 +29,7 @@ inp_data = {
                       "basis": "sto-3g"
                       },
                   "pyrex" : {
-                      "irc_filename" : "./ref/co2_h2/full_irc.xyz",
+                      "irc_filename" : irc_file,
                       "irc_stepsize" : 0.2
                    }
              }
@@ -33,10 +38,10 @@ inp_data = {
 json_input = json.dumps(inp_data)
 params = input_reader.Params(json_input)
 
-inp_ref_geom=open("./ref/ref_data_geom.json").read()
+inp_ref_geom=open(ref_geoms_file).read()
 ref_data_geom = json.loads(inp_ref_geom)
 
-inp_ref_energy=open("./ref/ref_data_energy.json").read()
+inp_ref_energy=open(ref_energy_file).read()
 ref_data_energy = json.loads(inp_ref_energy)
 
 
