@@ -1,5 +1,6 @@
 ![pyrex](logos/pyrex_logo_2019_banner.png)
 
+[![Travis-CI](https://travis-ci.org/WDerricotte/pyrex.svg?branch=master)](https://travis-ci.org/WDerricotte/pyrex)
 [![Documentation Status](https://readthedocs.org/projects/pyrex/badge/?version=latest)](http://pyrex.readthedocs.io/en/latest/?badge=latest)
 [![License](https://img.shields.io/github/license/WDerricotte/pyrex)](https://github.com/WDerricotte/pyrex/blob/master/LICENSE)
 [![Commits](https://img.shields.io/github/commit-activity/m/WDerricotte/pyrex)](https://github.com/WDerricotte/pyrex/commits/master)
