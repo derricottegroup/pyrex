@@ -66,12 +66,12 @@ def test_pyscf_energies():
     diff = abs(np.asarray(params.energies) - np.asarray(ref_energies))
     assert max(diff) <= 1.0e-6
 
-def test_orca_energies():
-    params.geoms = ref_data_geom["ref_geoms"]["total_geoms_orca"]
-    params.qm_program = "orca"
-    params.method = "rhf"
-    ref_energies = ref_data_energy["ref_energy"]["orca_total_energies"]
-    scf_instance = scf_class(params, output_filename)
-    params.energies, params.frontier_orb_energies = scf_instance.orca_scf(params.geoms)
-    diff = abs(np.asarray(params.energies) - np.asarray(ref_energies))
-    assert max(diff) <= 1.0e-6
+#def test_orca_energies():
+#    params.geoms = ref_data_geom["ref_geoms"]["total_geoms_orca"]
+#    params.qm_program = "orca"
+#    params.method = "rhf"
+#    ref_energies = ref_data_energy["ref_energy"]["orca_total_energies"]
+#    scf_instance = scf_class(params, output_filename)
+#    params.energies, params.frontier_orb_energies = scf_instance.orca_scf(params.geoms)
+#    diff = abs(np.asarray(params.energies) - np.asarray(ref_energies))
+#    assert max(diff) <= 1.0e-6
