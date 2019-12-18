@@ -346,6 +346,7 @@ def total_reaction_work_integrals(params):
 
 def sapt_geometry_build(params):
     if(params.do_sapt==True or params.do_supermolecular==True):
+        geomparser = Geomparser(params.natoms, params.molecular_charge, params.molecular_multiplicity, params.geometries, params.coordinates)
         params.sapt_geometries = geomparser.sapt_geombuilder(params.charge_A, params.mult_A, params.charge_B, params.mult_B, params.frag_A, params.frag_B)
     #p_sapt_geometries = geomparser.sapt_geombuilder(p_charge_A, p_mult_A, p_charge_B, p_mult_B, product_frag_A, product_frag_B)
 
@@ -404,8 +405,8 @@ def sapt_energy_calc(params):
         coordinates = params.coordinates
         #sapt_method = params.sapt_method
         basis = params.basis
-        del_E = [(energy - (e_A + e_B)) for energy in energies]
-        sapt_ = sapt(sapt_geometries[:index_ts+1], params, params.method, basis, output_filename)
+        del_E = [(energy - (params.e_A + params.e_B)) for energy in params.energies]
+        sapt_ = sapt(params.sapt_geometries[:index_ts+1], params, params.method, basis, output_filename)
         int_  = sapt_.psi4_super()
         strain_e = []
         for i in range(len(energies[:index_ts+1])):
@@ -457,9 +458,10 @@ def sapt_energy_calc(params):
         coordinates = params.coordinates
         sapt_method = params.sapt_method
         basis = params.basis
-        del_E = [(energy - (e_A + e_B)) for energy in energies]
-        print(del_E)
-        print(energies)
+        #index_min = params.index_min
+        #index_max = params.index_max
+        #index_ts = params.index_ts 
+        del_E = [(energy - (params.e_A + params.e_B)) for energy in params.energies]
         output = open(output_filename, "a")
         output.write('\n\n--Symmetry-Adapted Perturbation Theory Energy Decomposition--\n')
         output.close()
@@ -471,10 +473,10 @@ def sapt_energy_calc(params):
             ind_ = sapt_data['E_ind'].values
             disp_ = sapt_data['E_disp'].values
         else:
-            sapt_ = sapt(sapt_geometries[:index_ts+1], params, sapt_method, basis, output_filename)
+            sapt_ = sapt(params.sapt_geometries[:index_ts+1], params, sapt_method, basis, output_filename)
             int_, elst_, exch_, ind_, disp_  = sapt_.psi4_sapt()
         strain_e = []
-        for i in range(len(energies[:index_ts+1])):
+        for i in range(len(params.energies[:index_ts+1])):
             strain_e.append((del_E[i] - int_[i]))
         reaction_force_strain_ = -1.0*np.gradient(strain_e,irc_step_size)
         reaction_force_int_ = -1.0*np.gradient(int_,irc_step_size)

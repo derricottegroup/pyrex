@@ -27,6 +27,7 @@ quotes =  [
     "Love yourself and your expression, you can’t go wrong. --KRS One",
     "Me and my people break bread, sit and smoke. The conversation rich, but that depend on what you consider broke -- Talib Kweli",
     "Everyday is a new opportunity to reach that goal. -- Rick Ross",
+    "I rock shows by myself. Aint no back up. Aint no help. -- Megan Thee Stallion",
     "Be more concerned with your character than your reputation. Because your character is what you really are. While your reputation is what others merely think you are. -- Jay Z",
     "Some seek fame cause they need validation, Some say hating is confused admiration. -- Nas",
     "They say a midget standing on a giant’s shoulders can see much further than the giant. So I got the whole rap world on my shoulders, they trying to see further than I am -- Jay Z",

@@ -7,7 +7,7 @@ def header(outfile,json_data):
 -----------------------------------------------------------------------
      pyREX: Python Reaction Energy eXtension for Quantum Chemistry
 
-                         pyREX beta 0.2
+                        pyREX version 1.0
 
                       Wallace D. Derricotte
                     Derricotte Research Group
