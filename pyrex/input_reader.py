@@ -14,6 +14,7 @@ class Params(object):
         self.do_energy = False
         self.do_frag = False
         self.do_sapt = False
+        self.do_fsapt = False
         self.do_atomic = False
         self.eps = 80.4 # Water by default
         self.do_polarization = False
@@ -256,6 +257,7 @@ class Params(object):
                 self.constrained_values = tmp_array
         #TODO Finish adding documentation. Start adding tests/samples/examples
         if 'fsapt' in input_params:
+            self.do_fsapt = True
             self.monomer_A_frags = input_params['fsapt']['monomer_A_frags']
             self.monomer_B_frags = input_params['fsapt']['monomer_B_frags']
             self.monomer_A_labels = input_params['fsapt']['monomer_A_labels']
