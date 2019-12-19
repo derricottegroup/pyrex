@@ -61,6 +61,7 @@ def read_options():
     parser.add_argument('--rexplot', action="store_true", help="Use PYREX plotting utility")
     parser.add_argument('--join_irc', action="store_true", help='Combine forward and backward IRCs. (string, default = false)')
     parser.add_argument('--input_gen', help="Use Built in PYREX input generator", default=None)
+    parser.add_argument('--fsapt_analyze', action="store_true", help="Utility to perform reaction F-SAPT decomposition of reaction force")
 
     #output_filename = args.output 
 #def pyrex(output_filename):
@@ -117,7 +118,7 @@ def geometry_builder(params):
 ##########################
 # Fragment Optimizations #
 ##########################
-    if(params.do_frag==True):
+    if(params.do_frag==True and params.fsapt_analyze==False):
         scf_instance = scf_class(params, output_filename)
         iso_frag_A = geomparser.iso_frag(params.charge_A, params.mult_A, params.frag_A)
         iso_frag_B = geomparser.iso_frag(params.charge_B, params.mult_B, params.frag_B)
@@ -670,6 +671,10 @@ def sapt_energy_calc(params):
        # for i in range(len(coordinates)):
        #     sapt_e_csv_all.write("%f,%f,%f,%f,%f,%f,%f\n" %(coordinates[i], strain_e_all[i], int_all[i], elst_all[i], exch_all[i], ind_all[i], disp_all[i]))
        # sapt_e_csv_all.close()
+
+def fsapt_analysis(params):
+    sapt_ = sapt(params.sapt_geometries, params, params.method, params.basis, output_filename)
+    sapt_.fsapt_post_analysis()
     
 ###############################
 # Reaction Fragility Spectrum #
@@ -716,6 +721,12 @@ def main():
     elif(args["rexplot"]==True):
         json_input = args["input"]
         rexplot_utility(json_input)
+    elif(args["fsapt_analyze"]==True):
+        params = read_params(args)
+        params.fsapt_analyze = True
+        geometry_builder(params)
+        sapt_geometry_build(params)
+        fsapt_analysis(params)
     else:
         params = read_params(args)
         calculate_irc(params)

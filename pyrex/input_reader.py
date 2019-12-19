@@ -15,6 +15,7 @@ class Params(object):
         self.do_frag = False
         self.do_sapt = False
         self.do_fsapt = False
+        self.fsapt_analyze = False
         self.do_atomic = False
         self.eps = 80.4 # Water by default
         self.do_polarization = False
