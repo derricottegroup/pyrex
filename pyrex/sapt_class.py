@@ -41,6 +41,10 @@ class sapt(object):
         output.write('\n{:>15} {:>15} {:>15} {:>15} {:>15} {:>15}\n'.format('IRC Point', 'E_int(kcal)', 'E_elst(kcal)','E_exch(kcal)', 'E_ind(kcal)', 'E_disp(kcal)'))
         output.write('-------------------------------------------------------------------------------------------------\n')
         output.close()
+        scale_sapt = False
+        # See if the user is requesting a scaled SAPT0 calculation
+        if(self.keywords['ssapt0_scale'] or self.keywords['SSAPT0_SCALE']):
+            scale_sapt = True
         for geometry in self.geometries:
             output = open(self.outfile, "a")
             psi4.core.set_output_file("psi4_output/irc_%d_sapt.out" %count, False)
@@ -52,7 +56,13 @@ class sapt(object):
                     os.mkdir('fsapt_output')
                 except FileExistsError:
                     pass
-            self.keywords['FISAPT_FSAPT_FILEPATH'] = 'fsapt_output/fsapt%d' %count
+                try:
+                    os.mkdir('s-fsapt_output')
+                except FileExistsError:
+                    pass
+                self.keywords['FISAPT_FSAPT_FILEPATH'] = 'fsapt_output/fsapt%d' %count
+                if(scale_sapt):
+                    self.keywords['FISAPT_FSSAPT_FILEPATH'] = 's-fsapt_output/fsapt%d' %count
             psi4.set_options(self.keywords)
             #print("pyREX:SAPT Calculation on IRC Point %d" %(count))
             e_int = psi4.energy(self.method)
@@ -60,24 +70,42 @@ class sapt(object):
             #      for fragment definitions. Something in the sapt block.
             if(self.do_fsapt):
                 fsaptA_outfile = open('fsapt_output/fsapt%d/fA.dat' %count, 'w+')
+                if(scale_sapt):
+                    s_fsaptA_outfile = open('s-fsapt_output/fsapt%d/fA.dat' %count, 'w+')
                 for i in range(len(self.monomer_A_labels)):
                     fsaptA_outfile.write("%s" %self.monomer_A_labels[i])
+                    if(scale_sapt):
+                        s_fsaptA_outfile.write("%s" %self.monomer_A_labels[i])
                     for j in range(len(self.monomer_A_frags[i])):
                         if(j==len(self.monomer_A_frags[i])-1):
                             fsaptA_outfile.write(" %d \n" %(all_atoms.index(self.monomer_A_frags[i][j])+1))
+                            if(scale_sapt):
+                                s_fsaptA_outfile.write(" %d \n" %(all_atoms.index(self.monomer_A_frags[i][j])+1))
                         else:
                             fsaptA_outfile.write(" %d " %(all_atoms.index(self.monomer_A_frags[i][j])+1))
+                            if(scale_sapt):
+                                s_fsaptA_outfile.write(" %d " %(all_atoms.index(self.monomer_A_frags[i][j])+1))
                 fsaptA_outfile.close()
+                s_fsaptA_outfile.close()
                 fsaptB_outfile = open('fsapt_output/fsapt%d/fB.dat' %count, 'w+')
+                if(scale_sapt):
+                    s_fsaptB_outfile = open('s-fsapt_output/fsapt%d/fB.dat' %count, 'w+')
                 for i in range(len(self.monomer_B_labels)):
                     fsaptB_outfile.write("%s" %self.monomer_B_labels[i])
+                    if(scale_sapt):
+                        s_fsaptB_outfile.write("%s" %self.monomer_B_labels[i])
                     for j in range(len(self.monomer_B_frags[i])):
                         if(j==len(self.monomer_B_frags[i])-1):
                             fsaptB_outfile.write(" %d \n" %(all_atoms.index(self.monomer_B_frags[i][j])+1))
+                            if(scale_sapt):
+                                s_fsaptB_outfile.write(" %d \n" %(all_atoms.index(self.monomer_B_frags[i][j])+1))
                         else:
                             fsaptB_outfile.write(" %d " %(all_atoms.index(self.monomer_B_frags[i][j])+1))
+                            if(scale_sapt):
+                                s_fsaptB_outfile.write(" %d " %(all_atoms.index(self.monomer_B_frags[i][j])+1))
                 fsaptB_outfile.close()
-            e_int =  psi4.core.variable("SAPT TOTAL ENERGY") 
+                s_fsaptB_outfile.close()
+            e_int =  psi4.core.variable("SAPT TOTAL ENERGY")
             e_elst = psi4.core.variable("SAPT ELST ENERGY")
             e_exch = psi4.core.variable("SAPT EXCH ENERGY")
             e_ind  = psi4.core.variable("SAPT IND ENERGY")
