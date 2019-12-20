@@ -76,7 +76,7 @@ def compute_hessian(params, geom):
     psi4.core.set_output_file("hessian.out", False)
     mol = psi4.geometry(geom)
     psi4.set_options(params.keywords)
-    H = psi4.hessian(params.method)
+    H = psi4.hessian("%s/%s" %(params.method,params.basis))
     Hess = np.array(H)
     return Hess
 

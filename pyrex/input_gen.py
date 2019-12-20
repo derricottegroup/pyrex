@@ -41,6 +41,49 @@ def build_standard():
     json_input.close()
     return input_file
 
+# Building a standard pyREX input file
+def build_frag():
+    irc_filename = input("What is the name of your coordinate file?[full_irc.xyz] ") or "full_irc.xyz"
+    frag_A = [int(i) for i in input("Define the atoms that compose the first fragment:").split()]
+    frag_B = [int(i) for i in input("Define the atoms that compose the second fragment:").split()]
+    charge_A = int(input("What is the charge of the first fragment?")) 
+    charge_B = int(input("What is the charge of the second fragment?"))
+    mult_A = int(input("What is the multiplicity of the first fragment?"))
+    mult_B = int(input("What is the multiplicity of the second fragment?"))
+
+    input_file = {}
+    input_file["molecule"] = {}
+    input_file["model"] = {}
+    input_file["pyrex"] = {}
+    irc_file = open(irc_filename, "r")
+    lines = irc_file.readlines()
+    natoms = int(lines[0])
+    symbols = []
+    for i in range(natoms):
+        line = lines[2+i].split()
+        symbols.append(str(line[0]))
+    # Build Molecule Block
+    input_file["molecule"]["symbols"] = symbols
+    input_file["molecule"]["molecular_charge"] = "0"
+    input_file["molecule"]["molecular_multiplicity"] = 1
+    input_file["molecule"]["fragments"] = [frag_A, frag_B]
+    input_file["molecule"]["fragment_charges"] = [charge_A, charge_B]
+    input_file["molecule"]["fragment_multiplicities"] = [mult_A, mult_B]
+    # Build Model Block
+    input_file["model"]["method"] = "scf"
+    input_file["model"]["basis"] = "sto-3g"
+    # Build Pyrex Block
+    input_file["pyrex"]["nthreads"] = 1
+    input_file["pyrex"]["irc_filename"] = irc_filename
+    input_file["pyrex"]["do_energy"] = True
+    input_file["pyrex"]["do_conceptualdft"] = True
+    input_file["pyrex"]["do_polarization"] = True
+    input_file["pyrex"]["irc_stepsize"] = 0.2
+    json_input = open("input.json", "w+")
+    json.dump(input_file, json_input, indent=indent)
+    json_input.close()
+    return input_file
+
 def join_irc():
     irc_forward_file = input("What is the name of your forward irc file?[irc_forward.xyz]") or "irc_forward.xyz"
     irc_backward_file = input("What is the name of your backward irc file?[irc_backward.xyz]") or "irc_backward.xyz"
