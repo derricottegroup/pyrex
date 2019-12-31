@@ -4,7 +4,7 @@ Activation Strain Model
 General Theory
 --------------
 
-The activation strain model (ASM), also known as the "distortion interaction model" is a rather simple energy decomposition scheme that lays the foundation for many of the techniques implemented in pyrex. Considering a reaction coordinate :math:`\xi`, the potential energy surface :math:`\Delta E(\xi)` can be decomposed into two contributions along the coordinate: (1) the strain energy :math:`\Delta E_{\rm strain}(\xi)`, which is associated with the structural deformation of the reactants as the reaction proceeds and (2) the interaction energy :math:`\Delta E_{\rm int}(\xi)`, which is associated with the electronic interactions between the electrons of the reactants as the reaction proceeds. This yields the following decomposition::
+The activation strain model (ASM), also known as the "distortion interaction model" is a rather simple energy decomposition scheme that lays the foundation for many of the techniques implemented in pyrex. Considering a reaction coordinate :math:`\xi`, the potential energy surface :math:`\Delta E(\xi)` can be decomposed into two contributions along the coordinate: (1) the strain energy :math:`\Delta E_{\rm strain}(\xi)`, which is associated with the structural deformation of the reactants as the reaction proceeds and (2) the interaction energy :math:`\Delta E_{\rm int}(\xi)`, which is associated with the electronic interactions between the electrons of the reactants as the reaction proceeds. This yields the following decomposition:
  
     .. math:: \Delta E(\xi) = \Delta E_{\rm strain}(\xi) + \Delta E_{\rm int}(\xi),
 

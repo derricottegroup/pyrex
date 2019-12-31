@@ -37,7 +37,7 @@
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="Input Generator" href="../input_generator.html" />
-    <link rel="prev" title="Getting Started" href="../getting_started.html" /> 
+    <link rel="prev" title="Activation Strain Model" href="activation_strain.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -87,6 +87,7 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="activation_strain.html">Activation Strain Model</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Reaction Force Analysis</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#general-theory">General Theory</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
@@ -175,7 +176,43 @@
 </div>
 <div class="section" id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
-<p>PUT EXAMPLE HERE</p>
+<p>Reaction force calculations are automatically done after the energy is either calculated or read in from a file. The example below is an input file for the reaction of carbon dioxide and the hydrogen molecule. The “do_energy” keyword is added to the “pyrex” block so this input will calculate the energy at each structure and calculate the reaction force:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;molecular_charge&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;molecular_multiplicity&quot;</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;scf&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;basis&quot;</span><span class="p">:</span> <span class="s2">&quot;sto-3g&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;pyrex&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;nthreads&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">&quot;irc_filename&quot;</span><span class="p">:</span> <span class="s2">&quot;full_irc.xyz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;do_energy&quot;</span> <span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;irc_stepsize&quot;</span><span class="p">:</span> <span class="mf">0.2</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This calculation will produce a “force.csv” file that will contain the reaction force along the reaction coordinate. These results can be plotted using the following REXplot input:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;rexplot&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;file&quot;</span> <span class="p">:</span> <span class="s2">&quot;force.csv&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;properties&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Force&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;coordinate&quot;</span> <span class="p">:</span> <span class="s2">&quot;Coordinate&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;x_label&quot;</span> <span class="p">:</span> <span class="s2">&quot;Reaction Coordinate ($</span><span class="se">\\</span><span class="s2">xi$)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;y_label&quot;</span> <span class="p">:</span> <span class="s2">&quot;$F$ (kcal/mol)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;scale&quot;</span> <span class="p">:</span> <span class="mf">627.509</span><span class="p">,</span>
+    <span class="s2">&quot;fig_dims&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+    <span class="s2">&quot;plot_file&quot;</span> <span class="p">:</span> <span class="s2">&quot;force.png&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Running this input will generate the following plot of the reaction force</p>
+<a class="reference internal image-reference" href="../_images/force.png"><img alt="alternate text" class="align-center" src="../_images/force.png" style="width: 500px;" /></a>
 </div>
 </div>
 
@@ -190,7 +227,7 @@
         <a href="../input_generator.html" class="btn btn-neutral float-right" title="Input Generator" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
       
-        <a href="../getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+        <a href="activation_strain.html" class="btn btn-neutral float-left" title="Activation Strain Model" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

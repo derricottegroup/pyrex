@@ -18,5 +18,44 @@ this is essentially the area under the curve of the force profile indicating the
 Example
 -------
 
-PUT EXAMPLE HERE
- 
+Reaction force calculations are automatically done after the energy is either calculated or read in from a file. The example below is an input file for the reaction of carbon dioxide and the hydrogen molecule. The "do_energy" keyword is added to the "pyrex" block so this input will calculate the energy at each structure and calculate the reaction force::
+
+    {
+      "molecule": {
+        "symbols": ["C","O","O","H","H"],
+        "molecular_charge": "0",
+        "molecular_multiplicity": 1
+      },
+      "model": {
+        "method": "scf",
+        "basis": "sto-3g"
+      },
+      "pyrex": {
+        "nthreads": 4,
+        "irc_filename": "full_irc.xyz",
+        "do_energy" : true,
+        "irc_stepsize": 0.2
+      }
+    }
+
+This calculation will produce a "force.csv" file that will contain the reaction force along the reaction coordinate. These results can be plotted using the following REXplot input::
+
+    {
+      "rexplot" : {
+        "file" : "force.csv",
+        "properties" : ["Force"],
+        "coordinate" : "Coordinate",
+        "x_label" : "Reaction Coordinate ($\\xi$)",
+        "y_label" : "$F$ (kcal/mol)",
+        "scale" : 627.509,
+        "fig_dims" : [9.0, 5.0],
+        "plot_file" : "force.png"
+      }
+    } 
+
+Running this input will generate the following plot of the reaction force 
+
+.. image:: figures/force.png
+   :width: 500 px
+   :alt: alternate text
+   :align: center
