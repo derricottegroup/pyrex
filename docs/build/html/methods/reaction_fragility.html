@@ -164,9 +164,15 @@
 <div class="section" id="general-theory">
 <h2>General Theory<a class="headerlink" href="#general-theory" title="Permalink to this headline">¶</a></h2>
 <p>While atomic contributions to the reaction force and reaction force constant can be beneficial in tracking the breaking/formation of chemical bonds in simple reaction systems, it is limited in its application because the changes in both are often dominated by the change in position of the atom rather than its actual participation in a bond. In other words, for more complex cases it is difficult to discern the difference between the elongation/shortening of a bond and true bond breaking and formation for different types of atoms. The reaction fragility spectrum is better able to discern this difference by making use of the coupled normal modes of the molecular Hessian to obtain a quantitative measure of the bonding status of individual atoms in a molecule. If we consider a molecular system composed of <span class="math notranslate nohighlight">\(N\)</span> atoms, the Hessian matrix element for the interaction between atoms <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span> is defined by the following mixed partial derivative:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">..</span> <span class="n">math</span><span class="p">::</span> <span class="n">k_</span><span class="p">{</span><span class="n">ij</span><span class="p">}</span> <span class="o">=</span> \<span class="n">left</span><span class="p">(</span>\<span class="n">frac</span><span class="p">{</span>\<span class="n">partial</span><span class="o">^</span><span class="mi">2</span> <span class="n">E</span><span class="p">}{</span>\<span class="n">partial</span> <span class="n">R_i</span> \<span class="n">partial</span> <span class="n">R_j</span><span class="p">}</span>\<span class="n">right</span><span class="p">),</span>
-</pre></div>
-</div>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[k_{ij} = \left(\frac{\partial^2 E}{\partial R_i \partial R_j}\right),\]</div>
+</div></blockquote>
+<p>where <span class="math notranslate nohighlight">\(E\)</span> is the total molecular energy while <span class="math notranslate nohighlight">\(R_i\)</span> and <span class="math notranslate nohighlight">\(R_j\)</span> represent the cartesian position (<span class="math notranslate nohighlight">\(R_x\)</span>, <span class="math notranslate nohighlight">\(R_y\)</span>, <span class="math notranslate nohighlight">\(R_z\)</span>) of atoms <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span> respectively. Given the three cartesian coordinates, this would compose a <span class="math notranslate nohighlight">\(3N \ x \ 3N\)</span> Hessian matrix (<span class="math notranslate nohighlight">\(\mathbf{K}\)</span>). Every <span class="math notranslate nohighlight">\(3 \ x \ 3\)</span> square matrix block along the block diagonal of the Hessian matrix is related to the individual atoms in the molecule. The trace of the Hessian is invariant to changes in coordinate and responds to changes in bonding structure of the molecule. The trace of each individual square block is that atoms contribution to the bonding pattern, this naturally lends itself to an atomic decomposition:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[{\rm Tr}\mathbf{K} = \sum^N_A {\rm Tr} \mathbf{k}^A\]</div>
+</div></blockquote>
 </div>
 </div>
 
