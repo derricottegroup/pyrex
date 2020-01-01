@@ -21,6 +21,7 @@ pyREX implements a series of reaction energy methods based on the total reaction
    :maxdepth: 2
    :caption: Contents:
 
+   pyrex_overview
    getting_started
    methods/activation_strain
    methods/reaction_force
