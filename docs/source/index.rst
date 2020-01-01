@@ -9,6 +9,7 @@ pyREX(Python Reaction Energy eXtension), is a free open-source implementation of
 
    pyrex_overview
    getting_started
+   building_a_coordinate
    methods/activation_strain
    methods/reaction_force
    methods/reaction_fragility

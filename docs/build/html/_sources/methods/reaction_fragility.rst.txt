@@ -71,3 +71,8 @@ This will produce the following plot of both atomic fragility spectra:
    :width: 500 px
    :alt: alternate text
    :align: center
+
+As you can see the fragility spectrum for O1 modulates much more than that of O2, indicating the initial weakening of the C-O bond to form the transition state and the final formation of the O-H bond in the product.
+
+.. caution::
+   Since the reaction fragility spectrum involves explicit calculation of the full Hessian Matrix at every point along your coordinate these calculations can be rather expensive even for a modest sized system. Have realistic expectations when it comes to computational cost for these calculations.

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>Input Generator &mdash; pyrex 0.0.1 documentation</title>
+  <title>Building a Coordinate &mdash; pyrex 0.0.1 documentation</title>
   
 
   
@@ -36,7 +36,8 @@
   <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="Reaction Fragility Spectrum" href="methods/reaction_fragility.html" /> 
+    <link rel="next" title="Activation Strain Model" href="methods/activation_strain.html" />
+    <link rel="prev" title="Getting Started" href="getting_started.html" /> 
 </head>
 
 <body class="wy-body-for-nav">
@@ -87,16 +88,15 @@
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="pyrex_overview.html">PYREX Motivation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="getting_started.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="building_a_coordinate.html">Building a Coordinate</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Building a Coordinate</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#intrinsic-reaction-coordinate">Intrinsic Reaction Coordinate</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#surface-scans">Surface Scans</a></li>
+</ul>
+</li>
 <li class="toctree-l1"><a class="reference internal" href="methods/activation_strain.html">Activation Strain Model</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methods/reaction_force.html">Reaction Force Analysis</a></li>
 <li class="toctree-l1"><a class="reference internal" href="methods/reaction_fragility.html">Reaction Fragility Spectrum</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">Input Generator</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#creating-an-irc-input">Creating an IRC Input</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#joining-irc-files">Joining IRC Files</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#generating-pyrex-input-files">Generating Pyrex Input Files</a></li>
-</ul>
-</li>
+<li class="toctree-l1"><a class="reference internal" href="input_generator.html">Input Generator</a></li>
 </ul>
 
             
@@ -142,13 +142,13 @@
     
       <li><a href="index.html">Docs</a> &raquo;</li>
         
-      <li>Input Generator</li>
+      <li>Building a Coordinate</li>
     
     
       <li class="wy-breadcrumbs-aside">
         
             
-            <a href="_sources/input_generator.rst.txt" rel="nofollow"> View page source</a>
+            <a href="_sources/building_a_coordinate.rst.txt" rel="nofollow"> View page source</a>
           
         
       </li>
@@ -161,16 +161,12 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
             
-  <div class="section" id="input-generator">
-<h1>Input Generator<a class="headerlink" href="#input-generator" title="Permalink to this headline">¶</a></h1>
-<p>In order to get started using pyREX you must have a .xyz coordinate file that contains the geometries for the reaction/process you are investigating and a .json input file that contains the relevant options for the calculation you would like to do in pyREX. There is a built-in input file generator that can help you with all the steps of getting your input file set up.</p>
-<div class="section" id="creating-an-irc-input">
-<h2>Creating an IRC Input<a class="headerlink" href="#creating-an-irc-input" title="Permalink to this headline">¶</a></h2>
-<p>Pyrex contains an IRC algorithm that uses gradients from QM software in order to calculate a minimum energy path for the reaction. If you have an optimized transition state structure you can generate an input file to run an IRC calculation using the following command line utility:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyrex</span> <span class="o">--</span><span class="n">input_gen</span><span class="o">=</span><span class="n">irc</span>
-</pre></div>
-</div>
-<p>pyrex will then ask you the name of your XYZ coordinate file containing your transition state structure. You can edit the input file from there to run the IRC calculation at your preferred level of theory. For example the following input file was created from an xyz file containing the transition state for the reaction of carbon dioxide and the hydrogen molecule:</p>
+  <div class="section" id="building-a-coordinate">
+<h1>Building a Coordinate<a class="headerlink" href="#building-a-coordinate" title="Permalink to this headline">¶</a></h1>
+<p>The first step to doing a calculation in PYREX is to obtain some sort of coordinate to do your calculation on. This is typically either an intrinsic reaction coordinate (IRC) or a surface scan of some kind. PYREX is general enough to take any IRC or surface scan you may have calculated in your favorite quantum chemistry software. So if you already have a coordinate and are ready to calculate properties, skip ahead to see how. However, if you need some help building a coordinate PYREX has a few tools that may be useful to get started.</p>
+<div class="section" id="intrinsic-reaction-coordinate">
+<h2>Intrinsic Reaction Coordinate<a class="headerlink" href="#intrinsic-reaction-coordinate" title="Permalink to this headline">¶</a></h2>
+<p>PYREX uses the mass-weighted cartesian coordinate definition of the IRC originally proposed by Fukui, the algorithm implemented is essentially a series of steepest-descent steps taken in the “forward” and “backward” direction downhill from the transition state. The algorithm is an implementation of the method proposed by Ishida and Morokuma which basically supplements the initial steepest-descent with a line search algortihm based on a second gradient calculation to ensure that the minimum energy path is followed. Like most steepest-descent algorithms, this one struggles with flat potential energy surfaces. However for cases where the imaginary vibrational frequency is rather large (about 1000 cm:math:<cite>^{-1}</cite> or higher) this algorithm should converge to the appropriate minimum energy path. A small step size of about 0.01 a.u. is recommended for smooth convergence and to obtain a sufficiently tight grid for calculations of numerical derivative properties like the reaction force. An example IRC input is shown below:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
 <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">{</span>
   <span class="s2">&quot;geometry&quot;</span> <span class="p">:</span>  <span class="p">[</span><span class="mf">0.113595072843</span><span class="p">,</span><span class="o">-</span><span class="mf">0.153880407652</span><span class="p">,</span><span class="mf">0.037596022684</span><span class="p">,</span>
@@ -198,47 +194,10 @@
 <span class="p">}</span>
 </pre></div>
 </div>
-<p>where the additional options for the irc calculation are added in the IRC block.</p>
-<div class="admonition caution">
-<p class="admonition-title">Caution</p>
-<p>The IRC algorithm implemented is a simple version of the Morokuma-Ishida predictor-corrector IRC. It is suggested that you use a step size of 0.01 au for all IRC calculations or else the algorithm becomes unstable. This fine of a stepsize is also recommended for computing finite-differences along the reaction coordinate. If you wish to use the IRC to simply confirm a transition state and want to converge as quickly as possible we recommend using other algorithms suited for this purpose.</p>
+<p>In the “molecule” block the transition state structure is provided in cartesian coordinates. The “irc” block is used to specify irc specific options. The first option is the direction of the irc, whether you will go forward (positive initial gradient) or backward (negative initial gradient). The “step_size” option specifies the step size in atomic units. The “mode” options specifies which mode in the normal mode file you want to follow (this is typically the first mode), and finally the file that contains normal modes from a vibrational frequency calculation are provided.</p>
 </div>
-</div>
-<div class="section" id="joining-irc-files">
-<h2>Joining IRC Files<a class="headerlink" href="#joining-irc-files" title="Permalink to this headline">¶</a></h2>
-<p>Often times the coordinate file you would like to run in pyREX is an intrinsic reaction coordinate (IRC) file. Most IRC codes output separate coordinates for the forward and backward trajectories for the reaction. However for calculations in pyrex you will need a continuous trajectory that begins with the last structure of your backward trajectory and ends with the last structure of your forward trajectory. You can do this very simply from the command line using the following command line utility:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyrex</span> <span class="o">--</span><span class="n">join_irc</span>
-</pre></div>
-</div>
-<p>pyrex will then ask you the name of your forward and backward trajectory and produce a single “full_irc.xyz” file.</p>
-</div>
-<div class="section" id="generating-pyrex-input-files">
-<h2>Generating Pyrex Input Files<a class="headerlink" href="#generating-pyrex-input-files" title="Permalink to this headline">¶</a></h2>
-<p>Once you have an IRC or other coordinate file, the standard use of pyrex is to obtain energies and properties along the reaction coordinate. In order to generate a standard input for the reaction energy, you can run the following from the command line:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pyrex</span> <span class="o">--</span><span class="n">input_gen</span><span class="o">=</span><span class="n">energy</span>
-</pre></div>
-</div>
-<p>pyrex will then ask you the name of your coordinate file and generate your standard .json input. You can edit the input file from there to run your desired level of theory and other options. For example, the following input was created from an IRC file for a reaction of carbon dioxide and the hydrogen molecule:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
-  <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
-    <span class="s2">&quot;molecular_charge&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;molecular_multiplicity&quot;</span><span class="p">:</span> <span class="mi">1</span>
-  <span class="p">},</span>
-  <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;scf&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;basis&quot;</span><span class="p">:</span> <span class="s2">&quot;sto-3g&quot;</span>
-  <span class="p">},</span>
-  <span class="s2">&quot;pyrex&quot;</span><span class="p">:</span> <span class="p">{</span>
-    <span class="s2">&quot;nthreads&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
-    <span class="s2">&quot;irc_filename&quot;</span><span class="p">:</span> <span class="s2">&quot;full_irc.xyz&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;do_energy&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
-    <span class="s2">&quot;do_conceptualdft&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
-    <span class="s2">&quot;irc_stepsize&quot;</span><span class="p">:</span> <span class="mf">0.2</span>
-  <span class="p">}</span>
-<span class="p">}</span>
-</pre></div>
-</div>
+<div class="section" id="surface-scans">
+<h2>Surface Scans<a class="headerlink" href="#surface-scans" title="Permalink to this headline">¶</a></h2>
 </div>
 </div>
 
@@ -250,8 +209,10 @@
   
     <div class="rst-footer-buttons" role="navigation" aria-label="footer navigation">
       
+        <a href="methods/activation_strain.html" class="btn btn-neutral float-right" title="Activation Strain Model" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right"></span></a>
       
-        <a href="methods/reaction_fragility.html" class="btn btn-neutral float-left" title="Reaction Fragility Spectrum" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
+      
+        <a href="getting_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left"></span> Previous</a>
       
     </div>
   

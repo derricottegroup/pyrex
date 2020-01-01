@@ -11,7 +11,7 @@ Pyrex contains an IRC algorithm that uses gradients from QM software in order to
 
     pyrex --input_gen=irc 
 
-pyrex will then ask you the name of your XYZ coordinate file containing your transition state structure. You can edit the input file from there to run the IRC calculation at your preferred level of theory. For example the following input file was created from an xyz file containing the transition state for the reaction of carbon dioxide and water::
+pyrex will then ask you the name of your XYZ coordinate file containing your transition state structure. You can edit the input file from there to run the IRC calculation at your preferred level of theory. For example the following input file was created from an xyz file containing the transition state for the reaction of carbon dioxide and the hydrogen molecule::
 
     {
     "molecule": {
