@@ -92,6 +92,7 @@
 <li class="toctree-l1"><a class="reference internal" href="reaction_force.html">Reaction Force Analysis</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Reaction Fragility Spectrum</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#general-theory">General Theory</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#example">Example</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../input_generator.html">Input Generator</a></li>
@@ -168,11 +169,21 @@
 <div><div class="math notranslate nohighlight">
 \[k_{ij} = \left(\frac{\partial^2 E}{\partial R_i \partial R_j}\right),\]</div>
 </div></blockquote>
-<p>where <span class="math notranslate nohighlight">\(E\)</span> is the total molecular energy while <span class="math notranslate nohighlight">\(R_i\)</span> and <span class="math notranslate nohighlight">\(R_j\)</span> represent the cartesian position (<span class="math notranslate nohighlight">\(R_x\)</span>, <span class="math notranslate nohighlight">\(R_y\)</span>, <span class="math notranslate nohighlight">\(R_z\)</span>) of atoms <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span> respectively. Given the three cartesian coordinates, this would compose a <span class="math notranslate nohighlight">\(3N \ x \ 3N\)</span> Hessian matrix (<span class="math notranslate nohighlight">\(\mathbf{K}\)</span>). Every <span class="math notranslate nohighlight">\(3 \ x \ 3\)</span> square matrix block along the block diagonal of the Hessian matrix is related to the individual atoms in the molecule. The trace of the Hessian is invariant to changes in coordinate and responds to changes in bonding structure of the molecule. The trace of each individual square block is that atoms contribution to the bonding pattern, this naturally lends itself to an atomic decomposition:</p>
+<p>where <span class="math notranslate nohighlight">\(E\)</span> is the total molecular energy while <span class="math notranslate nohighlight">\(R_i\)</span> and <span class="math notranslate nohighlight">\(R_j\)</span> represent the cartesian position (<span class="math notranslate nohighlight">\(R_x\)</span>, <span class="math notranslate nohighlight">\(R_y\)</span>, <span class="math notranslate nohighlight">\(R_z\)</span>) of atoms <span class="math notranslate nohighlight">\(i\)</span> and <span class="math notranslate nohighlight">\(j\)</span> respectively. Given the three cartesian coordinates, this would compose a <span class="math notranslate nohighlight">\(3N \ \times \ 3N\)</span> Hessian matrix (<span class="math notranslate nohighlight">\(\mathbf{K}\)</span>). Every <span class="math notranslate nohighlight">\(3 \ \times \ 3\)</span> square matrix block along the block diagonal of the Hessian matrix is related to the individual atoms in the molecule. The trace of the Hessian is invariant to changes in coordinate and responds to changes in bonding structure of the molecule. The trace of each individual square block is that atoms contribution to the bonding pattern, this naturally lends itself to an atomic decomposition:</p>
 <blockquote>
 <div><div class="math notranslate nohighlight">
-\[{\rm Tr}\mathbf{K} = \sum^N_A {\rm Tr} \mathbf{k}^A\]</div>
+\[{\rm Tr} \ \mathbf{K} = \sum^N_A {\rm Tr} \ \mathbf{k}^A,\]</div>
 </div></blockquote>
+<p>where <span class="math notranslate nohighlight">\(\mathbf{k}^A\)</span> is the square block diagonal matrix related to atom <span class="math notranslate nohighlight">\(A\)</span>. Any decrease (increase) in the trace of <span class="math notranslate nohighlight">\(\mathbf{k}^A\)</span> corresponds to the weakening (strengthening) of a bond. The reaction fragility spectrum (<span class="math notranslate nohighlight">\(a_{\xi}\)</span>) tracks the change in this contribution as the reaction proceeds, it does this by investigating the derivative of the trace of the Hessian as the reaction progresses:</p>
+<blockquote>
+<div><div class="math notranslate nohighlight">
+\[a_{\xi} = \frac{\partial}{\partial \xi}({\rm Tr} \ \mathbf{K}) = \sum^N_A \frac{\partial}{\partial \xi} {\rm Tr} \ \mathbf{k}^A = \sum^N_A a^A_{\xi},\]</div>
+</div></blockquote>
+<p>where (<span class="math notranslate nohighlight">\(a^A_{\xi}\)</span>) would be the atomic fragility spectrum for atom <span class="math notranslate nohighlight">\(A\)</span>. By utilizing the invariant trace of the Hessian rather than atomic contributions to the total energy, the fragility spectrum represents a tool that is less sensitive to nuclear motion and more akin to bond indices.</p>
+</div>
+<div class="section" id="example">
+<h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
+<p>PUT EXAMPLE HERE</p>
 </div>
 </div>
 
