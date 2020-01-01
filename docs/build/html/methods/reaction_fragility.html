@@ -183,7 +183,46 @@
 </div>
 <div class="section" id="example">
 <h2>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h2>
-<p>PUT EXAMPLE HERE</p>
+<p>The example below is an input file to calculate the reaction fragility spectrum for the reaction of carbon dioxide and the hydrogen molecule. The “do_fragility_spec” keyword is added to the “pyrex” block in order to calculate the fragility spectrum:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;molecule&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;symbols&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;C&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;O&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">,</span><span class="s2">&quot;H&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;molecular_charge&quot;</span><span class="p">:</span> <span class="s2">&quot;0&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;molecular_multiplicity&quot;</span><span class="p">:</span> <span class="mi">1</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;model&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;scf&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;basis&quot;</span><span class="p">:</span> <span class="s2">&quot;sto-3g&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;pyrex&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;nthreads&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">&quot;irc_filename&quot;</span><span class="p">:</span> <span class="s2">&quot;full_irc.xyz&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;do_energy&quot;</span> <span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;energy_read&quot;</span> <span class="p">:</span> <span class="s2">&quot;energy.csv&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;do_fragility_spec&quot;</span> <span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;irc_stepsize&quot;</span><span class="p">:</span> <span class="mf">0.2</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>the “energy_read” keyword is added in this case so that the total energies can be read in from a previously calculated file, avoiding the need to recalculate the energy. This calculation will produce a file called “frag_spec.csv”, that will contain the atomic fragility spectrum for each atom in the molecule. To highlight this method, we will take a look at the fragility spectra for the two oxygens, the figure below shows the molecular structure of the reactants, transition state, and product for this reaction:</p>
+<a class="reference internal image-reference" href="../_images/co2_h2_structs.png"><img alt="alternate text" class="align-center" src="../_images/co2_h2_structs.png" style="width: 500px;" /></a>
+<p>Notice that O1 forms a new bond with a hydrogen atom while O2 does not, based on our understanding of the reaction fragility spectrum we would expect a much larger change in this spectrum for O1 when compared to O2. However, we will have to investigate this to find out. Using the plotting utility, we can directly plot the two atomic fragility spectra on the same plot using the following input:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;rexplot&quot;</span> <span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;file&quot;</span> <span class="p">:</span> <span class="s2">&quot;frag_spec.csv&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;properties&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="s2">&quot;O1&quot;</span><span class="p">,</span> <span class="s2">&quot;O2&quot;</span><span class="p">],</span>
+    <span class="s2">&quot;coordinate&quot;</span> <span class="p">:</span> <span class="s2">&quot;Coordinate&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;x_label&quot;</span> <span class="p">:</span> <span class="s2">&quot;Reaction Coordinate ($</span><span class="se">\\</span><span class="s2">xi$)&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;y_label&quot;</span> <span class="p">:</span> <span class="s2">&quot;$a_{</span><span class="se">\\</span><span class="s2">xi}$&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;fig_dims&quot;</span> <span class="p">:</span> <span class="p">[</span><span class="mf">9.0</span><span class="p">,</span> <span class="mf">5.0</span><span class="p">],</span>
+    <span class="s2">&quot;plot_file&quot;</span> <span class="p">:</span> <span class="s2">&quot;frag_spec.png&quot;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>This will produce the following plot of both atomic fragility spectra:</p>
+<a class="reference internal image-reference" href="../_images/frag_spec.png"><img alt="alternate text" class="align-center" src="../_images/frag_spec.png" style="width: 500px;" /></a>
 </div>
 </div>
 

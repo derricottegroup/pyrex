@@ -22,4 +22,52 @@ where (:math:`a^A_{\xi}`) would be the atomic fragility spectrum for atom :math:
 Example
 -------
 
-PUT EXAMPLE HERE
+The example below is an input file to calculate the reaction fragility spectrum for the reaction of carbon dioxide and the hydrogen molecule. The "do_fragility_spec" keyword is added to the "pyrex" block in order to calculate the fragility spectrum::
+
+    {
+      "molecule": {
+        "symbols": ["C","O","O","H","H"],
+        "molecular_charge": "0",
+        "molecular_multiplicity": 1
+      },
+      "model": {
+        "method": "scf",
+        "basis": "sto-3g"
+      },
+      "pyrex": {
+        "nthreads": 4,
+        "irc_filename": "full_irc.xyz",
+        "do_energy" : true,
+        "energy_read" : "energy.csv",
+        "do_fragility_spec" : true,
+        "irc_stepsize": 0.2
+      }
+    }
+
+the "energy_read" keyword is added in this case so that the total energies can be read in from a previously calculated file, avoiding the need to recalculate the energy. This calculation will produce a file called "frag_spec.csv", that will contain the atomic fragility spectrum for each atom in the molecule. To highlight this method, we will take a look at the fragility spectra for the two oxygens, the figure below shows the molecular structure of the reactants, transition state, and product for this reaction:
+
+.. image:: figures/co2_h2_structs.png
+   :width: 500 px
+   :alt: alternate text
+   :align: center
+
+Notice that O1 forms a new bond with a hydrogen atom while O2 does not, based on our understanding of the reaction fragility spectrum we would expect a much larger change in this spectrum for O1 when compared to O2. However, we will have to investigate this to find out. Using the plotting utility, we can directly plot the two atomic fragility spectra on the same plot using the following input::
+
+    {
+      "rexplot" : {
+        "file" : "frag_spec.csv",
+        "properties" : ["O1", "O2"],
+        "coordinate" : "Coordinate",
+        "x_label" : "Reaction Coordinate ($\\xi$)",
+        "y_label" : "$a_{\\xi}$",
+        "fig_dims" : [9.0, 5.0],
+        "plot_file" : "frag_spec.png"
+      }
+    }
+
+This will produce the following plot of both atomic fragility spectra:
+
+.. image:: figures/frag_spec.png
+   :width: 500 px
+   :alt: alternate text
+   :align: center
