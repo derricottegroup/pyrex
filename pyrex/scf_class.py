@@ -99,6 +99,9 @@ class scf_class(object):
             #print(geom_parse)
             geom += "symmetry c1"
             mol = psi4.geometry(geom)
+            if(self.do_solvent):
+                self.keywords['pcm'] = "true"
+                self.keywords['pcm_scf_type'] = "total"
             psi4.set_options(self.keywords)
             #print("pyREX:Single Point Calculation on IRC Point %d" %(count))
             psi4.set_num_threads(self.nthreads)

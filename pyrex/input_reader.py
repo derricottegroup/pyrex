@@ -189,7 +189,7 @@ class Params(object):
             if 'nthreads' in input_params['pyrex']:
                 self.nthreads = input_params['pyrex']['nthreads']
             if 'do_solvent' in input_params['pyrex']:
-                self.do_solvent = input_params['pyrex']['do_solvent']
+                self.do_solvent = bool(input_params['pyrex']['do_solvent'])
             if 'eps' in input_params['pyrex']:
                 self.eps = input_params['pyrex']['eps']
             if 'do_conceptualdft' in input_params['pyrex']:
