@@ -11,6 +11,7 @@ class Params(object):
         """
         self.do_irc = False
         self.do_solvent = False
+        self.pcm_solvent = "Water"
         self.do_energy = False
         self.do_frag = False
         self.do_sapt = False
@@ -190,6 +191,8 @@ class Params(object):
                 self.nthreads = input_params['pyrex']['nthreads']
             if 'do_solvent' in input_params['pyrex']:
                 self.do_solvent = bool(input_params['pyrex']['do_solvent'])
+            if 'pcm_solvent' in input_params['pyrex']:
+                self.pcm_solvent = str(input_params['pyrex']['pcm_solvent'])
             if 'eps' in input_params['pyrex']:
                 self.eps = input_params['pyrex']['eps']
             if 'do_conceptualdft' in input_params['pyrex']:

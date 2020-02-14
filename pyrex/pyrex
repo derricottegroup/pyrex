@@ -221,6 +221,33 @@ def reaction_force_analysis(params):
         output.write("\nProduct Region:            %.3f ------> %.3f\n" %(coordinates[params.index_max], coordinates[-1]))
         params.reaction_force_values = reaction_force_values 
 
+###########################
+# Reaction Force Constant #
+###########################
+
+def reaction_force_constant(params):
+    if(params.do_energy or params.energy_file!=None):
+        coordinates = params.coordinates
+        reaction_force_constant_values = -1.0*np.gradient(params.reaction_force_values,params.irc_stepsize)
+        output = open(output_filename, "a")
+        output.write('\n\n--Reaction Force Constant--\n')
+        output.write('\n-------------------------------------------------------------------------------------')
+        output.write('\n{:>20} {:>20} {:>20}\n'.format('IRC Point', 'k (Hartree)', 'k (kcal)'))
+        output.write('-------------------------------------------------------------------------------------\n')
+
+        force_count = 0
+        for reaction_force_constant in reaction_force_constant_values:
+            output.write('\n{:>20} {:>20.7f} {:>20.7f}\n'.format(params.coordinates[force_count], reaction_force_constant, reaction_force_constant*627.51))
+            force_count = force_count+1
+        output.write('-------------------------------------------------------------------------------------\n')
+        output.close()
+        
+        force_constant_csv = open("force_constant.csv", "w+")
+        force_constant_csv.write("Coordinate,Force Constant\n")
+        for i in range(len(coordinates)):
+            force_constant_csv.write("%f, %f\n" %(coordinates[i], reaction_force_constant_values[i]))
+        force_constant_csv.close()
+
 ##############################
 # Activation Strain Analysis #
 ##############################
@@ -736,6 +763,7 @@ def main():
         geometry_builder(params)
         energy_calculations(params)
         reaction_force_analysis(params)
+        reaction_force_constant(params)
         activation_strain_analysis(params)
         conceptual_dft_analysis(params)
         total_reaction_work_integrals(params)

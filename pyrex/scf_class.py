@@ -22,6 +22,7 @@ class scf_class(object):
         self.mult = data.molecular_multiplicity
         self.nthreads = data.nthreads
         self.do_solvent = data.do_solvent
+        self.pcm_solvent = data.pcm_solvent
         self.eps = data.eps
         self.method = str(data.method)
         self.basis = str(data.basis)
@@ -79,7 +80,7 @@ class scf_class(object):
                Units = Angstrom
                Medium {
                SolverType = IEFPCM
-               Solvent = Water
+               Solvent = %s
                }
                Cavity {
                RadiiSet = UFF
@@ -88,7 +89,7 @@ class scf_class(object):
                Area = 0.3
                Mode = Implicit
                }
-            """)
+            """ %self.pcm_solvent)
         for geometry in geometries:
             output = open(self.outfile, "a")
             psi4.core.set_output_file("psi4_output/irc_%d.out" %count, False)
