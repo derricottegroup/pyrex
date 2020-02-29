@@ -123,9 +123,11 @@ def fragility_spec(params,geoms,output_file):
     hess_update_track = 0
     hess_traces = []
     grad_method = "%s/%s" %(params.method,params.basis)
+    c_matrices = []
     for geom in geoms:
         output = open(output_file, "a")
         output.write("\nCalculating Hessian Trace for IRC Point %.3f\n" %params.coordinates[count])
+        output.close()
        # if(hess_update_track==0 or params.coordinates[count]==0.0):
         #print("prior to Hessian calc")
         H = compute_hessian(params,geom)
@@ -150,21 +152,32 @@ def fragility_spec(params,geoms,output_file):
        #     params.oldgrad = grad
        #     H += hess_diff
         #Grab Square blocks of Hessian
-        increment = 0
-        hess_trace_atoms = []
-        for z in range(params.natoms):
-            H_atom = np.zeros((3,3))
-            for i in range(3):
-                for j in range(3):
-                  H_atom[i][j] = H[i+increment][j+increment]
-            output.write("\nHessian Trace for %s%d atom\n" %(params.symbols[z],z))
-            hess_trace = np.trace(H_atom)
-            hess_trace_atoms.append(hess_trace)
-            output.write("%.5f\n" %hess_trace)
-            increment += 3 
-        hess_traces.append(hess_trace_atoms)
-        count += 1
-        output.close()
+        connectivity_matrix = np.zeros((params.natoms, params.natoms)) # Building Blank Connectivity Matrix
+        hess_trace_bond = []
+        increment_i = 0
+        for i in range(params.natoms):
+            increment_j = 0
+            for j in range(params.natoms):
+                output = open(output_file, "a")
+                H_bond = np.zeros((3,3))
+                #print(increment_i)
+                #print(increment_j)
+                for k in range(3):
+                    for l in range(3):
+                        H_bond[k][l] = H[k+increment_i][l+increment_j]
+                output.write("\nHessian Trace for %s%d-%s%d Bond\n" %(params.symbols[i],i, params.symbols[j],j))
+                hess_trace = np.trace(H_bond)
+                hess_trace_bond.append(hess_trace)
+                connectivity_matrix[i][j] = hess_trace 
+                output.write("%.5f\n" %hess_trace)
+                increment_j += 3 
+                hess_traces.append(hess_trace_bond)
+                #count += 1
+                output.close()
+            increment_i += 3
+        c_matrices.append(connectivity_matrix) #Store connectivity matrix for current geometry
+        count +=1    
+        #TODO: Continue Working on Connectivity Matrix Code, implement all of the techniques from the paper
         #hess_update_track +=1
         #if(hess_update_track==2):
         #    hess_update_track = 0
@@ -175,22 +188,49 @@ def fragility_spec(params,geoms,output_file):
         for j in range(len(geoms)):
             atom_traces.append(hess_traces[j][i])
         atom_ordered_traces.append(atom_traces)
+
+    # Grab Divergences from Connectivity Matrices
+    divergences = [] # Empty list for divergences
+    for i in range(params.natoms):
+        for j in range(params.natoms):
+            divergence_elements = []
+            for k in range(len(geoms)):
+                divergence_elements.append(c_matrices[k][i][j])
+            divergences.append(("%s%d-%s%d" %(params.symbols[i],i, params.symbols[j],j),divergence_elements))
+
+
+    # Calculate Fragility Spectrum for Each Divergence
+    fragilities = [] # Empty list for fragilities
+    for i in range(len(divergences)):
+        bond_title = divergences[i][0]
+        divergence = divergences[i][1]
+        fragile = -1.0*np.gradient(divergence, params.irc_stepsize)
+        fragilities.append((bond_title,fragile))
+            
             
     # Take derivative of trace to get fragility spectrum for each atom
-    fragilities = []
-    for i in range(params.natoms):
-        fragility = np.gradient(atom_ordered_traces[i],params.irc_stepsize)
-        fragilities.append(fragility)
-        #print("Fragility for atom %s%d" %(params.symbols[i], i))
-        #print(fragility)
+    # fragilities = []
+    # for i in range(params.natoms):
+    #     fragility = np.gradient(atom_ordered_traces[i],params.irc_stepsize)
+    #     fragilities.append(fragility)
+    #     #print("Fragility for atom %s%d" %(params.symbols[i], i))
+    #     #print(fragility)
     
     csv_output = open("frag_spec.csv", "w")
     csv_output.write("Coordinate,")
-    for i in range(params.natoms):
-        csv_output.write("%s%d," %(params.symbols[i], i))
+    for i in range(len(fragilities)):
+        csv_output.write("%s," %(fragilities[i][0]))
     csv_output.write("\n")
     for i in range(len(params.geoms)):
         csv_output.write("%.4f," %params.coordinates[i])
-        for j in range(params.natoms):
-            csv_output.write("%.8f," %fragilities[j][i])
-        csv_output.write("\n")
+        for j in range(len(fragilities)):
+            csv_output.write("%.8f," %fragilities[j][1][i])  
+        csv_output.write("\n")     
+    # for i in range(params.natoms):
+    #     csv_output.write("%s%d," %(params.symbols[i], i))
+    # csv_output.write("\n")
+    # for i in range(len(params.geoms)):
+    #     csv_output.write("%.4f," %params.coordinates[i])
+    #     for j in range(params.natoms):
+    #         csv_output.write("%.8f," %fragilities[j][i])
+    #     csv_output.write("\n")

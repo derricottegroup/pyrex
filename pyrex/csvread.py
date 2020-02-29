@@ -128,7 +128,7 @@ def plot(json_input):
     multi_coord = 0
     for i in range(len(params.properties)):
         #y_fit = inter.InterpolatedUnivariateSpline(x[multi_coord], y[i])
-        y_fit = UnivariateSpline(x[multi_coord], y[i], s=1e-9)
+        y_fit = UnivariateSpline(x[multi_coord], y[i], s=5e-13)
         y_spline.append(y_fit)
         if(len(x) > 1):
             multi_coord = multi_coord + 1
