@@ -157,6 +157,9 @@ def energy_calculations(params):
         if(params.qm_program == 'orca'):
             params.energies,params.frontier_orb_energies = scf_instance.orca_scf(params.geoms)
 
+        if(params.qm_program == 'sparrow'):
+            params.energies = scf_instance.sparrow_scf(params.geoms)
+
 # Store energies in .csv file
         energy_csv = open("energy.csv", "w+")
         energy_csv.write("Coordinate,Energy\n")

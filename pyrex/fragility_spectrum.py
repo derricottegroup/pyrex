@@ -1,5 +1,12 @@
 """
-    Implementation of Reaction Fragility Spectrum
+    Implementation of Reaction Fragility Spectrum and Related Methods
+
+    References:
+        (1) Komorowski et al. Phys. Chem. Chem. Phys, 2016, 18, 32658
+        (2) Zaklika et al. J. Phys. Chem. A 2019, 123, 4274-4283
+        (3) Ordon et al. J. Phys. Chem. A 2020, 124, 1076-1086
+
+    Equations from these papers are referenced in comments throughout the code
 """
 
 __authors__  = "Wallace D. Derricotte"
@@ -15,61 +22,7 @@ import os
 import sys
 import json
 from geomparser import *
-
-
-#class Params():
-#    def __init__(self):
-#        """
-#            Initialize .json file provided by user in command line, read input and store variables.
-#        """
-#        json_input = sys.argv[1]
-#        self.read_input(json_input)
-#        self.geometry_builder()
-#        self.oldgrad = 0.0
-#        self.oldcoord = 0.0
-#    def read_input(self, json_input):
-#        json_data=open(json_input).read()
-#        input_params = json.loads(json_data)
-#        #print(input_params['molecule']['molecular_charge'])
-#        #TODO Add explanation of read in variables similar to euler.py
-#        if 'symbols' in input_params['molecule']:
-#            self.symbols = input_params['molecule']['symbols']
-#            self.natoms = len(input_params['molecule']['symbols'])
-#        if 'molecular_charge' in input_params['molecule']:
-#            self.molecular_charge = int(input_params['molecule']['molecular_charge'])
-#        if 'molecular_multiplicity' in input_params['molecule']:
-#            self.molecular_multiplicity = input_params['molecule']['molecular_multiplicity']
-#        if 'basis' in input_params['model']:
-#            self.basis = input_params['model']['basis']
-#        if 'method' in input_params['model']:
-#            self.method = input_params['model']['method']
-#        if 'keywords' in input_params:
-#            self.keywords = input_params['keywords']
-#        if 'irc_filename' in input_params['pyrex']:
-#            self.irc_filename = input_params['pyrex']['irc_filename']
-#        if 'irc_stepsize' in input_params['pyrex']:
-#            self.irc_stepsize = input_params['pyrex']['irc_stepsize']
-#
-#    def geometry_builder(self):
-#        full_irc = open(self.irc_filename, "r")
-#        natoms = self.natoms
-#        irc = []
-#        geometries = []
-#        coordinates = []
-#        for line in full_irc:
-#            if "Full IRC Point" in line:
-#                geom = []
-#                irc_num_line = line.split()
-#                irc_num = int(irc_num_line[3])
-#                for i in range(natoms):
-#                    line = next(full_irc)
-#                    geom.append(line.lstrip())
-#                irc.append((irc_num, geom))
-#                geometries.append(geom)
-#                coordinates.append(irc_num*self.irc_stepsize)
-#        geomparser = Geomparser(natoms, self.molecular_charge, self.molecular_multiplicity, geometries, coordinates)
-#        self.geoms = geomparser.geombuilder()   
-#        #self.irc = irc_filename
+import sparrow_interface 
 
 def compute_hessian(params, geom):
     # Use PSI4 to calculate Hessian matrix
@@ -166,9 +119,9 @@ def fragility_spec(params,geoms,output_file):
                     for l in range(3):
                         H_bond[k][l] = H[k+increment_i][l+increment_j]
                 output.write("\nHessian Trace for %s%d-%s%d Bond\n" %(params.symbols[i],i, params.symbols[j],j))
-                hess_trace = np.trace(H_bond)
+                hess_trace = np.trace(H_bond) # Eqn.9 and Eqn.10 Ref.(2)
                 hess_trace_bond.append(hess_trace)
-                connectivity_matrix[i][j] = hess_trace 
+                connectivity_matrix[i][j] = hess_trace # Eqn.8 Ref.(2)
                 output.write("%.5f\n" %hess_trace)
                 increment_j += 3 
                 hess_traces.append(hess_trace_bond)
@@ -204,10 +157,31 @@ def fragility_spec(params,geoms,output_file):
     for i in range(len(divergences)):
         bond_title = divergences[i][0]
         divergence = divergences[i][1]
-        fragile = -1.0*np.gradient(divergence, params.irc_stepsize)
+        fragile = -1.0*np.gradient(divergence, params.irc_stepsize) # Eqn.20 Ref.(2)
         fragilities.append((bond_title,fragile))
-            
-            
+    
+    # Calculate Atomization energies described in Ref 3
+    relative_energies = []
+    for i in range(params.natoms):
+        for j in range(params.natoms):
+            bond_title = "%s%d-%s%d" %(params.symbols[i],i, params.symbols[j],j)
+            atomization_energies = []
+            for k in range(len(geoms)):
+                atomization_energy = 0
+                c_matrix_trace = np.trace(c_matrices[k])
+                if(i==j):
+                    atomization_energy = c_matrices[k][i][j]/c_matrix_trace # Eqn.17 Ref.(3)
+                else:
+                    atomization_energy = -2.0*c_matrices[k][i][j]/c_matrix_trace # Eqn.18 Ref.(3)
+                atomization_energies.append(atomization_energy)
+            relative_energies.append((bond_title,atomization_energies))
+
+    relative_energy_variations = []
+    for i in range(len(relative_energies)):
+        bond_title = relative_energies[i][0]
+        relative_energy = relative_energies[i][1]
+        variation = np.gradient(relative_energy, params.irc_stepsize)
+        relative_energy_variations.append((bond_title,variation))       
     # Take derivative of trace to get fragility spectrum for each atom
     # fragilities = []
     # for i in range(params.natoms):
@@ -225,7 +199,18 @@ def fragility_spec(params,geoms,output_file):
         csv_output.write("%.4f," %params.coordinates[i])
         for j in range(len(fragilities)):
             csv_output.write("%.8f," %fragilities[j][1][i])  
-        csv_output.write("\n")     
+        csv_output.write("\n") 
+
+    csv_output = open("rel_energy_variations.csv", "w")
+    csv_output.write("Coordinate,")
+    for i in range(len(relative_energy_variations)):
+        csv_output.write("%s," %(relative_energy_variations[i][0]))
+    csv_output.write("\n")
+    for i in range(len(params.geoms)):
+        csv_output.write("%.4f," %params.coordinates[i])
+        for j in range(len(relative_energy_variations)):
+            csv_output.write("%.8f," %relative_energy_variations[j][1][i])  
+        csv_output.write("\n")    
     # for i in range(params.natoms):
     #     csv_output.write("%s%d," %(params.symbols[i], i))
     # csv_output.write("\n")
