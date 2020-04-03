@@ -21,6 +21,9 @@ import psi4
 import os
 import sys
 import json
+import seaborn as sns
+import matplotlib.pylab as plt
+import matplotlib.animation as animation
 from geomparser import *
 import sparrow_interface 
 
@@ -187,6 +190,52 @@ def fragility_spec(params,geoms,output_file):
                     atomization_energy = -2.0*c_matrices[k][i][j]/c_matrix_trace # Eqn.18 Ref.(3)
                 atomization_energies.append(atomization_energy)
             relative_energies.append((bond_title,atomization_energies))
+
+    # Create Heatmap for each Connectivity Matrix
+
+    # Identify active space for truncated connectivity matrix (If specified)
+    indices = np.arange(params.natoms)
+    if (params.active_site==True):
+        indices = params.active_site_indices
+        subset_matrices = []
+        for c_matrix in c_matrices:
+            c_matrix_subset = np.zeros((len(indices),len(indices)))
+            for i in range(len(indices)):
+                for j in range(len(indices)):
+                    c_matrix_subset[i][j] = c_matrix[indices[i]][indices[j]]
+            subset_matrices.append(c_matrix_subset)
+        c_matrices = subset_matrices
+                
+    count = 0
+    ims = []
+    atom_symbols = []
+    # Get appropriate Symbols
+    for i in range(len(indices)):
+        atom_symbols.append("%s%d" %(params.symbols[indices[i]], indices[i]+1))
+    # Find appropriate min/max value for the heatmap
+    mins = []
+    maxs = []
+    for c_matrix in c_matrices:
+        mins.append(c_matrix.min())
+        maxs.append(c_matrix.max())
+    total_min = min(mins)
+    total_max = max(maxs)
+    limit = max([np.abs(total_max), np.abs(total_min)])
+    for c_matrix in c_matrices:
+        plt.figure()
+        c_matrix_heatmap = sns.heatmap(np.tril(c_matrix),vmax = limit, vmin = -1.0*limit, cmap='RdBu_r',
+                                                linewidth=0.5,xticklabels=atom_symbols,yticklabels=atom_symbols)
+        im = plt.imshow(c_matrix,vmax = 1.8, vmin = -1.8, cmap='coolwarm', animated=True)
+        plt.savefig("heatmap_%d.png" %count)
+        plt.close()
+        ims.append([im])
+        count = count + 1
+    Writer = animation.writers['ffmpeg']
+    writer = Writer(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+    fig = plt.figure()
+    ani = animation.ArtistAnimation(fig,ims,interval=50, blit=True,repeat_delay=1000)
+    ani.save('heatmap_movie.mp4', writer=writer)
+
 
     relative_energy_variations = []
     for i in range(len(relative_energies)):

@@ -13,6 +13,7 @@ class Params(object):
         self.do_solvent = False
         self.pcm_solvent = "Water"
         self.do_energy = False
+        self.active_site = False
         self.do_frag = False
         self.do_sapt = False
         self.do_fsapt = False
@@ -228,6 +229,9 @@ class Params(object):
                 self.orca_header = input_params['pyrex']['orca_header']
             if 'orca_block' in input_params['pyrex']:
                 self.orca_block = input_params['pyrex']['orca_block']
+            if 'active_site' in input_params['pyrex']:
+                self.active_site_indices = input_params['pyrex']['active_site']
+                self.active_site = True
         """
             Surf Scan Block: Options relevant for surface scans in Pyrex.
                              (Currently only compatible with PSI4)

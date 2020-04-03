@@ -52,14 +52,14 @@ def surf_psi4(params,output_file):
         surf_out.write("%s\n" %natoms)
         surf_out.write("%s surface scan with fixed %s of %f\n" %(params.scan_type, params.constraint_type, constrained_value))
         if(params.scan_type=='relaxed'):
-            E = psi4.optimize(params.method)
+            E = psi4.optimize("%s/%s" %(params.method,params.basis))
             pre_string = mol.create_psi4_string_from_molecule()
             #print(pre_string)
             struct = pre_string.split("\n",7)[7]
             #print(struct)
             surf_out.write(struct[:-1])
         if(params.scan_type=='unrelaxed'):
-            E = psi4.energy(params.method)
+            E = psi4.energy("%s/%s" %(params.method,params.basis))
         output = open(output_file,"a")
         output.write('\n{:>20.4f} {:>20.7f}\n'.format(constrained_value, E))
         output.close()

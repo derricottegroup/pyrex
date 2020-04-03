@@ -1,5 +1,8 @@
 import matplotlib
-matplotlib.use("TkAgg")
+#matplotlib.use("TkAgg")
+from matplotlib import rcParams
+rcParams['font.family'] = 'sans-serif'
+rcParams['font.sans-serif'] = ['Arial']
 import matplotlib.pyplot as plt
 from scipy.interpolate import UnivariateSpline
 import scipy.interpolate as inter
@@ -15,6 +18,8 @@ class Params():
         self.force_min = 0.0
         self.force_max = 0.0
         self.scale = 1.0
+        self.ytick_step = None
+        self.xtick_step = None
         self.x_min = None
         self.x_max = None
         self.y_min = None
@@ -23,10 +28,10 @@ class Params():
         self.color = []
         self.user_props = False
         self.prop_labels = []
-        self.fontsize = 16
-        self.ticklabel_size = 10
-        self.linewidth = 5.0
-        self.axiswidth = 2.0
+        self.fontsize = 4
+        self.ticklabel_size = 4
+        self.linewidth = 1.0
+        self.axiswidth = 0.5
         self.fig_dims = [9.0, 5.0]
         self.coordinates = ['Coordinate']
         self.read_input(json_input)
@@ -53,7 +58,11 @@ class Params():
             if 'rel_energy' in input_params['rexplot']:
                 self.rel_energy = bool(input_params['rexplot']['rel_energy'])
             if 'scale' in input_params['rexplot']:
-                self.scale = input_params['rexplot']['scale'] 
+                self.scale = input_params['rexplot']['scale']
+            if 'ytick_step' in input_params['rexplot']:
+                self.ytick_step = input_params['rexplot']['ytick_step'] 
+            if 'xtick_step' in input_params['rexplot']:
+                self.xtick_step = input_params['rexplot']['xtick_step']
             if 'x_min' in input_params['rexplot']:
                 self.x_min = input_params['rexplot']['x_min']
             if 'x_max' in input_params['rexplot']:
@@ -79,6 +88,18 @@ class Params():
             if 'plot_file' in input_params['rexplot']:
                 self.do_saveplot = True
                 self.plot_file = input_params['rexplot']['plot_file']
+
+def computeTicks (x, step = 5):
+    """
+    Computes domain with given step encompassing series x
+    @ params
+    x    - Required - A list-like object of integers or floats
+    step - Optional - Tick frequency
+    """
+    import math as Math
+    xMax, xMin = Math.ceil(max(x)), Math.floor(min(x))
+    dMax, dMin = xMax + abs((xMax % step) - step) + (step if (xMax % step != 0) else 0), xMin - abs((xMin % step))
+    return range(dMin, dMax, step)
 
 
 def simpleaxis(ax):
@@ -128,7 +149,7 @@ def plot(json_input):
     multi_coord = 0
     for i in range(len(params.properties)):
         #y_fit = inter.InterpolatedUnivariateSpline(x[multi_coord], y[i])
-        y_fit = UnivariateSpline(x[multi_coord], y[i], s=1.0e-2)
+        y_fit = UnivariateSpline(x[multi_coord], y[i], s=0)
         y_spline.append(y_fit)
         if(len(x) > 1):
             multi_coord = multi_coord + 1
@@ -152,9 +173,9 @@ def plot(json_input):
     plt.ylabel(params.y_label, fontsize=fontsize)
     plt.xlabel(params.x_label, fontsize=fontsize)
     if(params.force_min!=0):
-        axvline(x=params.force_min, linewidth=1.0, color='k', linestyle=':')
+        axvline(x=params.force_min, linewidth=0.5, color='k', linestyle=':')
     if(params.force_max!=0):
-        axvline(x=params.force_max, linewidth=1.0, color='r', linestyle=':')
+        axvline(x=params.force_max, linewidth=0.5, color='k', linestyle=':')
     plt.xticks(fontsize=fontsize)
     plt.yticks(fontsize=fontsize)
     if(params.user_props==True):
@@ -184,15 +205,24 @@ def plot(json_input):
         #tick.label1.set_fontweight('bold')
     for axis in ['bottom','left']:
         ax.spines[axis].set_linewidth(params.axiswidth)
-    ax.xaxis.set_tick_params(width=1)
-    ax.yaxis.set_tick_params(width=1)
+    ax.xaxis.set_tick_params(width=0.3, length=1)
+    ax.yaxis.set_tick_params(width=0.3, length=1)
+    #if(params.tick_step!=None):
+    #    start, end = ax.get_ylim()
+    #    ax.yaxis.set_ticks(np.arange(start, end, params.tick_step))
     plt.legend(frameon=False, fontsize=params.fontsize)
     if(params.y_max and params.y_min):
         plt.ylim(params.y_min, params.y_max)
+    if(params.ytick_step!=None):
+        start, end = ax.get_ylim()
+        ax.yaxis.set_ticks(computeTicks(np.arange(params.y_min, params.y_max),step=params.ytick_step))
     else:
         pass
     if(params.x_max!=None and params.x_min!=None):
         plt.xlim(params.x_min, params.x_max)
+    if(params.xtick_step!=None):
+        start, end = ax.get_xlim()
+        ax.xaxis.set_ticks(computeTicks(np.arange(params.x_min, params.x_max),step=params.xtick_step))
     else:
         pass
     fig_dims = params.fig_dims
