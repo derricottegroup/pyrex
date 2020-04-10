@@ -3,6 +3,8 @@ import os
 import json
 import numpy as np
 from header import *
+from pydantic import BaseModel, Field
+from typing import Dict, List, Optional 
 
 class Params(object):
     def __init__(self,json_data):
@@ -24,6 +26,7 @@ class Params(object):
         self.do_eda = False
         self.do_conceptualdft = False
         self.do_fragility_spec = False
+        self.single_connectivity_matrix = False
         self.do_supermolecular = False
         self.do_surf_scan = False
         self.scan_type = 'relaxed'
@@ -67,7 +70,7 @@ class Params(object):
                 geometry(list) -- defines the xyz coordinates for the molecule (numbers only!) 
         """
         if 'molecule' in input_params:
-            if 'molecular_charge' in input_params['molecule']:
+            if 'symbols' in input_params['molecule']:
                 self.symbols = input_params['molecule']['symbols']
                 self.natoms = len(input_params['molecule']['symbols'])
             if 'molecular_charge' in input_params["molecule"]:
@@ -200,6 +203,8 @@ class Params(object):
                 self.do_conceptualdft = bool(input_params['pyrex']['do_conceptualdft'])
             if 'do_fragility_spec' in input_params['pyrex']:
                 self.do_fragility_spec = bool(input_params['pyrex']['do_fragility_spec'])
+            if 'single_connectivity_matrix' in input_params['pyrex']:
+                self.single_connectivity_matrix = bool(input_params['pyrex']['single_connectivity_matrix'])
             if 'do_supermolecular' in input_params['pyrex']:
                 self.do_supermolecular = bool(input_params['pyrex']['do_supermolecular'])
             if 'energy_read' in input_params['pyrex']:
@@ -370,3 +375,5 @@ class Params(object):
                         ts_vec.append(np_trj)
                     line = next(normal_mode_file)
         return ts_vec 
+
+
