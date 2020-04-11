@@ -108,6 +108,8 @@ class scf_class(object):
             psi4.set_options(self.keywords)
             #print("pyREX:Single Point Calculation on IRC Point %d" %(count))
             psi4.set_num_threads(self.nthreads)
+            if(self.set_memory):
+                    psi4.set_memory(self.memory_allocation)
             energy, wfn = psi4.energy(self.level_of_theory, return_wfn=True)
             #wfn = psi4.core.Wavefunction.build(mol, self.basis)
             ndocc = wfn.doccpi()[0]

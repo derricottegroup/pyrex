@@ -24,6 +24,8 @@ class Params(object):
         self.eps = 80.4 # Water by default
         self.do_polarization = False
         self.do_eda = False
+        self.set_memory = False
+        self.memory_allocation =  ""
         self.do_conceptualdft = False
         self.do_fragility_spec = False
         self.single_connectivity_matrix = False
@@ -193,6 +195,9 @@ class Params(object):
                 self.xc_functional = input_params['pyrex']['xc_functional']
             if 'nthreads' in input_params['pyrex']:
                 self.nthreads = input_params['pyrex']['nthreads']
+            if 'set_memory' in input_params['pyrex']:
+                self.set_memory = True
+                self.memory_allocation = str(input_params['pyrex']['set_memory'])
             if 'do_solvent' in input_params['pyrex']:
                 self.do_solvent = bool(input_params['pyrex']['do_solvent'])
             if 'pcm_solvent' in input_params['pyrex']:

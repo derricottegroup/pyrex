@@ -86,6 +86,9 @@ def single_connectivity_matrix(params,output_file):
     hess_trace_bond = []
     hess_traces = []
     increment_i = 0
+    # Change the iterator to iterate check docs for range function by 3 --Princess Suggestion
+    # range(0,params.natoms,3): Potential replacement
+    #TODO: Princess and Nick rewrite in such a way that it is not a 4-layer loop.
     for i in range(params.natoms):
         increment_j = 0
         for j in range(params.natoms):

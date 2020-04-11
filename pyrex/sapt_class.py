@@ -19,6 +19,9 @@ class sapt(object):
         self.step_size = data.irc_stepsize
         self.coordinates = data.coordinates
         self.force_min = data.force_min
+        self.nthreads = data.nthreads
+        self.set_memory = data.set_memory
+        self.memory_allocation = data.memory_allocation
         # Specifics for F-SAPT Calculations
         if(data.do_fsapt):
             self.monomer_A_frags = data.monomer_A_frags
@@ -65,6 +68,9 @@ class sapt(object):
                     self.keywords['FISAPT_FSSAPT_FILEPATH'] = 's-fsapt_output/fsapt%d' %count
             psi4.set_options(self.keywords)
             #print("pyREX:SAPT Calculation on IRC Point %d" %(count))
+            psi4.set_num_threads(self.nthreads)
+            if(self.set_memory):
+                psi4.set_memory(self.memory_allocation)
             e_int = psi4.energy(self.method)
             #TODO: Actually have this create the SAPT files necessary for FSAPT partitioning. Make user options as well
             #      for fragment definitions. Something in the sapt block.

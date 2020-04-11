@@ -47,6 +47,7 @@ class PyrexOptions(BaseModel):
     irc_stepsize: float
     xc_functional: Optional[str] = None
     nthreads: Optional[int] = 1
+    set_memory: Optional[str] = None
     do_solvent: Optional[bool] = None
     pcm_solvent: Optional[str] = None
     eps: Optional[float] = None
