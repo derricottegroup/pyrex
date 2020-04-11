@@ -145,6 +145,9 @@ class sapt(object):
             geometry += "symmetry c1"
             psi4.geometry(geometry)
             psi4.set_options({'reference': 'rhf', 'basis' : self.basis})
+            psi4.set_num_threads(self.nthreads)
+            if(self.set_memory):
+                psi4.set_memory(self.memory_allocation)
             #print("pyREX:SAPT Calculation on IRC Point %d" %(count))
             e_int = psi4.energy("%s/%s" %(self.method,self.basis), bsse_type='cp')
             output.write('\n{:>15} {:>15.4f}\n'.format(count, e_int*au_to_kcal))
