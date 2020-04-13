@@ -25,6 +25,7 @@ class scf_class(object):
         self.do_solvent = data.do_solvent
         self.pcm_solvent = data.pcm_solvent
         self.set_memory = data.set_memory
+        self.memory_allocation = data.memory_allocation
         self.eps = data.eps
         self.natoms = data.natoms
         self.method = str(data.method)
