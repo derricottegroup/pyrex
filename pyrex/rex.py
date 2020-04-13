@@ -22,10 +22,10 @@ import fragility_spectrum
 import quotes
 import csvread
 import pandas as pd
+from input_pydantic import build_inp
 from decimal import Decimal
 from concept_dft import *
 from scf_class import *
-from input_pydantic import *
 import surface_scan
 from geomparser import *
 from atomic import atomic_decomp
