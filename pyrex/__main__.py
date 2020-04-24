@@ -37,7 +37,7 @@ def main():
         rex.fsapt_analysis(params)
     elif(args["connectivity_matrix"]==True):
         params = rex.read_params(args)
-        rex.fragility_spectrum.single_connectivity_matrix(params,output_filename)
+        rex.fragility_spectrum.single_connectivity_matrix(params)
 
     # Normal pyrex stuff
     else:

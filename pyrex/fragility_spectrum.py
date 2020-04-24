@@ -80,7 +80,7 @@ def bofill_hess_update(hess, del_g, del_x):
     hess_disp = coeff*h_ms + (1.0 - coeff)*h_psb
     return hess_disp
 
-def single_connectivity_matrix(params,output_file):
+def single_connectivity_matrix(params):
     H = compute_hessian(params,params.geometry) # Compute Hessian at geometry
     connectivity_matrix = np.zeros((params.natoms, params.natoms)) # Building Blank Connectivity Matrix
     hess_trace_bond = []
@@ -92,20 +92,16 @@ def single_connectivity_matrix(params,output_file):
     for i in range(params.natoms):
         increment_j = 0
         for j in range(params.natoms):
-            output = open(output_file, "a")
             H_bond = np.zeros((3,3))
             for k in range(3):
                 for l in range(3):
                     H_bond[k][l] = H[k+increment_i][l+increment_j]
-            output.write("\nHessian Trace for %s%d-%s%d Bond\n" %(params.symbols[i],i, params.symbols[j],j))
             hess_trace = np.trace(H_bond) # Eqn.9 and Eqn.10 Ref.(2)
             hess_trace_bond.append(hess_trace)
             connectivity_matrix[i][j] = hess_trace # Eqn.8 Ref.(2)
-            output.write("%.5f\n" %hess_trace)
             increment_j += 3 
             hess_traces.append(hess_trace_bond)
             #count += 1
-            output.close()
         increment_i += 3
     np.savetxt('connectivity_matrix.csv', connectivity_matrix, delimiter=',')
     # Create Heatmap for each Connectivity Matrix
