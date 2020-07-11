@@ -25,7 +25,7 @@ import pandas as pd
 from input_pydantic import build_inp
 from decimal import Decimal
 from concept_dft import *
-from scf_class import *
+import scf
 import surface_scan
 from geomparser import *
 from atomic import atomic_decomp
@@ -126,11 +126,11 @@ def geometry_builder(params):
 # Fragment Optimizations #
 ##########################
     if(params.do_frag==True and params.fsapt_analyze==False):
-        scf_instance = scf_class(params, output_filename)
+        #scf_instance = scf_class(params, output_filename)
         iso_frag_A = geomparser.iso_frag(params.charge_A, params.mult_A, params.frag_A)
         iso_frag_B = geomparser.iso_frag(params.charge_B, params.mult_B, params.frag_B)
-        params.e_A = scf_instance.opt("A", params.natoms_A, iso_frag_A[0])
-        params.e_B = scf_instance.opt("B", params.natoms_B, iso_frag_B[0])
+        params.e_A = scf.opt(params, "A", params.natoms_A, iso_frag_A[0])
+        params.e_B = scf.opt(params, "B", params.natoms_B, iso_frag_B[0])
 
 ###########################
 # Run Energy Calculations #
@@ -138,9 +138,9 @@ def geometry_builder(params):
 
 def energy_calculations(params):
     if(params.do_energy and params.energy_file==None):
-        scf_instance = scf_class(params, output_filename)
+        #scf_instance = scf_class(params, output_filename)
         if(params.qm_program == 'psi4'):
-            params.energies, params.wavefunctions = scf_instance.psi4_scf(params.geoms)
+            params.energies, params.wavefunctions = scf.psi4_scf(params, params.geoms)
             nelec = params.wavefunctions[0].nalpha()
         if(params.do_polarization):
             frag_energies_irc = []
@@ -149,23 +149,23 @@ def energy_calculations(params):
                 output = open(output_filename, "a")
                 output.write('\n\n-- Calculating the Energy of Fragment %d--\n' %(i+1))
                 output.close()
-                frag_energies, frag_wavefunctions = scf_instance.psi4_scf(params.frag_geoms_irc[i])
+                frag_energies, frag_wavefunctions = scf.psi4_scf(params, params.frag_geoms_irc[i])
                 frag_energies_irc.append(frag_energies)
                 frag_wavefunctions_irc.append(frag_wavefunctions)
             params.frag_energies_irc = frag_energies_irc
             params.frag_wavefunctions_irc = frag_wavefunctions_irc 
 
         if(params.qm_program == 'pyscf' and params.method == 'scf'):
-            params.energies,params.frontier_orb_energies = scf_instance.pyscf_scf(params.geoms)
+            params.energies,params.frontier_orb_energies = scf.pyscf_scf(params, params.geoms)
    
         if(params.qm_program == 'pyscf' and params.method == 'dft'):
-            params.energies,params.frontier_orb_energies = scf_instance.pyscf_dft(params.geoms, params.xc_functional)
+            params.energies,params.frontier_orb_energies = scf.pyscf_dft(params, params.geoms, params.xc_functional)
 
         if(params.qm_program == 'orca'):
-            params.energies,params.frontier_orb_energies = scf_instance.orca_scf(params.geoms)
+            params.energies,params.frontier_orb_energies = scf.orca_scf(params, params.geoms)
 
         if(params.qm_program == 'sparrow'):
-            params.energies = scf_instance.sparrow_scf(params.geoms)
+            params.energies = scf.sparrow_scf(params, params.geoms)
 
 # Store energies in .csv file
         energy_csv = open("energy.csv", "w+")

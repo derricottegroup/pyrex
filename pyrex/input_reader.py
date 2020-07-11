@@ -54,6 +54,7 @@ class Params(object):
         output_filename = "pyrex_output.dat"
         #json_data=open(json_input).read()
         header(output_filename, json_data)
+        self.outfile = output_filename
     def read_input(self, json_data):
         #json_data=open(json_input).read()
         input_params = json.loads(json_data)
