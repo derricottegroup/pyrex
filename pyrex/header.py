@@ -5,9 +5,9 @@ def header(outfile,json_data):
     output = open(outfile, 'w+')
     header ='''
 -----------------------------------------------------------------------
-     pyREX: Python Reaction Energy eXtension for Quantum Chemistry
+     PYREX: Python Reaction Energy eXtension for Quantum Chemistry
 
-                        pyREX version 1.0
+                        PYREX version 1.0
 
                       Wallace D. Derricotte
                     Derricotte Research Group
