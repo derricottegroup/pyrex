@@ -2,7 +2,7 @@ import sys
 import os
 import json
 import numpy as np
-from header import *
+from .header import *
 from pydantic import BaseModel, Field
 from typing import Dict, List, Optional 
 

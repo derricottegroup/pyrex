@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import json
-import _make_iterencode
+from . import _make_iterencode
 
 
 # Necessary Information for JSON File Encoding
