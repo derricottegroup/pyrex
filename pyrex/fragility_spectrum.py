@@ -24,8 +24,8 @@ import json
 import seaborn as sns
 import matplotlib.pylab as plt
 import matplotlib.animation as animation
-from geomparser import *
-import sparrow_interface 
+from .geomparser import *
+from . import sparrow_interface 
 
 def compute_hessian(params, geom):
     # Use PSI4 to calculate Hessian matrix

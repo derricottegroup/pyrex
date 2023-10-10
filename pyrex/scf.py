@@ -9,8 +9,8 @@ import numpy as np
 import psi4
 from pyscf import lib
 from pyscf import scf, dft ,gto, solvent
-import orca_interface
-import sparrow_interface
+from . import orca_interface
+from . import sparrow_interface
 
 def print_header(outfile):
     output = open(outfile, "a")

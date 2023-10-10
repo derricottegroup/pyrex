@@ -1,7 +1,7 @@
 import sys
-import rex
+from . import rex
 import argparse
-import input_gen
+from . import input_gen
 
 pyrex_help = """PYREX is an open-source python toolkit for intrinsic reactivity analysis"""
 parser = argparse.ArgumentParser(description=pyrex_help)

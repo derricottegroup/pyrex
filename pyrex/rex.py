@@ -10,26 +10,26 @@ __date__ = "2018-5-29"
 import psi4
 import numpy as np
 import os
-from header import *
+from .header import *
 import random
 import re
 import datetime
 import json
-import euler
-import input_reader
-import input_gen
-import fragility_spectrum
-import quotes
-import csvread
+from . import euler
+from . import input_reader
+from . import input_gen
+from . import fragility_spectrum
+from . import quotes
+from . import csvread
 import pandas as pd
-from input_pydantic import build_inp
+from .input_pydantic import build_inp
 from decimal import Decimal
-from concept_dft import *
-import scf
-import surface_scan
-from geomparser import *
-from atomic import atomic_decomp
-from sapt_class import *
+from .concept_dft import *
+from . import scf
+from . import surface_scan
+from .geomparser import *
+from .atomic import atomic_decomp
+from .sapt_class import *
 import argparse
 import sys
 
